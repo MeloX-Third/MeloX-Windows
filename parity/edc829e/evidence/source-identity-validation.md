@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`bd78218` 歌曲菜单的歌曲/歌手/专辑搜索使用完整 SourceId，经搜索导航总线指定插件单来源查询；插件未安装时显示该来源失败，不回退网易。桌面动态歌曲搜索结果接入歌曲菜单；切换来源或注册表变更时清空旧搜索结果，目录结果校验来源和 generation。`gradle :desktop:desktopTest :desktop:desktopJar` 成功（48 秒）。生产插件运行时、目录结果窗口交互与插件实际查询尚待验收。
+
 截至 `25a6c5c` 完整回归：`gradle :shared:desktopTest :desktop:desktopTest :desktop:desktopJar` 成功（2 分 16 秒），共享层 XML 577 项通过、0 失败/错误/跳过；桌面 XML 17 项中 11 通过、6 条件跳过，0 失败/错误，桌面测试和 JAR 为最近成功结果的 UP-TO-DATE 复用。包含插件协议/账号/OAuth/独立 JVM 事务恢复及 LAN/分页改动。AutoMix 先前偶发连续交接失败本轮未复现，未定位原因，继续保留待查；此回归不代表桌面全量迁移或插件生产运行时完成。
 
 `0c8ff33` 管理器持久化异常专项：启用意图写入失败时注销未启用候选并关闭资源；停用意图写入失败时保留原 Provider、Enabled 状态和资源，恢复写入后可成功停用。`gradle :shared:desktopTest --tests "melox.plugin.*"` 成功（14 秒），新增边界测试通过；随后启动共享层完整回归，结果单独记录。
