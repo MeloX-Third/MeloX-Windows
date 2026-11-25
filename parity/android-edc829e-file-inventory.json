@@ -1171,7 +1171,7 @@
                                   "shared/src/commonMain/kotlin/melox/recommendation/MeloXHomeRecommendationPool.kt"
                               ],
         "review":  "PARTIAL",
-        "notes": "e17ec01: Fixed Android baseline reviewed. Process pool and full-identity queue contributions implemented; recommendation/playback 109 tests passed and desktop compilation succeeded. Home seed wiring under validation; card consumption remains for the appropriate UI phase."
+        "notes": "e17ec01: Fixed Android baseline reviewed. Process pool and full-identity queue contributions implemented; recommendation/playback 109 tests passed. a5ec929: Home feed seeds wired; recommendation 6 tests and desktop tests/JAR passed. Card consumption remains for the appropriate UI phase."
     },
     {
         "android":  "core/remoteconfig/MeloXRemoteConfigDefaults.kt",

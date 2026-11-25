@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`a5ec929` 首页种子接线：网易首页内容和最近播放、其他内置 Provider 首页新歌进入推荐池；种子刷新遵循基线的已有卡片稳定规则，不使用播放队列的新增优先逻辑。`gradle :shared:desktopTest --tests "melox.recommendation.*" :desktop:desktopTest :desktop:desktopJar` 成功（1 分 43 秒）；共享推荐专项 XML 6 项全部通过。卡片消费及动态首页后续接线仍待完成。
+
 `e17ec01` 迁移 Android 进程内首页推荐池及普通/Provider 整队列贡献，按完整资源身份去重，保留原 track 元数据；新增队列优先更新最多五首，重复歌曲不改变已有展示顺序。两项回归覆盖插件间相同资源 ID、整队列输入、上限和稳定性。`gradle :shared:desktopTest --tests "melox.recommendation.*" --tests "melox.playback.*" :desktop:compileKotlinDesktop` 成功（1 分 56 秒）；XML 109 项全部通过、0 跳过。此时首页种子/卡片接线尚未完成。
 
 `03a820d` 歌词绑定选择器对搜索、分页和预览分别应用 30 秒超时并显示可重试错误；外层页面关闭/来源切换取消仍向上传播。`gradle :desktop:desktopTest :desktop:desktopJar` 成功（41 秒）。真实超时窗口输入验收仍待完成。
