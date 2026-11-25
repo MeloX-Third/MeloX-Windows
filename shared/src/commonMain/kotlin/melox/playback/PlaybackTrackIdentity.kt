@@ -2,6 +2,7 @@ package melox.playback
 
 import melox.music.model.MusicResourceId
 import melox.music.model.MusicSource
+import melox.music.model.SourceResourceUri
 
 /**
  * Track IDs used by new providers. A legacy numeric ID is intentionally parsed
@@ -17,10 +18,12 @@ object PlaybackTrackIdentity {
     const val AlbumExtra = "melox.track.album"
     const val ArtworkExtra = "melox.track.artwork"
 
-    fun encode(id: MusicResourceId): String =
-        "${Prefix}${id.source.storageValue}:${id.value}"
+    fun encode(id: MusicResourceId): String = if (id.sourceId.builtIn == null)
+        SourceResourceUri.encode(id.sourceId, id.value)
+    else "${Prefix}${id.sourceId.value}:${id.value}"
 
     fun decode(mediaId: String): MusicResourceId? {
+        SourceResourceUri.decode(mediaId)?.let { return MusicResourceId(it.first, it.second) }
         mediaId.toLongOrNull()?.takeIf { it > 0L }?.let {
             return MusicResourceId(MusicSource.Netease, it.toString())
         }
@@ -45,7 +48,7 @@ object PlaybackTrackIdentity {
 
     fun neteaseNumericId(item: Any?): Long? =
         fromMediaItem(item)
-            ?.takeIf { it.source == MusicSource.Netease }
+            ?.takeIf { it.sourceId.builtIn == MusicSource.Netease }
             ?.value
             ?.toLongOrNull()
 }
