@@ -405,6 +405,38 @@ private fun homeGreeting(): String = "下午好"
 
 @Composable
 private fun DailySongsPage(songs: List<melox.model.SearchSong>, onBack: () -> Unit, title: String = "每日推荐") {
+    if (melox.settings.MeloXSettingsRuntime.desktopLayoutEnabled) {
+        val queue by melox.playback.PlaybackCommands.queue.collectAsState()
+        val playback by melox.playback.MeloXPlaybackOutput.state.collectAsState()
+        var actionSong by remember(songs) { mutableStateOf<melox.model.SearchSong?>(null) }
+        var menuAnchor by remember { mutableStateOf<androidx.compose.ui.unit.IntOffset?>(null) }
+        melox.ui.desktop.MeloXDesktopCollectionDetail(
+            kind = melox.ui.desktop.desktopString("ui.common.playlist"),
+            title = title,
+            subtitle = null,
+            metadata = melox.ui.desktop.desktopFormat("ui.common.song_count", songs.size),
+            description = null,
+            artworkUrl = songs.firstOrNull()?.artworkUrl,
+            songs = songs,
+            loading = false,
+            error = null,
+            playingId = queue.songs.getOrNull(queue.index)?.id,
+            isPlaying = playback.isPlaying,
+            onBack = onBack,
+            onPlayAll = { songs.firstOrNull()?.let { melox.playback.PlaybackCommands.playQueue(songs, it.id) } },
+            onShuffle = {
+                val shuffled = songs.shuffled()
+                shuffled.firstOrNull()?.let { melox.playback.PlaybackCommands.playQueue(shuffled, it.id) }
+            },
+            onRetry = {},
+            onSong = { melox.playback.PlaybackCommands.playQueue(songs, it.id) },
+            onMore = { actionSong = it },
+            onMenuAnchor = { menuAnchor = it },
+            tag = "desktop-home-recommendations",
+        )
+        actionSong?.let { song -> MeloXSongActionsOverlay(song, songs, true, { actionSong = null }, desktopAnchor = menuAnchor) }
+        return
+    }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(top = 18.dp, bottom = 146.dp)) {
         item { MeloXIosTopBar(title = title, onBack = onBack) }
         item {
