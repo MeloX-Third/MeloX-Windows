@@ -44,9 +44,9 @@ fun classicQueueIndex(songs: List<SearchSong>, currentIndex: Int, track: MusicTr
     fun matches(song: SearchSong): Boolean {
         val provider = song.providerTrack
         if (provider?.id == track.id) return true
-        return track.id.source == MusicSource.Netease &&
+        return track.id.sourceId.builtIn == MusicSource.Netease &&
             track.id.value == song.id.toString() &&
-            (provider == null || provider.id.source == MusicSource.Netease)
+            (provider == null || provider.id.sourceId.builtIn == MusicSource.Netease)
     }
     if (currentIndex in songs.indices && matches(songs[currentIndex])) return currentIndex
     return songs.indexOfFirst(::matches).takeIf { it >= 0 }
@@ -278,14 +278,14 @@ internal data class DesktopPlaybackStart(
 
 private fun isDesktopSongDownloaded(song: SearchSong): Boolean {
     val id = song.providerTrack?.id
-    if (id?.source == MusicSource.Local) {
+    if (id?.sourceId?.builtIn == MusicSource.Local) {
         val location = (song.providerTrack?.providerMetadata as? melox.music.model.ProviderTrackMetadata.Local)?.contentUri
         return location?.let { runCatching {
             val file = if (it.startsWith("file:")) java.io.File(java.net.URI(it)) else java.io.File(it)
             file.isFile && file.canRead()
         }.getOrDefault(false) } ?: false
     }
-    if (id == null || id.source == MusicSource.Netease) {
+    if (id == null || id.sourceId.builtIn == MusicSource.Netease) {
         val songId = id?.value?.toLongOrNull() ?: song.id
         if (MeloXDownloadStore.instance().contains(songId)) return true
     }
@@ -1151,6 +1151,7 @@ class MeloXDesktopPlayer internal constructor(
                 thirdPartySourcesEnabled = ThirdPartyMusicSourceConsentStore::enabled,
                 thirdPartyOnlyForMembership = ThirdPartyMusicSourceConsentStore::membershipFallbackOnly,
                 crossProviderFallback = crossProviderFallback,
+                localSourceProvider = { melox.download.MeloXProviderDownloadStore.get().localPlaybackUri(it) },
             ).also { providerResolver = it }
             val uri = ProviderPlaybackResolver.uriForTrack(track, MusicQualityRuntime.selected.toCommonTier())
             val request = resolver.resolveProviderRequest(uri)

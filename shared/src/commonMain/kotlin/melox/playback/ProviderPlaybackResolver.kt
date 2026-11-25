@@ -7,6 +7,9 @@ import melox.music.model.MusicSource
 import melox.music.model.MusicTrack
 import melox.music.model.PlaybackResolution
 import melox.music.model.ProviderTrackMetadata
+import melox.music.model.SourceId
+import melox.music.model.MeloXTrackJson
+import melox.music.provider.MusicCapability
 import melox.music.provider.MusicProviderRegistry
 import melox.music.provider.PlaybackCapability
 import melox.platform.logDebug
@@ -18,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CompletableFuture
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withTimeout
 
 /**
  * Adds provider-aware `melox://track/...` URIs while delegating every legacy
@@ -38,6 +42,7 @@ class ProviderPlaybackResolver(
     private val thirdPartyOnlyForMembership: () -> Boolean = { false },
     private val crossProviderFallback: CrossProviderPlaybackFallbackResolver? = null,
     thirdPartyPlayback: ThirdPartyPlaybackResolver? = null,
+    private val localSourceProvider: (MusicResourceId) -> String? = { null },
 ) {
     private val fallbackChain = PlaybackFallbackChain(crossProviderFallback, thirdPartyPlayback ?: ThirdPartyPlaybackResolver(
         thirdPartySourcesEnabled, thirdPartyOnlyForMembership, chkszPlayback, lxUserPlayback))
@@ -85,6 +90,9 @@ class ResolvedRequest(
             return ResolvedRequest(netease.uri, netease.headers)
         }
         if (parsed.host != ProviderTrackHost) throw IOException("Unsupported MeloX host: ${parsed.host}")
+        val dynamicSource = parsed.path.substringAfter('/').substringBefore('/').let(SourceId::parse)
+            ?.takeIf { it.builtIn == null }
+        if (dynamicSource != null) return resolveDynamicRequest(parsed, dynamicSource)
         val source = parseSource(parsed) ?: throw IOException("Invalid MeloX provider source: $uri")
         if (!providerPlaybackEnabled(source)) {
             throw IOException("${source.displayName} 播放接口已由远程兼容性配置临时关闭")
@@ -170,6 +178,37 @@ class ResolvedRequest(
             throw error
         } finally {
             inFlight.remove(key, pending)
+        }
+    }
+
+    private fun resolveDynamicRequest(uri: java.net.URI, source: SourceId): ResolvedRequest {
+        val segments = uri.path.removePrefix("/").split('/', limit = 2)
+        val value = segments.getOrNull(1)?.takeIf(String::isNotBlank)
+            ?: throw IOException("Invalid dynamic resource ID")
+        val id = MusicResourceId(source, value)
+        localSourceProvider(id)?.let { return ResolvedRequest(it) }
+        if (providers[source] == null) providers.awaitPluginRestore()
+        val generation = providers.generation
+        val provider = providers[source] ?: throw IOException("Music source ${source.value} is missing or disabled")
+        val playback = (provider as? PlaybackCapability)?.takeIf { provider.supports(MusicCapability.Playback) }
+            ?: throw IOException("Music source ${source.value} does not support playback")
+        val track = queryParam(uri, "standardTrack")?.let { raw ->
+            if (raw.toByteArray(Charsets.UTF_8).size > 1024 * 1024) throw IOException("Track metadata too large")
+            runCatching { MeloXTrackJson.decode(org.json.JSONObject(raw)) }.getOrNull()
+                ?.takeIf { it.id == id } ?: throw IOException("Invalid dynamic track identity")
+        } ?: MusicTrack(id, queryParam(uri, TrackTitleQuery).orEmpty(),
+            queryParam(uri, TrackArtistsQuery).orEmpty().split('\u001f').filter(String::isNotBlank)
+                .map { melox.music.model.MusicArtistRef(name = it) },
+            durationMs = queryParam(uri, TrackDurationQuery)?.toLongOrNull())
+        val resolution = runBlocking(Dispatchers.IO) {
+            withTimeout(12_000L) { playback.resolvePlayback(track, currentQuality(uri)) }
+        }
+        if (providers.generation != generation || providers[source] !== provider)
+            throw IOException("Music source changed during resolution")
+        return when (resolution) {
+            is PlaybackResolution.Playable -> ResolvedRequest(resolution.url, resolution.requestHeaders, resolution.expiresAtEpochMs)
+            is PlaybackResolution.Preview -> ResolvedRequest(resolution.url)
+            else -> throw IOException("Music source audio unavailable: ${resolution.javaClass.simpleName}")
         }
     }
 
@@ -265,12 +304,13 @@ class ResolvedRequest(
             quality: AudioQualityTier,
         ): String = buildString {
             append("$MeloXScheme://$ProviderTrackHost/")
-            append(track.id.source.storageValue)
+            append(track.id.sourceId.value)
             append("/")
             fun encoded(value: String) = java.net.URLEncoder.encode(value, "UTF-8").replace("+", "%20")
             append(encoded(track.id.value))
             val fields = linkedMapOf(QualityQuery to quality.name, TrackTitleQuery to track.title,
                 TrackArtistsQuery to track.artists.joinToString("\u001f") { it.name })
+            if (track.id.sourceId.builtIn == null) fields["standardTrack"] = MeloXTrackJson.encode(track).toString()
             track.durationMs?.let { fields[TrackDurationQuery] = it.toString() }
             when (val metadata = track.providerMetadata) {
                 is ProviderTrackMetadata.Jellyfin -> {

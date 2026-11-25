@@ -213,6 +213,7 @@ class NeteasePlaybackResolver(
                 thirdPartyOnlyForMembership = thirdPartyOnlyForMembership,
                 crossProviderFallback = crossProviderFallback,
                 thirdPartyPlayback = thirdPartyResolver,
+                localSourceProvider = { melox.download.MeloXProviderDownloadStore.get().localPlaybackUri(it) },
             ).also { providerDelegate = it }
         }
     }
