@@ -117,6 +117,7 @@ object MeloXSettingsPreferences {
             "playback_heart_mode_on_launch" -> MeloXSettingsRuntime.startsHeartModeOnLaunch = value
             "immersive_playback" -> MeloXSettingsRuntime.immersivePlaybackEnabled = value
             "player_show_quality_tip" -> MeloXSettingsRuntime.showPlayerQualityTip = value
+            "playback_show_volume_slider" -> MeloXSettingsRuntime.showVolumeSlider = value
             "system_font" -> MeloXSettingsRuntime.systemFontEnabled = value
         }
     }

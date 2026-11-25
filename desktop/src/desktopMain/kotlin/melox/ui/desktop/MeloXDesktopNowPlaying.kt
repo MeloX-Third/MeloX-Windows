@@ -121,7 +121,7 @@ internal fun MeloXDesktopNowPlaying(track: MusicTrack, onDismiss: () -> Unit, on
             Row(Modifier.height(36.dp).clip(CircleShape).background(Color.White.copy(alpha = .08f))
                 .border(.75.dp, Color.White.copy(alpha = .18f), CircleShape).padding(horizontal = 10.dp),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(1.dp)) {
-                DesktopPlayerVolume(volume)
+                if (melox.settings.MeloXSettingsRuntime.showVolumeSlider) DesktopPlayerVolume(volume)
                 DesktopVolumeMute(volume)
             }
         }

@@ -35,6 +35,8 @@ internal fun PinnedPlaybackSettings() {
             MeloXSettingsPreferences.setString("playback_volume_mode", it.name)
         }
         SettingsToggleRow("settings_allow_other_apps", "playback_allow_other_apps", false, enabled = false)
+        SettingsToggleRow("settings_show_volume_slider", "playback_show_volume_slider", true,
+            subtitle = pinnedString("settings_show_volume_slider_note"))
         SettingsToggleRow("settings_remember_player_page", "playback_remember_page", true)
         SettingsToggleRow("settings_save_queue_on_exit", "playback_save_queue", true)
         SettingsToggleRow("settings_remember_last_song", "playback_remember_last_song", true)

@@ -259,7 +259,7 @@ private fun DesktopBottomPlayer(inspector: DesktopInspector?, onInspector: (Desk
             DesktopSeekBar(Modifier.fillMaxWidth().height(8.dp), color)
         }
         Spacer(Modifier.width(9.dp))
-        if (volumeExpanded) {
+        if (volumeExpanded && melox.settings.MeloXSettingsRuntime.showVolumeSlider) {
             MeloXLiquidSlider(volume, { player?.setVolume(it) }, valueRange = 0f..1f,
                 enabled = melox.dlna.DlnaSession.state.collectAsState().value.device?.let { it.rendering != null } ?: true,
                 modifier = Modifier.width(100.dp).height(36.dp).testTag("desktop-volume-slider"), contentDescription = desktopString("ui.player.volume"))

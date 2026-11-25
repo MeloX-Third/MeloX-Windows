@@ -362,6 +362,8 @@ object MeloXSettingsRuntime {
         internal set
     var showPlayerQualityTip by mutableStateOf(true)
         internal set
+    var showVolumeSlider by mutableStateOf(true)
+        internal set
     var systemFontEnabled by mutableStateOf(false)
         internal set
     var smartQueueEnabled by mutableStateOf(false)
@@ -460,6 +462,7 @@ object MeloXSettingsRuntime {
         }.getOrDefault(MeloXScreenAwakeMode.Disabled)
         immersivePlaybackEnabled = prefs().getBoolean("immersive_playback", false)
         showPlayerQualityTip = prefs().getBoolean("player_show_quality_tip", true)
+        showVolumeSlider = prefs().getBoolean("playback_show_volume_slider", true)
         systemFontEnabled = prefs().getBoolean("system_font", false)
         smartQueueEnabled = MeloXPlaybackModePreferences.smartQueue()
         transitionUiEnabled = prefs().getBoolean("transition_ui_enabled", false)
