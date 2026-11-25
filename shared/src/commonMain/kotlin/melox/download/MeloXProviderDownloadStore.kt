@@ -90,7 +90,7 @@ class MeloXProviderDownloadStore private constructor() {
     fun start(track: MusicTrack, quality: AudioQualityTier = AudioQualityTier.Standard) {
         val idKey = key(track.id)
         if (isDownloaded(track.id) || jobs.containsKey(idKey)) return
-        val provider = MeloXMusicProviders.create().require(track.id.source)
+        val provider = MeloXMusicProviders.create()[track.id.sourceId] ?: return
         val downloader = provider as? DownloadCapability ?: return
         activeDownloads[idKey] = true
         lateinit var job: Job
@@ -98,7 +98,7 @@ class MeloXProviderDownloadStore private constructor() {
             try {
                 val resolution = downloader.resolveDownload(track, quality)
                 val playable = resolution as? PlaybackResolution.Playable
-                    ?: error("${track.id.source.displayName} 当前没有可下载音频")
+                    ?: error("${track.id.sourceId.displayName} 当前没有可下载音频")
                 val extension = extensionFor(playable.format)
                 val fileName = "${digest(idKey)}.$extension"
                 val destination = File(directory, fileName)
@@ -159,10 +159,12 @@ class MeloXProviderDownloadStore private constructor() {
         buildList {
             for (index in 0 until array.length()) {
                 val json = array.optJSONObject(index) ?: continue
-                val source = MusicSource.entries.firstOrNull { it.storageValue == json.optString("source") } ?: continue
+                val source = melox.music.model.SourceId.parse(json.optString("source")) ?: continue
                 val id = json.optString("id").takeIf(String::isNotBlank) ?: continue
                 val fileName = json.optString("fileName").takeIf(String::isNotBlank) ?: continue
-                val track = MusicTrack(
+                val track = if (json.has("track")) {
+                    ProviderDownloadIndexCodec.decodeTrack(json) ?: continue
+                } else MusicTrack(
                     id = MusicResourceId(source, id),
                     title = json.optString("title", "未知歌曲"),
                     artists = json.optString("artists").split(" / ").filter(String::isNotBlank)
@@ -171,7 +173,7 @@ class MeloXProviderDownloadStore private constructor() {
                         ?.let { name -> MusicAlbumRef(name = name) },
                     artworkUrl = json.optString("artworkUrl").takeIf(String::isNotBlank),
                     durationMs = json.optLong("durationMs").takeIf { it > 0L },
-                    providerMetadata = if (source == MusicSource.Spotify) {
+                    providerMetadata = if (source.builtIn == MusicSource.Spotify) {
                         ProviderTrackMetadata.Spotify(id)
                     } else ProviderTrackMetadata.Empty,
                 )
@@ -198,7 +200,8 @@ class MeloXProviderDownloadStore private constructor() {
         records.forEach { record ->
             val track = record.track
             array.put(JSONObject().apply {
-                put("source", track.id.source.storageValue)
+                put("source", track.id.sourceId.value)
+                put("track", melox.music.model.MeloXTrackJson.encode(track))
                 put("id", track.id.value)
                 put("title", track.title)
                 put("artists", track.artistText)
@@ -236,7 +239,7 @@ class MeloXProviderDownloadStore private constructor() {
         .digest(value.toByteArray())
         .joinToString("") { "%02x".format(it) }
 
-    private fun key(id: MusicResourceId): String = "${id.source.storageValue}:${id.value}"
+    private fun key(id: MusicResourceId): String = "${id.sourceId.value}:${id.value}"
 
     companion object {
         @Volatile private var instance: MeloXProviderDownloadStore? = null

@@ -5,6 +5,18 @@ import org.json.JSONObject
 import kotlin.test.*
 
 class ProviderDownloadIndexCodecTest {
+    @Test fun fullDynamicTrackRetainsMetadataAndRejectsConflictingIndexIdentity() {
+        val source = melox.music.model.SourceId.parse("plugin:example.catalog")!!
+        val track = melox.music.model.MusicTrack(melox.music.model.MusicResourceId(source, "123"), "Track",
+            listOf(melox.music.model.MusicArtistRef(name = "Artist")), bestQuality = melox.music.model.AudioQualityTier.Lossless)
+        val row = JSONObject().put("source", source.value).put("id", "123")
+            .put("track", melox.music.model.MeloXTrackJson.encode(track))
+        assertEquals(track, ProviderDownloadIndexCodec.decodeTrack(JSONObject(row.toString())))
+        assertNull(ProviderDownloadIndexCodec.decodeTrack(JSONObject(row.toString()).put("source", "netease")))
+        assertNull(ProviderDownloadIndexCodec.decodeTrack(JSONObject(row.toString()).put("id", "other")))
+        assertNull(ProviderDownloadIndexCodec.decodeTrack(JSONObject(row.toString()).put("track", "invalid")))
+    }
+
     @Test fun updatesPreserveUnknownSourcesFieldsAndNonObjectRows() {
         val previous = JSONArray("""[{"source":"qq_music","id":"same","extension":{"future":true}},
             {"source":"plugin:future","id":"same","payload":42},"unknown-row",null]""")

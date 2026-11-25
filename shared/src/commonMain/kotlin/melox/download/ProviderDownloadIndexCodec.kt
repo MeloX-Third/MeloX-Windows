@@ -5,6 +5,12 @@ import org.json.JSONObject
 
 /** Preserve unknown sources, rows and fields until an identity is explicitly removed. */
 internal object ProviderDownloadIndexCodec {
+    fun decodeTrack(value: JSONObject): melox.music.model.MusicTrack? {
+        val encoded = value.optJSONObject("track") ?: return null
+        val track = melox.music.model.MeloXTrackJson.decode(encoded) ?: return null
+        return track.takeIf { identity(value) == "${it.id.sourceId.value}:${it.id.value}" }
+    }
+
     fun identity(value: JSONObject): String? = if (value.opt("source") is String && value.opt("id") is String)
         value.getString("source") + ":" + value.getString("id") else null
 
