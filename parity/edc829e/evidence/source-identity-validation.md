@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`39f5993` 桌面歌曲搜索使用与手机共用的显式 SourceId 聚合白名单，取消桌面绕过聚合的条件；目录/本地曲库范围保持独立，聚合部分来源失败在桌面单列展示，来源标题反映当前查询范围。`gradle :desktop:desktopTest :desktop:desktopJar` 成功（1 分 17 秒）。尚需带真实插件的生产查询与窗口输入验收。
+
 `52dac0a` LAN 队列改用 SourceId 往返及查找，保留 qq/youtube 旧别名；插件未注册时明确拒绝，解析期间注册表变化后拒绝旧结果。`55cfd57` 播放器、首页、搜索、收藏、推荐列表和歌单详情移除旧枚举身份访问；歌单详情与操作菜单订阅注册表变化，拒绝撤销后的加载结果。`gradle :shared:desktopTest --tests "melox.lan.*" :desktop:desktopTest :desktop:desktopJar` 成功：LAN 15 项通过，桌面 17 项中 11 通过、6 条件跳过，0 失败/错误，JAR 成功。后续重复运行全部相关编译/测试为 UP-TO-DATE。不代表共享全量回归、插件实际 LAN 传输或真实窗口验收完成。
 
 `c68d289` 修复桌面旧枚举入口：CLI 接受 SourceId、等待插件恢复、按当前注册表查找并检查搜索结果来源与 generation；探索歌单/榜单卡片键和颜色使用 SourceId；插件歌曲分享不再访问抛错的旧 `.source`。`gradle :desktop:desktopTest :desktop:desktopJar` 成功（48 秒）。尚无 CLI 动态插件端到端输入回放；LAN 同类入口另行验证。
