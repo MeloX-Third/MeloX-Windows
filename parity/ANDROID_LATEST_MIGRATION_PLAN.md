@@ -82,7 +82,7 @@
 | 桌面下载暂停与继续 | PARTIAL | `fdd0ee2` 为 NetEase 下载页增加暂停/继续/取消，继续从头下载并等待旧任务完成临时文件清理；暂停保留歌单关联，取消阻止排队重启。并发时序专项 1 项通过，下载包共 7 项通过，桌面编译及 `04c7cf9` 完整回归通过；其余入口与真实传输输入验收待补 |
 | QRC 回退解压边界 | IMPLEMENTED | `0e56cb6` 补第二条 QRC 解码路径的 4 MiB 解压限制；两项 QRC 专项通过 |
 | 最新源码文件清单 | INVENTORIED | `android-edc829e-file-inventory.json` 登记 398 个变更 Kotlin 文件，同名候选不代表语义一致；`ANDROID_EDC829E_AUDIT.md` 记录已核对行为与缺口，其他文件仍 UNREVIEWED |
-| 动态音源身份基础类型 | PARTIAL | `70ac17a` 迁移 SourceId 和严格 SourceResourceUri，三项身份/转义/UTF-8 边界专项通过；MusicResourceId、Provider、持久化及 UI 接线仍在迁移，不能视为插件可用 |
+| 动态音源身份基础类型 | PARTIAL | `70ac17a` 迁移 SourceId 和严格 SourceResourceUri；`fdd6d93` 将 MusicResourceId 接到完整身份，保留内置构造兼容，未知来源旧 API 明确拒绝。完整回归共享层 498 项通过、桌面 10 通过/6 条件跳过、JAR 成功；Provider、持久化及 UI 接线仍在迁移，不能视为插件可用 |
 | 存储设置下载控制 | IMPLEMENTED | `69a36ca` 增加暂停/继续/取消和暂停任务展示；暂停专项两项及桌面编译通过，真实传输/指针回放待验收 |
 | 播放全量回归 | VALIDATED | 2026-11-25 最新完整运行共享层 474 项，0 失败/0 错误/0 跳过；包含 `02af178`。历史：首轮上一首测试受防抖影响，`6911501` 隔离场景；第二轮 PCM 缓冲静音等待超时，随后修复引擎启动暂停/恢复竞争。单轮通过不等于所有并发问题已关闭 |
 | 桌面测试和 JAR | VALIDATED | 同轮 `:desktop:desktopTest` 16 项，10 项通过、6 项按环境条件跳过，0 失败/0 错误；`:desktop:desktopJar` 成功。跳过项不能当作真实窗口输入验收，JAR 构建不等于 MSI/EXE 安装包验收 |
