@@ -21,6 +21,7 @@ class PluginHttpBroker internal constructor(
     internalTransport: okhttp3.Interceptor? = null,
     private val credential: PluginCredentialLease? = null,
     internalDns: okhttp3.Dns? = null,
+    internalTls: Pair<javax.net.ssl.SSLSocketFactory, javax.net.ssl.X509TrustManager>? = null,
 ) : Closeable {
     init { require(credential == null || credential.source == manifest.sourceId) { "credential source mismatch" } }
     private val requests = AtomicInteger()
@@ -32,6 +33,7 @@ class PluginHttpBroker internal constructor(
         .dns(internalDns ?: PluginPublicDns(manifest.networkDomains)).apply {
             // Internal deterministic transport fixtures; production uses the isolated client above.
             internalTransport?.let(::addInterceptor)
+            internalTls?.let { (factory, trust) -> sslSocketFactory(factory, trust) }
         }.build()
 
     fun request(json: String): String {

@@ -70,6 +70,7 @@ kotlin {
                 implementation(libs.kotlinx.coroutines.swing)
                 implementation(libs.kotlinx.coroutines.test)
                 implementation("com.squareup.okhttp3:mockwebserver:5.3.2")
+                implementation("com.squareup.okhttp3:okhttp-tls:5.3.2")
             }
         }
     }
