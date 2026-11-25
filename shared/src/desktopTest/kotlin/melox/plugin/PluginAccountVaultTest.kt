@@ -12,6 +12,29 @@ class PluginAccountVaultTest {
     private val source = SourceId.parse("plugin:example.vault")!!
     private val policy = PluginAuthentication("apiToken", domains = setOf("api.example.com"))
 
+    @Test fun oauthRefreshRetainsRefreshTokenAndReauthorizationReplacesPolicyWithoutDuplicatingSlot(): Unit {
+        assumeTrue(Platform.isWindows())
+        val root = Files.createTempDirectory("plugin-vault-oauth").toFile()
+        try {
+            val oauth = PluginOAuthConfiguration("https://api.example.com/authorize", "https://api.example.com/token", "client", emptyList())
+            val auth = policy.copy(type = "oauth2Pkce", oauth = oauth)
+            val vault = PluginAccountVault(source, root, WindowsDpapi)
+            val account = vault.importOAuthAndActivate("OAuth", PluginAccountVault.Tokens("access", "refresh", 1000), auth)
+            val previous = assertNotNull(vault.lease())
+            val refreshed = vault.replaceTokens(previous, PluginAccountVault.Tokens("new-access", expiresAt = 2000))
+            assertEquals("refresh", refreshed.refreshToken)
+            assertFalse(previous.isCurrent())
+            val changed = auth.copy(oauth = oauth.copy(scopes = listOf("library")))
+            val authorized = vault.reauthorize(refreshed, PluginAccountVault.Tokens("reauthorized"), changed)
+            assertEquals(changed, authorized.policy)
+            assertNull(authorized.refreshToken)
+            assertEquals(listOf(account), vault.accounts())
+            assertFalse(refreshed.isCurrent())
+            assertFails { vault.reauthorize(refreshed, PluginAccountVault.Tokens("late"), auth) }
+            assertEquals("reauthorized", vault.lease()?.token)
+        } finally { root.deleteRecursively() }
+    }
+
     @Test fun windowsProtectionPersistsSlotsAndSessionChangesRevokeOldLeases(): Unit {
         assumeTrue(Platform.isWindows())
         val root = Files.createTempDirectory("plugin-vault-dpapi").toFile()

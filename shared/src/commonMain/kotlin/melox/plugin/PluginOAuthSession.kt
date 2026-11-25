@@ -21,18 +21,21 @@ internal class PluginOAuthSession(
 ) : Closeable {
     private class Pending(val manifest: PluginManifest, val label: String, val redirect: String,
         val state: String, val verifier: String, val started: Long,
+        val saveReplacement: ((PluginOAuthContract.Tokens) -> Unit)? = null,
         var exchanging: Boolean = false, var transport: PluginHttpBroker? = null)
     private val lock = Any()
     private val pending = mutableMapOf<SourceId, Pending>()
     private var closed = false
 
-    fun begin(manifest: PluginManifest, label: String, redirect: String): String {
+    fun begin(manifest: PluginManifest, label: String, redirect: String,
+        saveReplacement: ((PluginOAuthContract.Tokens) -> Unit)? = null,
+    ): String {
         require(label.isNotBlank() && label.length <= 120)
         require(manifest.authentication?.type == "oauth2Pkce")
         val config = requireNotNull(manifest.authentication.oauth)
         validateRedirect(redirect)
         check(current(manifest)) { "plugin unavailable" }
-        val attempt = Pending(manifest, label, redirect, random(), random(), elapsedMillis())
+        val attempt = Pending(manifest, label, redirect, random(), random(), elapsedMillis(), saveReplacement)
         val url = config.authorizationEndpoint.toHttpUrl().newBuilder()
             .addQueryParameter("response_type", "code").addQueryParameter("client_id", config.clientId)
             .addQueryParameter("redirect_uri", redirect).addQueryParameter("scope", config.scopes.joinToString(" "))
@@ -93,7 +96,7 @@ internal class PluginOAuthSession(
                 synchronized(lock) {
                     check(pending[source] === attempt) { "OAuth login cancelled" }
                     check(elapsedMillis() - attempt.started in 0..600_000L) { "OAuth login expired" }
-                    save(attempt.manifest, attempt.label, tokens)
+                    attempt.saveReplacement?.invoke(tokens) ?: save(attempt.manifest, attempt.label, tokens)
                     pending.remove(source)
                 }
             }

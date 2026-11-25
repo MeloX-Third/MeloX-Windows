@@ -14,6 +14,22 @@ class PluginOAuthSessionTest {
         setOf("api.example.com"), PluginAuthentication("oauth2Pkce", domains = setOf("api.example.com"), oauth = config))
     private val redirect = "http://127.0.0.1:43210/oauth2redirect"
 
+    @Test fun reauthorizationUsesCapturedReplacementInsteadOfCreatingAnotherSlot(): Unit {
+        var replacements = 0
+        PluginOAuthSession({ true }, { _, action -> action() }, { _, _, _ -> error("must not create slot") },
+            broker = { m, active -> PluginHttpBroker(m, active, Interceptor { chain ->
+                Response.Builder().request(chain.request()).protocol(Protocol.HTTP_1_1).code(200).message("fixture")
+                    .body("""{"access_token":"replacement","token_type":"Bearer"}""".toResponseBody()).build()
+            }) }).use { session ->
+            val url = session.begin(manifest, "Existing", redirect) { tokens ->
+                assertEquals("replacement", tokens.accessToken)
+                replacements++
+            }.toHttpUrl()
+            session.complete("$redirect?state=${url.queryParameter("state")}&code=code")
+            assertEquals(1, replacements)
+        }
+    }
+
     @Test fun claimsStateBeforeExchangeAndCommitsOnlyOnce(): Unit {
         var calls = 0
         var saves = 0
