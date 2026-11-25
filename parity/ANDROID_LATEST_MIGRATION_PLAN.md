@@ -70,9 +70,9 @@
 | 桌面音量条显示开关 | IMPLEMENTED | `084544e` 对应 Android `c82ac33` / `6b26dc3`；保存/即时状态/桌面完整播放器和底部播放器接线；偏好重载测试及 `:desktop:compileKotlinDesktop` 通过，实际 UI 输入验收待补 |
 | 桌面 UI 全量差分 | IN_PROGRESS | 逐页盘点和实现，完成后才进入手机 UI |
 | 首页推荐桌面详情 | IMPLEMENTED | `9bf5ce6` 将每日推荐/私人漫游/相似歌曲从手机列表分流至独立桌面 collection，接通播放/随机播放/歌曲菜单；桌面编译通过，实际输入验收待补 |
-| 播放全量回归 | IN_PROGRESS | 首轮 473 项中上一首测试受防抖影响，`6911501` 隔离两种设置场景后专项通过；第二轮 473 项中 PCM 缓冲静音等待超时，正在审计启动暂停/恢复竞争；尚未取得全量通过结果 |
-| 桌面测试和 JAR | VALIDATED | 2026-11-25 AutoMix 原有 11 项专项复跑、`:desktop:desktopTest`、`:desktop:desktopJar` 通过；不代替共享层完整回归，也不包含随后新增的引擎启动锁修复 |
-| 双解码引擎启动暂停/恢复竞争 | IMPLEMENTED | `02af178` 将引擎发布和暂停状态读取、引擎暂停/恢复调用纳入同一 playbackLock；AutoMix 12 项专项通过，包含 20 次真实 FFmpeg 启动恢复/PCM 写入；最新全量回归运行中 |
+| 播放全量回归 | VALIDATED | 2026-11-25 最新完整运行共享层 474 项，0 失败/0 错误/0 跳过；包含 `02af178`。历史：首轮上一首测试受防抖影响，`6911501` 隔离场景；第二轮 PCM 缓冲静音等待超时，随后修复引擎启动暂停/恢复竞争。单轮通过不等于所有并发问题已关闭 |
+| 桌面测试和 JAR | VALIDATED | 同轮 `:desktop:desktopTest` 16 项，10 项通过、6 项按环境条件跳过，0 失败/0 错误；`:desktop:desktopJar` 成功。跳过项不能当作真实窗口输入验收，JAR 构建不等于 MSI/EXE 安装包验收 |
+| 双解码引擎启动暂停/恢复竞争 | IMPLEMENTED | `02af178` 将引擎发布和暂停状态读取、引擎暂停/恢复调用纳入同一 playbackLock；AutoMix 12 项专项通过，包含 20 次真实 FFmpeg 启动恢复/PCM 写入；随后共享层完整 474 项回归通过 |
 | Android 0.7.5+ 255 提交全量差分 | IN_PROGRESS | 逐 subsystem 比对；不按提交数机械复制 |
 | 手机 UI 全量差分 | BLOCKED_BY_PHASE_A | 桌面阶段结束后执行 |
 | 真实设备/账号/像素验收 | EXTERNAL_ACCEPTANCE | 代码与自动化可先完成；无设备/账户/固定源帧的项保持 PARTIAL/BLOCKED |
