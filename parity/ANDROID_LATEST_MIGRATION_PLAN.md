@@ -12,6 +12,8 @@
 
 ## 已知起点
 
+网易库缓存增量：`b4e7540` 已完成收藏快照淘汰保护、歌单独立额度（48 文件/64 MiB）及唯一临时文件/原子写入，缓存保留与旧首页兼容专项三项通过（2 分 4 秒）。30 分钟磁盘新鲜度、缺缓存刷新和 SHA-256 分类键本轮继续验证；收藏 specialType、游标分页和缺歌回填继续保留为待完成。
+
 最新完整回归覆盖至 `8031044` 的代码：`:shared:desktopTest :desktop:desktopTest :desktop:desktopJar` 成功（7 分 28 秒）；XML 汇总共享 631 项通过/0 跳过，桌面 13 项通过/6 条件跳过，0 失败。`cdf571e` 的 1 GiB 暂存预算及幂等释放已纳入；`8031044` 仅完成同会话公开插件媒体强 ETag/Range 续传，账号媒体及跨重启续传仍待迁移。网易库缓存淘汰/新鲜度、收藏分页与系统歌单识别新确认缺口见审计文档，继续实施；桌面和手机全量迁移仍未完成。
 
 打包运行时：`f36ba8e` 保留 jlink 的 Java 启动命令；实际分发 app-image 已成功生成，`4c02768` 用产物 runtime/JAR 验证 RX bundle→AppContainer→JVM/V8→Provider 搜索。复现脚本与限制见 `edc829e/app-image-without-wix.gradle` 和证据文档；EXE/MSI 仍受 WiX 下载阻塞，窗口内插件管理、bundle 复用/清理和强 ETag 下载续传继续保留为未完成。

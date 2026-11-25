@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`b4e7540` 修复网易库缓存淘汰：收藏快照排除浏览缓存数量/字节淘汰，歌单独立 48 文件/64 MiB，浏览缓存保留 128 文件/32 MiB；唯一临时文件加原子替换避免并发写共用路径。`NeteaseLibraryCacheRetentionTest` 与 `NeteaseHomeCacheCompatibilityTest` 共三项通过（2 分 4 秒）。此后新鲜度和 SHA-256 分类键变更另行验证，631 项完整回归不覆盖这些后续库缓存代码。
+
 最新固定工作区完整回归（代码 `8031044`）成功：`gradle :shared:desktopTest :desktop:desktopTest :desktop:desktopJar`，7 分 28 秒。JUnit XML 汇总：shared tests=631/failures=0/errors=0/skipped=0；desktop tests=19/failures=0/errors=0/skipped=6，即桌面 13 通过、6 条件跳过。覆盖下载预算幂等释放、强 ETag 续传、推荐行为/训练键、酷我音质和 worker 等当前代码；条件跳过和自动化测试不代表真实窗口、公网 OAuth、MSI 或设备验收完成。
 
 `8031044` 加入公开插件媒体强 ETag 续传：Range/If-Range 精确校验，200 先截断并同步旧字节再写新 validator，错误范围/作用域变化丢弃片段；仅持久化 scope 摘要、ETag、长度。`cdf571e` 的预算幂等释放、续传两项与 Provider 生命周期两项专项均通过，桌面 JAR 成功（5 分 8 秒）。该专项构建期间仍有后续修改，因此完整回归另行执行；初次全量构建因工作区编译时序交叉而失败，不计为通过。当前续传仅支持同一 Store 会话/generation 的公开媒体；认证媒体和跨重启续传保持未完成，启动清理旧片段且不自动联网。
