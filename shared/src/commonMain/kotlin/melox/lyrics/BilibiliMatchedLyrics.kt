@@ -102,7 +102,7 @@ internal open class BilibiliLyricSources(registry: MusicProviderRegistry? = null
     open suspend fun search(source: MusicSource, query: String): List<MusicTrack> =
         (providers[source] as? SearchCapability)?.searchSongs(query, 1, 20)?.items.orEmpty()
     open suspend fun lyrics(track: MusicTrack): LyricsDocument =
-        (providers[track.id.source] as? LyricsCapability)?.lyrics(track, preference) ?: LyricsDocument(emptyList())
+        (providers[track.id.sourceId] as? LyricsCapability)?.lyrics(track, preference) ?: LyricsDocument(emptyList())
     open suspend fun amll(track: MusicTrack): LyricsDocument = track.id.value.toLongOrNull()?.let {
         AmlldbLyricsClient().lyrics(it, preference)
     } ?: LyricsDocument(emptyList())
