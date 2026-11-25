@@ -111,6 +111,15 @@ compose.desktop {
     }
 }
 
+// Compose 1.8.1 hides this jlink switch in its Kotlin-internal task API.
+// Isolated plugin JVMs require the launcher from the same linked runtime.
+tasks.withType<org.jetbrains.compose.desktop.application.tasks.AbstractJLinkTask>().configureEach {
+    @Suppress("UNCHECKED_CAST")
+    val stripCommands = javaClass.getMethod("getStripNativeCommands\$compose").invoke(this)
+        as org.gradle.api.provider.Property<Boolean>
+    stripCommands.set(false)
+}
+
 // Production JVM flags (jpackage java-options) must be the flags every replay runs under.
 val productionJvmArgs = listOf("-Xms16m", "-Xmx1g", "-XX:+UseSerialGC", "-Dfile.encoding=UTF-8", "--add-opens=java.desktop/java.awt.event=ALL-UNNAMED")
 

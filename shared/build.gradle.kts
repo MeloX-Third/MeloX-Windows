@@ -11,6 +11,9 @@ plugins {
 tasks.withType<org.gradle.api.tasks.testing.Test>().configureEach {
     val testHome = layout.buildDirectory.dir("parity/test-home")
     systemProperty("user.home", testHome.get().asFile.absolutePath)
+    providers.gradleProperty("pluginWorkerJavaHome").orNull?.let {
+        systemProperty("melox.test.workerJavaHome", it)
+    }
     doFirst {
         testHome.get().asFile.mkdirs()
         systemProperty("melox.test.workerClasspath", classpath.asPath)

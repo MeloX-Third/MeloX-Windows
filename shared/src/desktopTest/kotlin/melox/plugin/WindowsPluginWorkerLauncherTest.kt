@@ -13,7 +13,8 @@ class WindowsPluginWorkerLauncherTest {
         val root = File("build/parity/production-worker-${java.util.UUID.randomUUID()}").absoluteFile
         val entries = requireNotNull(System.getProperty("melox.test.workerClasspath")).split(File.pathSeparator).map(::File)
         val jars = entries.filter { it.isFile && (it.name.startsWith("kotlin-stdlib") || it.name.startsWith("json-") || it.name.startsWith("javet")) }
-        val launcher = WindowsPluginWorkerBundle.prepare(root, File(System.getProperty("java.home")),
+        val runtimeHome = File(System.getProperty("melox.test.workerJavaHome", System.getProperty("java.home")))
+        val launcher = WindowsPluginWorkerBundle.prepare(root, runtimeHome,
             jars + File("build/classes/kotlin/desktop/main").absoluteFile)
         val storageRoot = java.nio.file.Files.createTempDirectory("container-factory-storage").toFile()
         val source = requireNotNull(melox.music.model.SourceId.parse("plugin:test.bundle"))
@@ -26,7 +27,7 @@ class WindowsPluginWorkerLauncherTest {
             try { assertTrue((provider.provider as PluginMusicProvider).searchSongs("fixture", 1, 30).items.isEmpty()) }
             finally { provider.resources.close() }
             assertFailsWith<IllegalArgumentException> {
-                WindowsPluginWorkerBundle.prepare(root, File(System.getProperty("java.home")), jars)
+                WindowsPluginWorkerBundle.prepare(root, runtimeHome, jars)
             }
         } finally { storageRoot.deleteRecursively(); root.deleteRecursively() }
     }
