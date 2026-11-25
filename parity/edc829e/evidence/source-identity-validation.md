@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`2f8ec55` 私有播放输入遇首响应 HTTP 401/403/410 时调用同一 Provider 重新解析一次；第二次失败直接传播，其他状态不重试，已开始读取的流不重放。刷新前后保持 Provider 实例/generation 校验，迟到流关闭。输入/broker 专项及 JAR 成功（1 分 13 秒），DynamicProviderPlaybackTest 与真实 PluginMediaSocketTest 补充专项成功（4 秒）。当前仅覆盖播放打开重解析，下载重解析与强制 OAuth 刷新仍待接线。
+
 `593b6bc` 将 worker 启动 envelope 单独限制为 1 MiB，以容纳 128 KiB 合法脚本经 JSON 转义后的体积；脚本保持 128 KiB、参数保持 128 KiB、账号保持 4 KiB，结果/宿主通信默认帧仍为 128 KiB。真实 JVM 执行恰好 128 KiB、含大量转义字符的脚本返回 42；超限参数在创建进程前拒绝。worker/IPC/AppContainer 联合专项及 desktopJar 成功（2 分 2 秒），并未扩大结果或网络配额。
 
 `25fd768` 桌面“功能→插件管理”接通生产 Manager：导入/升级预览能力、域名、认证、发布者指纹与候选摘要；启停、卸载确认、损坏记录移除、诊断查看/清除，以及账号选择/删除/token 导入/OAuth 登录/重新授权/取消。弹窗内容可滚动，来源行状态按完整 SourceId 固定。桌面测试与 JAR 构建成功（44 秒）；这是编译及现有桌面回归证据，尚未执行该页面的真实窗口输入或真实公网 OAuth 验收。
