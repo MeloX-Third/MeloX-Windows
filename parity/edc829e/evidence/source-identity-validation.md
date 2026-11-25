@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`81cd272` 桌面音乐服务页展示当前启用的动态 Provider，并提供逐来源“参与搜索”开关，接入 SourceId 白名单持久化；订阅注册表和偏好 revision。`gradle :desktop:desktopTest :desktop:desktopJar` 成功（47 秒）。当前生产插件加载仍待实现，因此未将控件编译成功视为插件安装/查询验收完成。
+
 `f5c3644` 共享 SearchSong 的网易原生写入门控改为 SourceId 内置值检查，动态歌曲即使带正数旧 UI id 也不进入网易端点；歌单分页和喜爱查找按完整 SourceId 比较。新增插件两页加载、喜爱匹配、跨来源拒绝与旧 UI 正数 id 回归。`c880c92` AutoSync 保留内置旧缓存键，对动态歌曲使用完整来源，DLNA 当前歌曲通知改用完整来源。`gradle :shared:desktopTest --tests "melox.music.*" --tests "melox.lan.*" :desktop:compileKotlinDesktop` 成功（3 分 9 秒），XML 54 项通过、0 失败/错误/跳过。AutoSync 与 DLNA 本轮只验证编译，实际设备与动态歌曲同步未验收。
 
 `39f5993` 桌面歌曲搜索使用与手机共用的显式 SourceId 聚合白名单，取消桌面绕过聚合的条件；目录/本地曲库范围保持独立，聚合部分来源失败在桌面单列展示，来源标题反映当前查询范围。`gradle :desktop:desktopTest :desktop:desktopJar` 成功（1 分 17 秒）。尚需带真实插件的生产查询与窗口输入验收。
