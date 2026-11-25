@@ -101,7 +101,7 @@ internal object MeloXPlaybackQueueStore {
         put("bestBitrate", song.bestBitrate)
         if (track != null) {
             put("providerTrack", melox.music.model.MeloXTrackJson.encode(track))
-            put("providerSource", track.id.source.storageValue)
+            put("providerSource", track.id.sourceId.value)
             put("providerId", track.id.value)
             put("providerArtists", JSONArray(track.artists.map { it.name }))
             (track.providerMetadata as? ProviderTrackMetadata.YouTube)?.let {
@@ -124,9 +124,17 @@ internal object MeloXPlaybackQueueStore {
         val id = value.optString("id").toLongOrNull() ?: return null
         val providerSource = value.optString("providerSource").takeIf(String::isNotBlank)
         val providerId = value.optString("providerId").takeIf(String::isNotBlank)
-        val providerTrack = value.optJSONObject("providerTrack")?.let(melox.music.model.MeloXTrackJson::decode)
-            ?: if (providerSource != null && providerId != null) {
-            val source = MusicSource.fromStorageValue(providerSource)
+        val providerTrack = if (value.has("providerTrack")) {
+            val encoded = value.optJSONObject("providerTrack") ?: return null
+            val decoded = melox.music.model.MeloXTrackJson.decode(encoded) ?: return null
+            if (providerSource != null || providerId != null) {
+                if (providerSource != decoded.id.sourceId.value || providerId != decoded.id.value) return null
+            }
+            decoded
+        } else if (providerSource != null || providerId != null) {
+            val sourceId = providerSource?.let(melox.music.model.SourceId::parse) ?: return null
+            if (providerId == null) return null
+            val source = sourceId.builtIn
             val names = value.optJSONArray("providerArtists")
             val artists = buildList {
                 if (names != null) {
@@ -143,7 +151,7 @@ internal object MeloXPlaybackQueueStore {
                 }
             }
             MusicTrack(
-                id = MusicResourceId(source, providerId),
+                id = MusicResourceId(sourceId, providerId),
                 title = value.optString("title"),
                 artists = artists,
                 album = value.optString("album").takeIf(String::isNotBlank)?.let { MusicAlbumRef(name = it) },
