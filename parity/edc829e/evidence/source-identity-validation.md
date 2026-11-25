@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`ee1158a` 媒体流取消 API 的 5 秒整请求超时，保留连接超时与 15 秒读取超时；读取异常立即关闭响应并取消所属请求。真实本地 HTTP socket 测试读取完整媒体体，并观察读取线程进入底层阻塞 socket read 后关闭 broker，3 秒内中断读取。`gradle :shared:desktopTest --tests "melox.plugin.*" --tests "melox.download.*" :desktop:compileKotlinDesktop` 成功（1 分 6 秒）。测试使用内部路由与 DNS 注入，未代表公网 DNS/TLS 或真实插件媒体验收。
+
 `14edfaa` Provider 下载生产入口按动态身份分流到私有 PluginHttpBroker，连接前及最终提交检查 registry generation，任务取消关闭 broker；动态来源拒绝非 PluginMusicProvider 和本地 file URL 绕过。`gradle :shared:desktopTest --tests "melox.download.*" --tests "melox.plugin.*" :desktop:compileKotlinDesktop` 最终重跑成功（11 秒），XML 71 项通过、0 失败/错误/跳过，包含动态文件拒绝与临时文件清理。尚缺实际插件远程下载成功、账号绑定与真实 TLS 证据。
 
 `e6fb2ef` 私有 broker 新增渐进媒体输入流，连接前校验 manifest 域名/HTTPS/头部，拒绝重定向和 HLS/DASH MIME，声明长度和读取累计限制 512 MiB；每次 read/skip 检查撤销，流关闭取消请求并移除所有权。`gradle :shared:desktopTest --tests "melox.plugin.*" :desktop:compileKotlinDesktop` 成功（1 分 11 秒）。媒体流测试为 interceptor fixture，未替代真实 TLS/socket、播放/下载生产链路与在途阻塞读取取消验收。
