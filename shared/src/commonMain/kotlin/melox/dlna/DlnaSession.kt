@@ -64,7 +64,7 @@ object DlnaSession {
             catch (failure: Exception) { mutable.update { it.copy(error = failure.message ?: "DLNA 投放失败") }; throw failure }
             finally {
                 mutable.update { it.copy(busy = false) }
-                if (active) localTrackChanged(AudioPlayer.currentTrack.value?.let { "${it.id.source.storageValue}:${it.id.value}" })
+                if (active) localTrackChanged(AudioPlayer.currentTrack.value?.let { "${it.id.sourceId.value}:${it.id.value}" })
             }
         } }
     }

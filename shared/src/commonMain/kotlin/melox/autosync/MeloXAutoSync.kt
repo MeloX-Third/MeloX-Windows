@@ -36,7 +36,7 @@ object MeloXAutoSync {
         if (!current()) return null
         val source = controller.playbackSourceForOutput()
         if (!current()) return null
-        val trackKey = "${track.id.source.name}:${track.id.value}"
+        val trackKey = "${track.id.sourceId.builtIn?.name ?: track.id.sourceId.value}:${track.id.value}"
         val audioKey = audioIdentity(source.uri, source.headers)
         return withContext(Dispatchers.IO) {
             generation.withLock {
