@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`2350574` Windows DPAPI 插件账号仓库：每账号独立密文、来源/账号内嵌绑定、加密后解密核验、原子落盘、会话选择及密文摘要撤销、刷新比较交换、失败保留旧数据。`gradle :shared:desktopTest --tests "melox.plugin.*"` 成功（10 秒），XML 44 项通过、0 失败/错误/跳过；其中账号三项真实 Windows DPAPI 测试全部执行，验证重建读取、磁盘不含 token、切换后拒绝迟到刷新、损坏保留、跨来源复制拒绝和加密失败。尚未接通账号 UI、OAuth 浏览器流程及生产运行时。
+
 `1a60ba6` 桌面插件封面接线验证：来源授权捕获、禁用/重新启用/替换后的旧授权拒绝；列表与播放器图片禁用插件缓存，调色板跳过插件缓存，图片通过独立 broker 加载并在解码前校验最长边 4096、总像素 8,000,000。共享插件专项 XML 41 项通过；`gradle :shared:desktopTest --tests "melox.plugin.*" :desktop:desktopTest :desktop:desktopJar` 成功（49 秒，共享专项沿用上一轮缓存结果）。首轮桌面编译的多行字符串加号错误已修复。额外图片尺寸专项与桌面 JAR 成功（35 秒），覆盖正常/边长/总像素/损坏图片。真实插件安装/启用与生产网络验收尚待运行时完成。
 
 `55a1453` 增加独立 OkHttp 插件 HTTP/图片 broker：HTTPS/443/清单域名授权、逐跳重定向检查和跨域请求头清空、8 次请求配额、API 64 KiB/图片 2 MiB、图片 MIME 与重定向拒绝、调用关闭和来源撤销检查。`gradle :shared:desktopTest --tests "melox.plugin.*"` 成功，5 分 16 秒，XML 40 项通过、0 失败/错误/跳过。响应测试用内部 interceptor 提供确定性 HTTP fixture，不代表真实 TLS/套接字验收；生产使用独立客户端和已验证的 DNS。credential 引用仍拒绝；凭据/OAuth、媒体流、运行时 host call 和桌面图片加载正在接通。
