@@ -52,7 +52,7 @@ object MeloXLanRuntime : LanHost {
         if (newRound) playbackRevision++
         if (!applying.get()) MeloXLanTogetherCoordinator.changed(seek)
         if (melox.dlna.DlnaSession.active) scope.launch(Dispatchers.Main) {
-            melox.dlna.DlnaSession.localTrackChanged(AudioPlayer.currentTrack.value?.let { "${it.id.source.storageValue}:${it.id.value}" })
+            melox.dlna.DlnaSession.localTrackChanged(AudioPlayer.currentTrack.value?.let { "${it.id.sourceId.value}:${it.id.value}" })
         }
     }
     val address: String get() = (server?.address ?: lanAddress()).hostAddress
@@ -181,7 +181,7 @@ object MeloXLanRuntime : LanHost {
 
     fun fromSong(song: SearchSong): LanTrack {
         val track = song.providerTrack
-        return LanTrack(track?.id?.source?.storageValue ?: "netease", track?.id?.value ?: song.id.toString(),
+        return LanTrack(track?.id?.sourceId?.value ?: "netease", track?.id?.value ?: song.id.toString(),
             song.name, song.artists, song.album, song.artworkUrl, song.durationMs)
     }
     override fun queue() = PlaybackCommands.queue.value.songs.map(::fromSong)
@@ -233,12 +233,13 @@ object MeloXLanRuntime : LanHost {
             else -> false
         }
     }
-    private fun song(track: LanTrack): SearchSong {
+    internal fun song(track: LanTrack): SearchSong {
         val aliases = mapOf("qq" to "qq_music", "youtube" to "youtube_music")
-        val source = MusicSource.entries.firstOrNull { it.storageValue == (aliases[track.source] ?: track.source) }
+        val source = SourceId.parse(aliases[track.source] ?: track.source)
             ?: throw IOException("unsupported_source")
-        if (source == MusicSource.AppleMusic) throw IOException("unsupported_source")
-        if (source == MusicSource.Netease) {
+        if (source.builtIn == null && !source.value.startsWith("plugin:")) throw IOException("unsupported_source")
+        if (source.builtIn == MusicSource.AppleMusic) throw IOException("unsupported_source")
+        if (source.builtIn == MusicSource.Netease) {
             val id = track.id.toLongOrNull()?.takeIf { it > 0 } ?: throw IOException("invalid_track")
             return SearchSong(id, track.title, track.artist, track.album, artworkUrl = track.artworkUrl, durationMs = track.durationMs)
         }
@@ -254,9 +255,15 @@ object MeloXLanRuntime : LanHost {
             return DesktopPlaybackRequest(r.uri, r.headers)
         }
         ProviderPlaybackRuntime.initialize()
-        val provider = ProviderPlaybackRuntime.registryOrNull()?.require(s.providerTrack.id.source) as? PlaybackCapability
+        val registry = ProviderPlaybackRuntime.registryOrNull() ?: throw IOException("unsupported_source")
+        registry.awaitPluginRestore()
+        val generation = registry.generation
+        val registered = registry[s.providerTrack.id.sourceId] ?: throw IOException("unsupported_source")
+        val provider = registered as? PlaybackCapability
             ?: throw IOException("unsupported_source")
         val result = runBlocking { provider.resolvePlayback(s.providerTrack, AudioQualityTier.Standard) }
+        if (registry.generation != generation || registry[s.providerTrack.id.sourceId] !== registered)
+            throw IOException("source_changed")
         val playable = result as? PlaybackResolution.Playable ?: throw IOException("track_unavailable")
         return DesktopPlaybackRequest(playable.url, playable.requestHeaders)
     }
