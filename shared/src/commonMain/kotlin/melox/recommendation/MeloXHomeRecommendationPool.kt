@@ -18,13 +18,14 @@ object MeloXHomeRecommendationPool {
     @Synchronized fun appendTracks(tracks: List<MusicTrack>) {
         this.tracks = state.appendTracks(tracks)
     }
-    fun appendSongs(songs: List<SearchSong>) = appendTracks(songs.mapNotNull { song ->
+    fun ensureSongs(source: String, songs: List<SearchSong>) = ensureSource(source, songs.mapNotNull(::recommendationTrack))
+    fun appendSongs(songs: List<SearchSong>) = appendTracks(songs.mapNotNull(::recommendationTrack))
+    private fun recommendationTrack(song: SearchSong): MusicTrack? =
         song.providerTrack ?: song.id.takeIf { it > 0 }?.let { id ->
             MusicTrack(MusicResourceId(MusicSource.Netease, id.toString()), song.name,
                 listOf(MusicArtistRef(name = song.artists)), artworkUrl = song.artworkUrl,
                 durationMs = song.durationMs.takeIf { it > 0 })
         }
-    })
 }
 
 internal class HomeRecommendationPool(private val shuffle: (List<MusicTrack>) -> List<MusicTrack> = { it.shuffled() }) {

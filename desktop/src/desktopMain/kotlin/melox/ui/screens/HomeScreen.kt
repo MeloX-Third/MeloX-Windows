@@ -145,6 +145,10 @@ private fun NeteaseHome(
     }
 
     val cacheKey = "${session.cookie.hashCode()}_${melox.settings.MeloXSettingsRuntime.musicArea}_${melox.settings.MeloXSettingsRuntime.podcastsEnabled}"
+    LaunchedEffect(content, recentSongs) {
+        val seeds = content?.let { it.newSongs + it.tailoredSongs + it.recentlyTrending + it.regionalSongs + it.roamingSongs + it.similarSongs }.orEmpty() + recentSongs
+        melox.recommendation.MeloXHomeRecommendationPool.ensureSongs(MusicSource.Netease.storageValue, seeds)
+    }
 
     suspend fun refresh(forceServer: Boolean) {
         if (refreshing) return
@@ -522,6 +526,9 @@ private fun ProviderHome(source: MusicSource, onOpenPlaylist: (MusicPlaylistSumm
     var rankingSongs by remember(source) { mutableStateOf<List<melox.model.SearchSong>?>(null) }
     var rankingTitle by remember(source) { mutableStateOf("") }
     var retry by remember(source) { mutableIntStateOf(0) }
+    LaunchedEffect(source, feed) {
+        melox.recommendation.MeloXHomeRecommendationPool.ensureSource(source.storageValue, feed?.newSongs.orEmpty())
+    }
     LaunchedEffect(source, retry) {
         loading = true
         val registry = melox.music.provider.MeloXMusicProviders.create()
