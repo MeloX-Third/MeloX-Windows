@@ -13,6 +13,11 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import melox.network.executeOwned
 import okhttp3.FormBody
 import okhttp3.OkHttpClient
@@ -34,7 +39,7 @@ class NeteaseLibraryClient(
         val likedPlaylistId = allPlaylists.neteaseLikedPlaylist()?.id
         val playlists = allPlaylists
         val likedIds = likedSongIdsBlocking(userId)
-        val likedById = likedIds.chunked(100).flatMap(::songDetailsBlocking).associateBy(SearchSong::id)
+        val likedById = songDetailsPaged(likedIds).associateBy(SearchSong::id)
         val liked = likedIds.mapNotNull(likedById::get)
         val recent = recentSongsBlocking(100)
         NeteaseLibrarySnapshot(playlists = playlists, likedSongs = liked, recentSongs = recent, likedPlaylistId = likedPlaylistId)
@@ -50,12 +55,8 @@ class NeteaseLibraryClient(
     }
 
     suspend fun likedSongs(userId: Long): List<SearchSong> = withContext(Dispatchers.IO) {
-        val owner = currentCoroutineContext()[Job]
-        val ids = likedSongIdsBlocking(userId, owner).distinct()
-        val songs = ids.chunked(100).flatMap { page ->
-            owner?.ensureActive()
-            songDetailsBlocking(page, owner)
-        }.associateBy(SearchSong::id)
+        val ids = likedSongIdsBlocking(userId, currentCoroutineContext()[Job]).distinct()
+        val songs = songDetailsPaged(ids).associateBy(SearchSong::id)
         ids.mapNotNull(songs::get)
     }
 
@@ -369,7 +370,11 @@ class NeteaseLibraryClient(
 
     fun songDetailsBlocking(ids: List<Long>, owner: Job? = null): List<SearchSong> {
         if (ids.isEmpty()) return emptyList()
-        val descriptors = JSONArray().apply { ids.take(100).forEach { put(JSONObject().put("id", it)) } }
+        if (ids.size > 100) return ids.chunked(100).flatMap { page ->
+            owner?.ensureActive()
+            songDetailsBlocking(page, owner)
+        }
+        val descriptors = JSONArray().apply { ids.forEach { put(JSONObject().put("id", it)) } }
         val path = "/api/v3/song/detail"
         val data = JSONObject().put("c", descriptors.toString())
         val authenticated = NeteaseSessionStore.containsMusicU(cookieProvider())
@@ -385,6 +390,14 @@ class NeteaseLibraryClient(
                 parseSong(songs.optJSONObject(index))?.let(::add)
             }
         }
+    }
+
+    private suspend fun songDetailsPaged(ids: List<Long>, pageSize: Int = 100): List<SearchSong> = coroutineScope {
+        require(pageSize in 1..100)
+        val gate = Semaphore(3)
+        ids.chunked(pageSize).map { page ->
+            async(Dispatchers.IO) { gate.withPermit { songDetailsBlocking(page, currentCoroutineContext()[Job]) } }
+        }.awaitAll().flatten()
     }
 
     private fun parsePlaylists(array: JSONArray): List<NeteasePlaylistSummary> = buildList {
