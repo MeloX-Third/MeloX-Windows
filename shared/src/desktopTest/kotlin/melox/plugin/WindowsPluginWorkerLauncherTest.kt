@@ -82,18 +82,28 @@ class WindowsPluginWorkerLauncherTest {
             "-Xmx96m", "-XX:-UsePerfData", "-Djavet.lib.loading.type=custom", "-Djavet.lib.loading.path=${native.absolutePath}",
             "-cp", classpath, "melox.plugin.PluginWorkerMain"), root)
         val executor = Executors.newSingleThreadExecutor()
+        val storageRoot = java.nio.file.Files.createTempDirectory("container-host-storage").toFile()
         try {
             launcher.start().use { worker ->
-                val result = executor.submit<String> { PluginIpcFrames.read(worker.input) }
+                val source = requireNotNull(melox.music.model.SourceId.parse("plugin:test.container"))
+                val manifest = PluginManifest(source, "Container", "1.0.0", 1, "index.js", emptySet(), emptySet())
+                val storage = PluginStorage(source, base = storageRoot)
+                val calls = PluginHostCalls("container-invocation", PluginHttpBroker(manifest), storage, { true })
+                val result = executor.submit<String> {
+                    PluginWorkerChannel("container-invocation", calls, { true }).receive(worker.input, worker.output)
+                }
                 PluginIpcFrames.write(worker.output, JSONObject().put("token", "container-invocation")
                     .put("method", "search").put("args", JSONArray()).put("script",
-                        "globalThis.meloxPlugin={search:()=>({platform:'windows',value:42})};").toString())
-                val frame = JSONObject(result.get(15, TimeUnit.SECONDS))
-                assertEquals("container-invocation", frame.getString("token"))
-                assertFalse(frame.getBoolean("error"), frame.toString())
-                assertEquals(42, JSONObject(frame.getString("payload")).getInt("value"))
+                        """globalThis.meloxPlugin={async search(host) {
+                            await host.storage.set('value','中文😀');
+                            return {platform:host.platform,value:await host.storage.get('value')};
+                        }};""").toString())
+                val value = JSONObject(result.get(15, TimeUnit.SECONDS))
+                assertEquals("windows", value.getString("platform"))
+                assertEquals("中文😀", value.getString("value"))
+                assertEquals("中文😀", storage.execute("storage.get", "value"))
             }
-        } finally { executor.shutdownNow() }
+        } finally { executor.shutdownNow(); storageRoot.deleteRecursively() }
     }
 }
 
