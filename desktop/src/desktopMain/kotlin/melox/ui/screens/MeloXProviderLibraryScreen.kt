@@ -244,10 +244,8 @@ private fun ProviderLibraryContent(source: SourceId, requestedPage: String?, onL
             key(source, entry.key, section) {
                 if (entry.playlist != null) PlaylistDetailScreen(MeloXLegacyUiBridge.playlist(entry.playlist), onBack = { detail = null })
                 else ProviderCollectionDetail(entry.title, entry.subtitle, entry.artwork, load = {
-                    currentResult {
-                        if (entry.album != null) (provider as AlbumCapability).albumDetail(entry.album, pageSize = 100).tracks
-                        else (provider as ArtistCapability).artistDetail(requireNotNull(entry.artist), pageSize = 100).tracks
-                    }.also { values -> values.forEach { checkIdentity(it.id) } }
+                    if (entry.album != null) loadProviderAlbumTracks(entry.album)
+                    else loadProviderArtistTracks(requireNotNull(entry.artist))
                 }, onBack = { detail = null }, resourceId = entry.album?.id ?: entry.artist?.id)
             }
         }

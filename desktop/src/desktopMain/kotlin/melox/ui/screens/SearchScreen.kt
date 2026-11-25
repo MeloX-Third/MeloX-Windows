@@ -627,11 +627,9 @@ fun SearchScreen(
             when (target) {
                 is SearchDetailDestination.Playlist -> PlaylistDetailScreen(MeloXLegacyUiBridge.playlist(target.value), onBack = { selectedProviderPlaylist = null })
                 is SearchDetailDestination.Album -> ProviderCollectionDetail(target.value.title, "", target.value.artworkUrl,
-                    load = { (providerRegistry[target.value.id.sourceId] as? AlbumCapability)?.albumDetail(target.value)?.tracks
-                        ?: error("音源未启用或不提供专辑详情") }, onBack = { selectedProviderAlbum = null }, resourceId = target.value.id)
+                    load = { loadProviderAlbumTracks(target.value) }, onBack = { selectedProviderAlbum = null }, resourceId = target.value.id)
                 is SearchDetailDestination.Artist -> ProviderCollectionDetail(target.value.name, "", target.value.artworkUrl,
-                    load = { (providerRegistry[target.value.id.sourceId] as? ArtistCapability)?.artistDetail(target.value)?.tracks
-                        ?: error("音源未启用或不提供歌手详情") }, onBack = { selectedProviderArtist = null }, resourceId = target.value.id)
+                    load = { loadProviderArtistTracks(target.value) }, onBack = { selectedProviderArtist = null }, resourceId = target.value.id)
                 is SearchDetailDestination.Media -> {
                     val item = target.value
                     when (item.kind) {
