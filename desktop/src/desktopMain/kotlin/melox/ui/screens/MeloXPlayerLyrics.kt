@@ -98,6 +98,8 @@ private class LyricTouchInteractionSource : MutableInteractionSource {
 /** Owned above the page layers, so loading/upgrades survive Artwork↔Lyrics↔Queue. */
 @Composable
 internal fun rememberMeloXPlayerLyrics(track: MusicTrack): MeloXPlayerLyricsState {
+    val registry = remember { melox.music.provider.MeloXMusicProviders.create() }
+    val providerGeneration by registry.changes.collectAsState()
     val preference = melox.lyrics.requestedLyricPreference()
     // A new request owns new display state, including when language changes after 30s.
     // Cancelled loads/upgrades can only hold the retired state, never the new language's state.
@@ -105,11 +107,13 @@ internal fun rememberMeloXPlayerLyrics(track: MusicTrack): MeloXPlayerLyricsStat
         MeloXSettingsRuntime.lyricStrongBindingEnabled, MeloXSettingsRuntime.bilibiliLyricAudioAlignmentEnabled) {
         MeloXPlayerLyricsState(track)
     }
-    LaunchedEffect(state) {
+    LaunchedEffect(state, providerGeneration) {
         state.loading = true
         state.error = null
+        state.providerDocument = null
+        state.document = null
         try {
-            MeloXLyricsLoad.shared.observe(track, preference = preference).collect { document ->
+            MeloXLyricsLoad.shared.observe(track, registry, preference = preference).collect { document ->
                 if (state.providerDocument == null || melox.playback.MeloXPlaybackOutput.positionMs.value <= MeloXLyricsLoad.AmllUpgradeWindowMs) {
                     state.providerDocument = document
                     state.document = document
