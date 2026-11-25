@@ -48,6 +48,7 @@ fun main() {
         val singleInstance = SingleInstance.acquire(java.nio.file.Path.of(melox.platform.meloXDataDir())) ?: return
         try {
         melox.settings.MeloXSettingsPreferences.initializeCritical()
+        melox.plugin.DesktopPluginRuntime.initialize()
         application {
             androidx.compose.runtime.LaunchedEffect(Unit) {
                 kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { melox.lan.MeloXLanRuntime.start() }
@@ -163,7 +164,10 @@ fun main() {
             }
             if (melox.settings.MeloXSettingsRuntime.floatingLyricsEnabled) melox.ui.screens.FloatingLyricsWindow()
         }
-        } finally { singleInstance.close() }
+        } finally {
+            try { melox.plugin.DesktopPluginRuntime.close() }
+            finally { singleInstance.close() }
+        }
     } catch (e: Exception) {
         val sw = StringWriter()
         e.printStackTrace(PrintWriter(sw))
