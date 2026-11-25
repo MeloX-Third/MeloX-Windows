@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`52dac0a` LAN 队列改用 SourceId 往返及查找，保留 qq/youtube 旧别名；插件未注册时明确拒绝，解析期间注册表变化后拒绝旧结果。`55cfd57` 播放器、首页、搜索、收藏、推荐列表和歌单详情移除旧枚举身份访问；歌单详情与操作菜单订阅注册表变化，拒绝撤销后的加载结果。`gradle :shared:desktopTest --tests "melox.lan.*" :desktop:desktopTest :desktop:desktopJar` 成功：LAN 15 项通过，桌面 17 项中 11 通过、6 条件跳过，0 失败/错误，JAR 成功。后续重复运行全部相关编译/测试为 UP-TO-DATE。不代表共享全量回归、插件实际 LAN 传输或真实窗口验收完成。
+
 `c68d289` 修复桌面旧枚举入口：CLI 接受 SourceId、等待插件恢复、按当前注册表查找并检查搜索结果来源与 generation；探索歌单/榜单卡片键和颜色使用 SourceId；插件歌曲分享不再访问抛错的旧 `.source`。`gradle :desktop:desktopTest :desktop:desktopJar` 成功（48 秒）。尚无 CLI 动态插件端到端输入回放；LAN 同类入口另行验证。
 
 `1793416` 浏览器入口支持原账号重新授权；真实回环集成测试继续验证宿主刷新成功更新同一账号，以及交换期间取消选择后拒绝迟到 token、保留既有凭据。`gradle :shared:desktopTest --tests "melox.plugin.*" :desktop:compileKotlinDesktop` 成功（16 秒）。token 服务为内部 fixture；真实浏览器、服务授权和生产 UI 接线仍未完成。
