@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`8075c58` 普通解码 PCM 能量发布改用完整 SourceId，新增真实 FFmpeg/受控音频输出回归验证插件身份不触发旧 `.source` 访问。普通解码专项与 JAR 构建成功；随后 `gradle :shared:desktopTest --tests "melox.player.DesktopStreamingAudioSessionTest" --tests "melox.playback.LxDynamicSourceBoundaryTest" :desktop:desktopJar` 成功（3 分 4 秒），XML 16 项全部通过、0 跳过，覆盖双解码继承回归。`c2cbddf` 拒绝动态来源进入 LX 播放/封面/歌词兼容入口，边界回归同轮通过。受控本地 WAV 验证不代表真实插件远程播放 broker 已完成。
+
 本轮完整回归成功（3 分 2 秒）：`gradle :shared:desktopTest :desktop:desktopTest :desktop:desktopJar`；共享 XML 592 项全部通过、0 跳过；桌面 XML 19 项中 13 通过/6 条件跳过，JAR 成功。编译阶段实际包含随后提交为 `5be06e0` 的桌面探索动态来源接线（保存 SourceId、generation 撤销、内容身份校验）；随后同命令的桌面部分检查 UP-TO-DATE。覆盖推荐池/首页种子、动态首页/排行榜、动态音乐库及专辑/歌手分页。真实插件生产、账号/硬件和视觉验收仍未完成，AutoMix 历史偶发未复现且未关闭。
 
 `6de9bad` 搜索和音乐库专辑/歌手详情读取显式 hasMore/total 指示的后续页，100 条分页，校验返回 summary 完整身份、歌曲来源及每页 Provider 实例/generation，完整身份去重且重复页无新增时停止。新增回归覆盖多页合并、重复页、跨来源数据及停用。`gradle :desktop:desktopTest :desktop:desktopJar` 成功（52 秒）。没有分页元数据时维持单页语义；真实服务分页与窗口输入验收仍待完成。
