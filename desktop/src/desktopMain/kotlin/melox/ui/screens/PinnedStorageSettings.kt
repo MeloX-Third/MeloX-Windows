@@ -126,8 +126,20 @@ internal fun PinnedStorageSettings() {
             MeloXIosListRow(title = active.song.name, subtitle = active.fractionCompleted?.let {
                 pinnedString("settings_storage_download_progress", (it * 100).toInt(), qualityTitle(active.quality))
             } ?: qualityTitle(active.quality), showChevron = false, trailingContent = {
+                Text(melox.ui.desktop.desktopPlatformString("download-pause"), Modifier.testTag("storage-download-pause:${active.song.id}").clickable { downloads.pause(active.song.id) }.padding(8.dp), color = MaterialTheme.colorScheme.primary)
                 Text(pinnedString("settings_storage_cancel"), Modifier.clickable { downloads.cancel(active.song.id) }.padding(8.dp), color = MaterialTheme.colorScheme.error)
             })
+        } }
+    }
+    if (downloads.pausedDownloads.isNotEmpty()) {
+        Spacer(Modifier.height(10.dp))
+        SettingsGlassGroup { downloads.pausedDownloads.values.toList().forEach { paused ->
+            MeloXIosListRow(title = paused.song.name,
+                subtitle = melox.ui.desktop.desktopPlatformString("download-paused"),
+                showChevron = false, trailingContent = {
+                    Text(melox.ui.desktop.desktopPlatformString("download-resume"), Modifier.testTag("storage-download-resume:${paused.song.id}").clickable { downloads.resume(paused.song.id) }.padding(8.dp), color = MaterialTheme.colorScheme.primary)
+                    Text(pinnedString("settings_storage_cancel"), Modifier.clickable { downloads.cancel(paused.song.id) }.padding(8.dp), color = MaterialTheme.colorScheme.error)
+                })
         } }
     }
     if (downloads.downloads.isNotEmpty()) {
