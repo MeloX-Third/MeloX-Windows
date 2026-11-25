@@ -10,6 +10,48 @@ import melox.music.provider.*
 import kotlin.test.*
 
 class PluginManagerTest {
+    @Test fun failedEnablePersistenceClosesCandidateAndFailedDisableRetainsRunningProvider() {
+        val root = Files.createTempDirectory("manager-persistence").toFile()
+        val store = PluginPackageStore(root)
+        var failWrite = false
+        val repository = object : PluginRepository by store {
+            override fun setEnabledSources(sources: Set<SourceId>) {
+                if (failWrite) throw java.io.IOException("fixture persistence failure")
+                store.setEnabledSources(sources)
+            }
+        }
+        val registry = MusicProviderRegistry(listOf(melox.provider.local.LocalProvider()))
+        var closes = 0
+        val manager = PluginManager(repository, registry, PluginManager.ProviderFactory {
+            PluginManager.LoadedProvider(object : MusicProvider {
+                override val sourceId = this@PluginManagerTest.source
+                override val displayName = "Test"
+                override val capabilities = emptySet<MusicCapability>()
+            }, Closeable { closes++ })
+        })
+        try {
+            manager.install(archive("1.0.0"))
+            failWrite = true
+            assertFailsWith<java.io.IOException> { manager.enable(source) }
+            assertNull(registry[source])
+            assertEquals(1, closes)
+            assertTrue(store.enabledSources().isEmpty())
+            failWrite = false
+            manager.enable(source)
+            val running = assertNotNull(registry[source])
+            failWrite = true
+            assertFailsWith<java.io.IOException> { manager.disable(source) }
+            assertSame(running, registry[source])
+            assertEquals(PluginManager.Status.Enabled, manager.plugins.value[source]?.status)
+            assertEquals(1, closes)
+            assertEquals(setOf(source), store.enabledSources())
+            failWrite = false
+            manager.disable(source)
+            assertNull(registry[source])
+            assertEquals(2, closes)
+        } finally { manager.close(); root.deleteRecursively() }
+    }
+
     private val source = SourceId.parse("plugin:example.manager")!!
     private fun archive(version: String, domain: String? = null) = ByteArrayOutputStream().apply {
         val manifest = org.json.JSONObject().put("id", "example.manager").put("name", "Manager").put("version", version)
