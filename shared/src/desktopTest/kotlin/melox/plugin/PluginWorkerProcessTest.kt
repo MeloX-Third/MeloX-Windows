@@ -18,6 +18,33 @@ class PluginWorkerProcessTest {
             .redirectError(ProcessBuilder.Redirect.DISCARD).start()
     }
 
+    @Test fun providerFactoryValidatesCapabilitiesBeforeReturningProvider() = kotlinx.coroutines.runBlocking {
+        val root = Files.createTempDirectory("plugin-factory").toFile()
+        val source = requireNotNull(SourceId.parse("plugin:test.factory"))
+        val manifest = PluginManifest(source, "Factory", "1.0.0", 1, "index.js", setOf(PluginCapability.Search), emptySet())
+        val factory = PluginProcessProviderFactory { plugin ->
+            PluginProcessRuntime(plugin, PluginWorkerLauncher {
+                val process = start()
+                object : PluginWorkerProcess {
+                    override val input = process.inputStream
+                    override val output = process.outputStream
+                    override fun close() { process.destroyForcibly(); process.waitFor(5, TimeUnit.SECONDS) }
+                }
+            }, { token, current -> PluginHostCalls(token, PluginHttpBroker(manifest), PluginStorage(source, base = root), current) })
+        }
+        try {
+            assertFailsWith<IllegalArgumentException> {
+                factory.prepare(PluginArchiveReader.Package(manifest, "globalThis.meloxPlugin={};"))
+            }
+            val loaded = factory.prepare(PluginArchiveReader.Package(manifest,
+                "globalThis.meloxPlugin={search:(query,page,pageSize)=>({items:[],page,pageSize,total:0,hasMore:false})};"))
+            try {
+                val provider = loaded.provider as PluginMusicProvider
+                assertTrue(provider.searchSongs("fixture", 1, 30).items.isEmpty())
+            } finally { loaded.resources.close() }
+        } finally { root.deleteRecursively() }
+    }
+
     @Test fun runtimeCreatesFreshProcessAndRejectsCallsAfterClose() = kotlinx.coroutines.runBlocking {
         val root = Files.createTempDirectory("plugin-runtime-process").toFile()
         val source = requireNotNull(SourceId.parse("plugin:test.runtime"))
