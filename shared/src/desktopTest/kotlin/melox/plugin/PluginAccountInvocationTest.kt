@@ -7,6 +7,38 @@ import org.json.JSONObject
 import kotlin.test.*
 
 class PluginAccountInvocationTest {
+    @Test fun expiringOAuthRefreshesBeforeCapturingWorkerAndValidationDoesNotRefresh() {
+        org.junit.Assume.assumeTrue(com.sun.jna.Platform.isWindows())
+        val root = Files.createTempDirectory("plugin-invocation-refresh").toFile()
+        val source = requireNotNull(SourceId.parse("plugin:test.invocation.refresh"))
+        val oauth = PluginOAuthConfiguration("https://api.example.com/authorize", "https://api.example.com/token", "client", emptyList())
+        val policy = PluginAuthentication("oauth2Pkce", domains = setOf("api.example.com"), oauth = oauth)
+        val manifest = PluginManifest(source, "Refresh", "1.0.0", 1, "index.js", emptySet(), policy.domains, authentication = policy)
+        val vault = PluginAccountVault(source, root, WindowsDpapi)
+        try {
+            val account = vault.importOAuthAndActivate("Account", PluginAccountVault.Tokens("old", "refresh", 1), policy)
+            var requests = 0
+            val capture = PluginAccountInvocation(manifest, vault, root) { candidate, active, lease ->
+                PluginHttpBroker(candidate, accountCurrent = active, credential = lease, internalTransport = okhttp3.Interceptor { chain ->
+                    requests++
+                    assertEquals("https://api.example.com/token", chain.request().url.toString())
+                    okhttp3.Response.Builder().request(chain.request()).protocol(okhttp3.Protocol.HTTP_1_1).code(200).message("OK")
+                        .body(okhttp3.ResponseBody.create(null, """{"access_token":"renewed","token_type":"Bearer","expires_in":3600}""")).build()
+                })
+            }
+            capture.capture("__validate")
+            assertEquals(0, requests)
+            val context = capture.capture("search")
+            assertEquals(1, requests)
+            assertEquals("renewed", vault.lease()?.token)
+            assertEquals("refresh", vault.lease()?.refreshToken)
+            assertEquals(account.id, context.account?.getString("id"))
+            assertTrue(context.current())
+            capture.capture("search")
+            assertEquals(1, requests)
+        } finally { root.deleteRecursively() }
+    }
+
     @Test fun workerUsesCapturedAccountAndHostStorageTogether() = kotlinx.coroutines.runBlocking {
         org.junit.Assume.assumeTrue(com.sun.jna.Platform.isWindows())
         val root = Files.createTempDirectory("plugin-account-worker").toFile()

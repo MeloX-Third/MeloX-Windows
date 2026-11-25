@@ -37,7 +37,7 @@ internal class PluginProcessRuntime(
     private val hostCalls: (String, () -> Boolean) -> PluginHostCalls,
     private val account: () -> JSONObject? = { null },
     private val current: () -> Boolean = { true },
-    private val context: (() -> PluginInvocationContext)? = null,
+    private val context: ((String) -> PluginInvocationContext)? = null,
 ) : Closeable {
     private val closed = AtomicBoolean()
     private val active = AtomicReference<Closeable?>()
@@ -49,7 +49,7 @@ internal class PluginProcessRuntime(
         require(busy.compareAndSet(false, true)) { "BUSY" }
         try {
             val token = UUID.randomUUID().toString()
-            val selected = context?.invoke()
+            val selected = context?.invoke(method)
             val valid = { !closed.get() && current() && (selected?.current?.invoke() ?: true) }
             val request = JSONObject().put("token", token).put("method", method).put("args", args)
                 .put("account", (if (selected != null) selected.account else account()) ?: JSONObject.NULL).put("script", plugin.script).toString()
