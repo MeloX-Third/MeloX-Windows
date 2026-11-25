@@ -135,6 +135,11 @@ internal fun MeloXDesktopProviderServices(navState: MeloXNavState, currentSource
                                 Text(provider.displayName, fontSize = 13.sp)
                                 Text(provider.sourceId.value, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
+                            DesktopSettingsButton(desktopString("ui.common.search"),
+                                Modifier.testTag("desktop-service-search:${provider.sourceId.value}")) {
+                                melox.ui.navigation.MeloXSearchLaunchBus.postSourceId("", melox.network.MeloXSearchKind.Songs, provider.sourceId)
+                                navState.goBack()
+                            }
                             DesktopSettingsCheckbox(desktopPlatformString("services_in_search"), provider.sourceId in pluginScope,
                                 "desktop-service-scope:${provider.sourceId.value}", modifier = Modifier.widthIn(max = 150.dp)) {
                                 MusicProviderSelectionStore.setUnifiedPluginEnabled(provider.sourceId, it)
