@@ -284,9 +284,11 @@ class MeloXProviderDownloadStore internal constructor(
             if (cause != null) broker.close()
         }
         try {
-            broker.use {
-                it.openMedia(resolution.url, resolution.requestHeaders, resolution.pluginMediaAccess != null).use { input ->
-                    destination.outputStream().use { output -> copyAudio(input, output) }
+            broker.use { transport ->
+                PluginDownloadStagingBudget.reserve(destination).use {
+                    transport.openMedia(resolution.url, resolution.requestHeaders, resolution.pluginMediaAccess != null).use { input ->
+                        destination.outputStream().use { output -> copyAudio(input, output) }
+                    }
                 }
             }
         } finally { cancellation.dispose(); observer.cancel() }
