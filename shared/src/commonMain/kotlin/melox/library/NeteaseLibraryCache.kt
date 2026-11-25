@@ -187,6 +187,7 @@ private fun encodePlaylist(value: NeteasePlaylistSummary) = JSONObject()
     .put("playCount", value.playCount)
     .put("description", value.description)
     .put("copywriter", value.copywriter)
+    .put("specialType", value.specialType ?: JSONObject.NULL)
 
 private fun decodePlaylist(value: JSONObject) = NeteasePlaylistSummary(
     id = value.getLong("id"),
@@ -198,6 +199,7 @@ private fun decodePlaylist(value: JSONObject) = NeteasePlaylistSummary(
     playCount = value.optLong("playCount"),
     description = value.optNullableString("description"),
     copywriter = value.optNullableString("copywriter"),
+    specialType = value.optInt("specialType", -1).takeIf { it >= 0 },
 )
 
 private fun encodeAlbums(values: List<melox.network.MeloXAlbumSummary>) = JSONArray().apply {

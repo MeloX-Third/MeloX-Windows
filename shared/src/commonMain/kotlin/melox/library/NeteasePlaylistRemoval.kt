@@ -9,7 +9,7 @@ fun neteasePlaylistRemoval(
     playlistId: Long,
 ): NeteasePlaylistRemoval {
     require(userId > 0 && playlistId > 0) { "账号或歌单 ID 无效" }
-    val liked = playlists.firstOrNull() ?: error("无法确认系统歌单，请刷新后重试")
+    val liked = playlists.neteaseLikedPlaylist() ?: error("无法确认系统歌单，请刷新后重试")
     check(liked.id > 0 && liked.creatorUserId == userId) { "无法确认系统歌单，请刷新后重试" }
     require(liked.id != playlistId) { "「我喜欢的音乐」是系统歌单，无法删除" }
     val target = playlists.singleOrNull { it.id == playlistId }

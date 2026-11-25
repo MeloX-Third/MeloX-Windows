@@ -20,7 +20,11 @@ data class NeteasePlaylistSummary(
     val providerPlaylist: MusicPlaylistSummary? = null,
     val subscribed: Boolean? = null,
     val copywriter: String? = null,
+    val specialType: Int? = null,
 )
+
+fun List<NeteasePlaylistSummary>.neteaseLikedPlaylist(): NeteasePlaylistSummary? =
+    firstOrNull { it.specialType == 5 } ?: firstOrNull()
 
 data class NeteasePlaylistDetail(
     val summary: NeteasePlaylistSummary,

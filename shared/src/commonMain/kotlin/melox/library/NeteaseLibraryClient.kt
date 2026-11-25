@@ -31,7 +31,7 @@ class NeteaseLibraryClient(
     suspend fun snapshot(userId: Long): NeteaseLibrarySnapshot = withContext(Dispatchers.IO) {
         ensureLoggedIn()
         val allPlaylists = userPlaylistsBlocking(userId)
-        val likedPlaylistId = allPlaylists.firstOrNull()?.id
+        val likedPlaylistId = allPlaylists.neteaseLikedPlaylist()?.id
         val playlists = allPlaylists
         val likedIds = likedSongIdsBlocking(userId)
         val likedById = likedIds.chunked(100).flatMap(::songDetailsBlocking).associateBy(SearchSong::id)
@@ -414,6 +414,7 @@ class NeteaseLibraryClient(
             playCount = value.optLong("playCount", 0L).coerceAtLeast(0L),
             description = description,
             subscribed = if (value.has("subscribed")) value.optBoolean("subscribed") else null,
+            specialType = value.optInt("specialType", -1).takeIf { it >= 0 },
             copywriter = value.optString("copywriter").takeIf { it.isNotBlank() && it != "null" },
         )
     }

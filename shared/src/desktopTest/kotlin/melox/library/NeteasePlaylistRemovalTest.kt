@@ -6,6 +6,15 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 class NeteasePlaylistRemovalTest {
+    @Test fun systemFavoritesStayProtectedWhenServerReordersPlaylists() {
+        val ordinary = playlist(2, 10)
+        val liked = playlist(1, 10).copy(specialType = 5)
+        val values = listOf(ordinary, liked)
+        assertEquals(liked, values.neteaseLikedPlaylist())
+        assertEquals(NeteasePlaylistRemoval.Delete, neteasePlaylistRemoval(values, 10, 2))
+        assertFailsWith<IllegalArgumentException> { neteasePlaylistRemoval(values, 10, 1) }
+    }
+
     private fun playlist(id: Long, creator: Long?) = NeteasePlaylistSummary(id, "fixture", null, 0, "", creator)
 
     @Test fun determinesRemovalFromFreshAccountList() {

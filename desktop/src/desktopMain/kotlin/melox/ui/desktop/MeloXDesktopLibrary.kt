@@ -135,7 +135,7 @@ internal fun MeloXDesktopLibrary(page: String?, onLogin: () -> Unit) {
                             ?: throw java.io.IOException(session.errorMessage ?: desktopString("ui.desktop.library.sign_in_message"))
                         if (section == "Playlists") {
                             val playlists = client.userPlaylists(user)
-                            protectedPlaylistId = playlists.firstOrNull()?.id
+                            protectedPlaylistId = playlists.firstOrNull { it.specialType == 5 }?.id ?: playlists.firstOrNull()?.id
                             cards = playlists.map { value -> DesktopLibraryCard(value.id, value.name, value.creatorName, value.coverUrl, value) { playlist = value } }
                         } else songs = client.likedSongs(user)
                     }

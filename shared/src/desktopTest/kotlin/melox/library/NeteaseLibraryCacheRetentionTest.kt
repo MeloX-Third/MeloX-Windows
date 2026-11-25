@@ -31,7 +31,8 @@ class NeteaseLibraryCacheRetentionTest {
         val root = Files.createTempDirectory("library-cache-retention").toFile()
         try {
             val cache = NeteaseLibraryCache(root)
-            val snapshot = NeteaseLibrarySnapshot(emptyList(), emptyList(), emptyList(), 42)
+            val snapshot = NeteaseLibrarySnapshot(listOf(NeteasePlaylistSummary(42, "Liked", null, 0, "", specialType = 5)),
+                emptyList(), emptyList(), 42)
             cache.saveSnapshot(7, snapshot)
             root.resolve("library_7.json").setLastModified(1)
             repeat(55) { index -> root.resolve("playlist_$index.json").apply { writeText("{}"); setLastModified(100L + index) } }
