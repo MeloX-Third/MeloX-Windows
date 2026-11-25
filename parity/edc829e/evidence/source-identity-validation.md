@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+覆盖代码至 `643f3c7` 的最新完整回归：`gradle :shared:desktopTest :desktop:desktopTest :desktop:desktopJar` 成功（3 分 30 秒）。共享 618 项通过、0 跳过；桌面 19 项中 13 通过、6 条件跳过；失败 0。该结果覆盖私有音频、LAN 转发、IPC、独立 worker、AppContainer 权限探针、bundle 与 Provider 工厂；不代表生产插件管理/账号 UI、媒体账号租约与重解析、手机 UI 或硬件验收完成。
+
 WindowsPluginWorkerBundle 的部署→AppContainer→Provider 工厂→标准分页搜索贯穿专项与 desktopJar 成功（25 秒），四项启动器专项均通过。可信 JVM/classpath 复制到唯一 staging、预部署 native DLL、固定 SID RX、原子发布且拒绝覆盖已有目录；测试从发布目录真实启动 JVM/V8 并调用 Provider。该 bundle API 已具备部署能力，应用启动时如何选择/复用版本与生产初始化仍待接通。
 
 `c5cc0bd` 使用可信 JVM 探针直接访问 OS：宿主私有文件读取、bundle 写入、本机 TCP 连接和创建子进程均被拒绝；宿主监听端 accept 超时，证明未收到连接。真实 V8/HostCalls 往返与探针联合启动器专项及 desktopJar 成功（15 秒）。`81c307c` Provider 工厂经独立运行时 __validate 校验声明方法，缺失方法拒绝并关闭运行时，合格 Provider 可执行标准分页搜索；进程专项 6 项与 desktopJar 成功（43 秒）。工厂默认生产初始化、安装/账号 UI 与网络 broker 公网验收仍未接通。
