@@ -200,12 +200,18 @@ data class MusicRankingSummary(
 
 /** Minimal account information that can be displayed without leaking provider-specific credentials. */
 data class MusicAccountSummary(
-    val source: MusicSource,
+    val sourceId: SourceId,
     val id: String,
     val displayName: String,
     val avatarUrl: String? = null,
     val subtitle: String? = null,
-)
+) {
+    constructor(source: MusicSource, id: String, displayName: String, avatarUrl: String? = null, subtitle: String? = null) :
+        this(SourceId.fromBuiltIn(source), id, displayName, avatarUrl, subtitle)
+
+    val source: MusicSource get() = sourceId.builtIn
+        ?: error("Source ${sourceId.value} is not a built-in music source")
+}
 
 /**
  * Common semantic feed. Empty lists are meaningful: a provider may simply not
