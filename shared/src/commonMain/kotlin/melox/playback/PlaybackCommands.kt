@@ -388,7 +388,7 @@ class MeloXDesktopPlayer internal constructor(
         },
     )
 
-    private val _repeatMode = MutableStateFlow(PlaybackCommands.REPEAT_OFF)
+    private val _repeatMode = MutableStateFlow(MeloXPlaybackModePreferences.repeatMode())
     val repeatMode: StateFlow<Int> = _repeatMode.asStateFlow()
 
     private val _shuffleEnabled = MutableStateFlow(MeloXPlaybackModePreferences.shuffle())
@@ -942,6 +942,7 @@ class MeloXDesktopPlayer internal constructor(
     fun setRepeatMode(mode: Int) {
         cancelMix()
         _repeatMode.value = mode.coerceIn(PlaybackCommands.REPEAT_OFF, PlaybackCommands.REPEAT_ALL)
+        MeloXPlaybackModePreferences.setRepeatMode(_repeatMode.value)
     }
 
     fun cycleRepeatMode() {

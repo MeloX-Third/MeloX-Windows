@@ -23,6 +23,7 @@ object MeloXPlaybackModePreferences {
     private const val KEY_SHUFFLE = "shuffle"
     private const val KEY_AUTOPLAY = "autoplay"
     private const val KEY_AUTOMIX = "auto_mix"
+    private const val KEY_REPEAT_MODE = "repeat_mode"
 
     private fun prefs() = getPreferences(NAME)
 
@@ -63,6 +64,11 @@ object MeloXPlaybackModePreferences {
     fun setAutoMixFloat(key: String, value: Float) = prefs().putFloat(key, value)
 
     fun smartQueue(): Boolean = prefs().getBoolean("smart_queue", false)
+
+    fun repeatMode(): Int = prefs().getInt(KEY_REPEAT_MODE, PlaybackCommands.REPEAT_OFF)
+
+    fun setRepeatMode(mode: Int) = prefs().putInt(KEY_REPEAT_MODE,
+        mode.coerceIn(PlaybackCommands.REPEAT_OFF, PlaybackCommands.REPEAT_ALL))
 
     fun setSmartQueue(enabled: Boolean) {
         MeloXPlaybackModeRuntime.smartQueueEnabled = enabled
