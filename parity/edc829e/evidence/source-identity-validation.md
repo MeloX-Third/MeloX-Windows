@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`6e75097` 歌词强绑定加载补齐 capability、来源 generation 与 Provider 实例校验，拒绝请求中停用的来源返回内容；专项覆盖停用拒绝与重新启用后成功。`gradle :shared:desktopTest --tests "melox.lyrics.*" :desktop:compileKotlinDesktop` 成功（1 分 23 秒）。
+
 截至 `c8cb341`，`gradle :shared:desktopTest :desktop:desktopTest :desktop:desktopJar` 成功（2 分 13 秒）：共享 XML 586 项全部通过，0 失败/错误/跳过；桌面测试与 JAR 为 UP-TO-DATE。包含 `fa1f56d` 本地真实 TLS API 响应读取、已信任证书仍拒绝主机名不匹配，以及 `c8cb341` 内置搜索返回插件候选时跳过其播放能力并继续已配置第三方阶段。同期尚未提交的歌词绑定撤销检查未包含在该轮已编译输入内，需独立验证。完整自动回归不代表 UI/功能迁移完成。
 
 `c8809d5` 旧 PlaybackFallbackChain 对动态来源明确返回无回退，不再访问会抛错的旧枚举；内置跨来源候选按完整 SourceId 比对。`gradle :shared:desktopTest --tests "melox.playback.*" --tests "melox.plugin.*" --tests "melox.download.*" :desktop:desktopTest :desktop:desktopJar` 成功（2 分 16 秒），共享层 XML 174 项通过、0 失败/错误/跳过。此为专项回归，不等于完整迁移验收。
