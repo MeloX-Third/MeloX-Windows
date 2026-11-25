@@ -1,5 +1,11 @@
 # 动态音源身份迁移验证
 
+`bba0598` 接入生产 Provider 下载任务恢复、手动重试和失败记录移除，使用版本独立临时文件及原子完成文件替换；来源 generation/实例变化拒绝提交。取消会关闭 HTTP 请求，复制按块检查取消，移除等待传输所有者退出后再清理文件/索引，清理期间阻止重启。恢复账号摘要但账号系统未接通时阻止重试。`d40efe5` 补桌面下载任务、重试、移除和取消入口。
+
+命令 `gradle :shared:desktopTest --tests "melox.download.*" :desktop:desktopTest :desktop:desktopJar` 成功，2 分 56 秒。XML 下载 12 项、0 失败/错误/跳过；桌面 16 项、10 通过/6 条件跳过、0 失败/错误；JAR 成功。生产测试覆盖来源缺失失败、重建 store 后等待手动重试、来源恢复后下载本地音频、完成索引和临时文件清理。真实插件账号/受控媒体传输及真实窗口任务操作仍待验证。
+
+此前完整命令 `gradle :shared:desktopTest :desktop:desktopTest :desktop:desktopJar` 运行共享层 518 项、1 失败：AutoMix 三曲连续交接应保留 1 个输出但实际为 2；桌面任务因共享层失败未继续。未修改 AutoMix 的单独复跑 `gradle :shared:desktopTest --tests "melox.playback.DesktopAutoMixIntegrationTest"` 成功，12 项通过，1 分 24 秒。偶发失败原因尚未定位，单独通过不视为完整回归通过。
+
 `9349aac` 将全量本地推荐分析的候选收集接到显式启用的动态白名单，保留内置候选来源范围；`31e9a3e` 将动态播放标准歌曲 JSON 接到 PluginJson 的 128 KiB/32 层解析前检查。命令 `gradle :shared:desktopTest --tests "melox.playback.DynamicProviderPlaybackTest" --tests "melox.recommendation.*" --tests "melox.plugin.PluginJsonTest"` 成功，57 秒。
 
 `38910c1` 迁移 ProviderDownloadTaskStore、PluginJson 和受控 PluginErrors：任务只保存完整 track/音质/版本/错误码/账号摘要；pending 恢复为 DOWNLOAD_INTERRUPTED；按资源身份及版本删除，旧取消不会删除新重试。最多 100 条/1 MiB，JSON 最深 32 层；保留未知行，损坏文件不覆盖，Windows 使用临时文件及 ATOMIC_MOVE。
