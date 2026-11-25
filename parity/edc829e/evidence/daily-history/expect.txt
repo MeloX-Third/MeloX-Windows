@@ -1,0 +1,5 @@
+01-history=tag:daily-history-preview-song:987654321,tag:daily-history-open-playlist
+02-empty-day=tag:daily-history-empty-day
+03-today=tag:daily-history-preview-song:987654321
+04-playlist=tag:desktop-daily-history-detail
+05-return=tag:daily-history-calendar

@@ -1,0 +1,5 @@
+history:tap@desktop-home-section:Selected for You
+empty-day:tap@daily-history-calendar-date:2026-11-24
+today:tap@daily-history-today
+playlist:tap@daily-history-open-playlist
+return:tap@desktop-collection-back
