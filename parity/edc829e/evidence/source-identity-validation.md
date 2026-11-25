@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`6b1d8ae` 将 MusicAccountSummary 主身份迁移到 SourceId，保留内置来源构造兼容；插件账号旧 source 访问明确报错。`gradle :shared:desktopTest --tests "melox.plugin.*" :desktop:compileKotlinDesktop` 成功，3 分 16 秒。新增账号测试验证同账号 ID 不同插件来源隔离、copy 保留来源、内置来源构造和认证状态。此项为公共账号模型，凭据仓库及插件账号 UI 尚未完成。
+
 `f2241a4` 移植全部 22 个 API v1 方法的返回结构校验，覆盖分页、嵌套目录模型、账号认证、收藏确认、媒体和歌词。专项 `gradle :shared:desktopTest --tests "melox.plugin.*"` 成功，1 分 52 秒，XML 19 项通过、0 失败/错误/跳过；遍历所有已填充字段，以不同 JSON 类型进行超过 1000 次变异并断言拒绝，另验证歌词乱序、分页范围、请求头换行和 DRM 声明。校验器尚待实际 PluginMusicProvider 调用，不能视为生产插件协议链路已完成。
 
 `8412162` 增加 Android Authentication/Download 能力声明、认证状态模型和动态注册表接口校验，同时移植渐进音频格式限制。`gradle :shared:desktopTest --tests "melox.plugin.*"` 成功，2 分 13 秒；新增测试覆盖声明能力却缺实现时拒绝注册，HLS/DASH/DRM 及 MIME 声明拒绝。实际 Provider 与受控媒体请求仍待接通。随后的 PluginWireContract 独立构建验证中，未计入本轮结论。
