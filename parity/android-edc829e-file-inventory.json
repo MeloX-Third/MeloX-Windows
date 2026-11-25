@@ -500,9 +500,10 @@
     {
         "android":  "core/plugin/PluginArchiveReader.kt",
         "windowsCandidates":  [
-
+                                  "shared/src/commonMain/kotlin/melox/plugin/PluginArchiveReader.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "IMPLEMENTED",
+        "notes": "fcd9ea6 bounded in-memory archive parsing, strict UTF-8, path and expansion limits; package tests pass. Production installation remains separate."
     },
     {
         "android":  "core/plugin/PluginArtwork.kt",
@@ -550,9 +551,10 @@
     {
         "android":  "core/plugin/PluginIpcPolicy.kt",
         "windowsCandidates":  [
-
+                                  "shared/src/commonMain/kotlin/melox/plugin/PluginIpcPolicy.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "IMPLEMENTED",
+        "notes": "379ffa3 migrates token/method/quota/error policies; boundary tests pass. Runtime enforcement is pending runtime migration."
     },
     {
         "android":  "core/plugin/PluginIsolatedService.kt",
@@ -579,9 +581,10 @@
     {
         "android":  "core/plugin/PluginManifest.kt",
         "windowsCandidates":  [
-
+                                  "shared/src/commonMain/kotlin/melox/plugin/PluginManifest.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "IMPLEMENTED",
+        "notes": "fcd9ea6 manifest v1 and credential/OAuth configuration bounds; malformed permission and domain tests pass."
     },
     {
         "android":  "core/plugin/PluginMediaFormats.kt",
@@ -628,16 +631,18 @@
     {
         "android":  "core/plugin/PluginPackageTrust.kt",
         "windowsCandidates":  [
-
+                                  "shared/src/commonMain/kotlin/melox/plugin/PluginPackageTrust.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "IMPLEMENTED",
+        "notes": "fcd9ea6 exact payload integrity and RSA publisher verification; tamper and archive-bound publisher approval tests pass."
     },
     {
         "android":  "core/plugin/PluginPermissions.kt",
         "windowsCandidates":  [
-
+                                  "shared/src/commonMain/kotlin/melox/plugin/PluginPermissions.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "IMPLEMENTED",
+        "notes": "379ffa3 parsed permission expansion comparison and descriptions; credential/domain/capability expansion tests pass."
     },
     {
         "android":  "core/plugin/PluginPublicDns.kt",
@@ -677,9 +682,10 @@
     {
         "android":  "core/plugin/PluginVersion.kt",
         "windowsCandidates":  [
-
+                                  "shared/src/commonMain/kotlin/melox/plugin/PluginVersion.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "IMPLEMENTED",
+        "notes": "2c0d6e9 semantic version validation and overflow-free precedence; prerelease and large component tests pass."
     },
     {
         "android":  "core/plugin/PluginWireContract.kt",
