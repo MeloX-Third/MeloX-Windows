@@ -257,9 +257,12 @@ open class LyricDocumentSources {
         }
         BoundLyricSource.Provider -> {
             val source = binding.providerSourceId ?: return LyricsDocument(emptyList())
-            val lyrics = melox.music.provider.MeloXMusicProviders.create()[source] as? LyricsCapability
-                ?: return LyricsDocument(emptyList())
-            lyrics.lyrics(
+            val registry = bindingRegistry()
+            val generation = registry.generation
+            val provider = registry[source] ?: return LyricsDocument(emptyList())
+            val lyrics = provider as? LyricsCapability ?: return LyricsDocument(emptyList())
+            if (!provider.supports(melox.music.provider.MusicCapability.Lyrics)) return LyricsDocument(emptyList())
+            val document = lyrics.lyrics(
                 MusicTrack(
                     id = melox.music.model.MusicResourceId(source, binding.resourceValue),
                     title = binding.title,
@@ -269,8 +272,11 @@ open class LyricDocumentSources {
                     durationMs = binding.durationMs.takeIf { it > 0L },
                 ), preference,
             )
+            if (registry.generation == generation && registry[source] === provider) document else LyricsDocument(emptyList())
         }
     }
+
+    internal open fun bindingRegistry(): MusicProviderRegistry = melox.music.provider.MeloXMusicProviders.create()
 
     open suspend fun amll(track: MusicTrack, registry: MusicProviderRegistry? = null,
         preference: MeloXLyricPreference = requestedLyricPreference()): LyricsDocument {

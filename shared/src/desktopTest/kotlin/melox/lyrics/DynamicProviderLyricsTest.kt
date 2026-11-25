@@ -8,6 +8,29 @@ import melox.settings.MeloXSettingsRuntime
 import kotlin.test.*
 
 class DynamicProviderLyricsTest {
+    @Test fun boundDynamicLyricsRejectProviderRevokedDuringRequest() = runBlocking {
+        val registry = MusicProviderRegistry(listOf(melox.provider.local.LocalProvider()))
+        var revoke = true
+        registry.registerDynamic(object : MusicProvider, LyricsCapability {
+            override val sourceId = this@DynamicProviderLyricsTest.source
+            override val displayName = "Bound lyrics"
+            override val capabilities = setOf(MusicCapability.Lyrics)
+            override suspend fun lyrics(track: MusicTrack): LyricsDocument {
+                if (revoke) registry.setDynamicEnabled(sourceId, false)
+                return LyricsDocument(listOf(LyricLine(1000, text = "bound")))
+            }
+        })
+        val sources = object : LyricDocumentSources() {
+            override fun bindingRegistry() = registry
+        }
+        val binding = LyricBinding(BoundLyricSource.Provider, resourceValue = "bound", title = "Title", artist = "Artist",
+            durationMs = 1000, providerSourceId = source)
+        assertTrue(sources.binding(binding, requestedLyricPreference()).lines.isEmpty())
+        revoke = false
+        registry.setDynamicEnabled(source, true)
+        assertEquals("bound", sources.binding(binding, requestedLyricPreference()).lines.single().text)
+    }
+
     private val source = SourceId.parse("plugin:example.lyrics")!!
     private val track = MusicTrack(MusicResourceId(source, "lyric-123"), "Title", emptyList())
 
