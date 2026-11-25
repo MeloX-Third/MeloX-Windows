@@ -44,6 +44,19 @@ class DesktopPlaybackStateTest {
 
     @BeforeTest fun resetModes() { MeloXPlaybackModePreferences.reset() }
 
+    @Test fun repeatModeSurvivesControllerRecreation() = runTest {
+        try {
+            val first = player({ DesktopPlaybackRequest("resolved") })
+            first.setRepeatMode(PlaybackCommands.REPEAT_ONE)
+            val restored = player({ DesktopPlaybackRequest("resolved") })
+            assertEquals(PlaybackCommands.REPEAT_ONE, restored.repeatMode.value)
+            restored.setRepeatMode(PlaybackCommands.REPEAT_ALL)
+            assertEquals(PlaybackCommands.REPEAT_ALL, MeloXPlaybackModePreferences.repeatMode())
+        } finally {
+            MeloXPlaybackModePreferences.reset()
+        }
+    }
+
     @Test fun startupQueueRestoreDoesNotResolveOrStartAudioUntilPlayAndRetainsSeek() = runTest {
         var resolutions = 0
         val starts = mutableListOf<DesktopPlaybackStart>()
