@@ -72,8 +72,10 @@ fun PlaylistDetailScreen(
     }
     val client = remember { NeteaseLibraryClient(cookieProvider = { NeteaseSessionStore.readCookie() }) }
     val youtubeRevision by melox.provider.youtubemusic.YouTubeSessionStore.revision.collectAsState()
-    val accountRevision = youtubeRevision.takeIf { playlist.providerPlaylist?.id?.source == melox.music.model.MusicSource.YouTubeMusic }
-    var detail by remember(playlist.id, playlist.providerPlaylist?.id, accountRevision) { mutableStateOf<NeteasePlaylistDetail?>(null) }
+    val providerRegistry = remember { MeloXMusicProviders.create() }
+    val providerRevision by providerRegistry.changes.collectAsState()
+    val accountRevision = youtubeRevision.takeIf { playlist.providerPlaylist?.id?.sourceId?.builtIn == melox.music.model.MusicSource.YouTubeMusic }
+    var detail by remember(playlist.id, playlist.providerPlaylist?.id, accountRevision, providerRevision) { mutableStateOf<NeteasePlaylistDetail?>(null) }
     var loading by remember(playlist.id, playlist.providerPlaylist?.id, accountRevision) { mutableStateOf(true) }
     var error by remember(playlist.id, playlist.providerPlaylist?.id, accountRevision) { mutableStateOf<String?>(null) }
     val currentSongId by remember { derivedStateOf { PlaybackCommands.currentSongId() } }
@@ -103,20 +105,22 @@ fun PlaylistDetailScreen(
                 .onSuccess { accountUserId = it }
         }
     }
-    LaunchedEffect(playlist.id, playlist.providerPlaylist?.id, accountRevision, refreshRevision) {
+    LaunchedEffect(playlist.id, playlist.providerPlaylist?.id, accountRevision, refreshRevision, providerRevision) {
         loading = true
         error = null
         val backing = playlist.providerPlaylist
         val result = runCatching {
             if (backing != null) {
-                val source = backing.id.source
-                val registry = MeloXMusicProviders.create()
-                val provider = registry.require(source)
+                val source = backing.id.sourceId
+                val registry = providerRegistry
+                val provider = registry[source] ?: error("音源未安装或未启用")
+                val generation = registry.generation
                 val capability = provider as? PlaylistCapability
                     ?: error("${source.displayName} 当前不提供歌单详情")
                 val providerDetail = withContext(Dispatchers.IO) {
                     capability.loadAllPlaylistTracks(backing)
                 }
+                check(registry.generation == generation && registry[source] === provider) { "音源已变化" }
                 MeloXLegacyUiBridge.playlistDetail(providerDetail)
             } else {
                 client.playlistDetail(playlist.id)

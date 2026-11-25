@@ -171,7 +171,7 @@ fun MeloXNowPlayingScreen(
     }
     val showOutputSwitcher = { showLanOutput = true }
 
-    val sourceColor = MeloXColors.sourceColors[track.id.source.storageValue] ?: MeloXColors.Primary
+    val sourceColor = MeloXColors.sourceColors[track.id.sourceId.value] ?: MeloXColors.Primary
     val expansion = if (animatedVisibilityScope != null) {
         val progress by animatedVisibilityScope.transition.animateFloat(
             transitionSpec = { playerContentSpec() }, label = "full-player-expansion-progress"
@@ -217,7 +217,7 @@ fun MeloXNowPlayingScreen(
             mixOutgoingArtworkUrl = mixBackground.outgoing?.artworkUrl.takeIf { mixBackground.active && !mixBackground.handedOff },
             mixIncomingArtworkUrl = mixBackground.incoming?.artworkUrl.takeIf { mixBackground.active && !mixBackground.handedOff },
             isPlaying = playerState.isPlaying,
-            mediaId = "${track.id.source.storageValue}:${track.id.value}",
+            mediaId = "${track.id.sourceId.value}:${track.id.value}",
             reduceMotion = MeloXSettingsRuntime.reduceMotion,
             modifier = Modifier.fillMaxSize().meloXRecordBackdrop(playerBackdrop),
         )
@@ -248,7 +248,7 @@ fun MeloXNowPlayingScreen(
                     expansion = expansion,
                     player = player,
                     sharedArtworkModifier = playerSharedElement(sharedTransitionScope, animatedVisibilityScope,
-                        "${track.id.source.storageValue}:${track.id.value}"),
+                        "${track.id.sourceId.value}:${track.id.value}"),
                 )
             } else {
                 ClassicPlayerScene(

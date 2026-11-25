@@ -92,7 +92,7 @@ fun MeloXMiniPlayer(
     var pendingDirection by remember { mutableStateOf(0) }
     var pendingOutgoingMediaId by remember { mutableStateOf<String?>(null) }
     var pendingIncoming by remember { mutableStateOf<melox.model.SearchSong?>(null) }
-    val mediaId = "${track.id.source.storageValue}:${track.id.value}"
+    val mediaId = "${track.id.sourceId.value}:${track.id.value}"
 
     LaunchedEffect(track.id, pendingDirection) {
         if (pendingDirection != 0 && mediaId != pendingOutgoingMediaId) {
@@ -491,7 +491,7 @@ private fun MiniArtwork(
     corner: androidx.compose.ui.unit.Dp = 6.dp,
 ) {
     val currentTrack by AudioPlayer.currentTrack.collectAsState()
-    val sourceColor = MeloXColors.sourceColors[currentTrack?.id?.source?.storageValue] ?: MeloXColors.Primary
+    val sourceColor = MeloXColors.sourceColors[currentTrack?.id?.sourceId?.value] ?: MeloXColors.Primary
     MeloXArtworkImage(
         artworkUrl,
         sourceColor,

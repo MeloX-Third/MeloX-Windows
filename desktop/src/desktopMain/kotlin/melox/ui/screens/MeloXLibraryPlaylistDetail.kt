@@ -123,15 +123,17 @@ internal fun MeloXLibraryPlaylistDetailScreen(
         NeteaseMusicOperationsClient(cookieProvider = { NeteaseSessionStore.readCookie() })
     }
     val providerPlaylist = initialPlaylist.providerPlaylist
-    val providerPlaylistCapability = remember(providerPlaylist?.id?.source) {
+    val providerRegistry = remember { MeloXMusicProviders.create() }
+    val providerRevision by providerRegistry.changes.collectAsState()
+    val providerPlaylistCapability = remember(providerPlaylist?.id?.sourceId, providerRevision) {
         providerPlaylist?.let { backing ->
-            MeloXMusicProviders.create().require(backing.id.source) as? PlaylistCapability
+            providerRegistry[backing.id.sourceId] as? PlaylistCapability
         }
     }
     val isProviderPlaylist = providerPlaylist != null
     val youtubeRevision by melox.provider.youtubemusic.YouTubeSessionStore.revision.collectAsState()
-    val accountRevision = youtubeRevision.takeIf { providerPlaylist?.id?.source == melox.music.model.MusicSource.YouTubeMusic }
-    var detail by remember(initialPlaylist.id, accountRevision) { mutableStateOf<NeteasePlaylistDetail?>(null) }
+    val accountRevision = youtubeRevision.takeIf { providerPlaylist?.id?.sourceId?.builtIn == melox.music.model.MusicSource.YouTubeMusic }
+    var detail by remember(initialPlaylist.id, accountRevision, providerRevision) { mutableStateOf<NeteasePlaylistDetail?>(null) }
     var loading by remember(initialPlaylist.id, accountRevision) { mutableStateOf(true) }
     var errorMessage by remember(initialPlaylist.id, accountRevision) { mutableStateOf<String?>(null) }
     var searchQuery by remember(initialPlaylist.id) { mutableStateOf("") }
@@ -182,14 +184,15 @@ internal fun MeloXLibraryPlaylistDetailScreen(
         if (providerPlaylist != null) {
             val capability = providerPlaylistCapability
             if (capability == null) {
-                errorMessage = "${providerPlaylist.id.source.displayName} 当前不提供歌单详情能力"
+                errorMessage = "${providerPlaylist.id.sourceId.displayName} 当前不提供歌单详情能力"
                 loading = false
                 return
             }
             runCatching {
+                val generation = providerRegistry.generation
                 withContext(Dispatchers.IO) {
                     capability.loadAllPlaylistTracks(providerPlaylist, pageSize = 200)
-                }
+                }.also { check(providerRegistry.generation == generation && providerRegistry[providerPlaylist.id.sourceId] === capability) { "音源已变化" } }
             }.onSuccess { providerDetail ->
                 detail = MeloXLegacyUiBridge.playlistDetail(providerDetail)
             }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it; errorMessage = it.message ?: "歌单加载失败" }
@@ -211,7 +214,7 @@ internal fun MeloXLibraryPlaylistDetailScreen(
         loading = false
     }
 
-    LaunchedEffect(initialPlaylist.id, providerPlaylist?.id, accountRevision) {
+    LaunchedEffect(initialPlaylist.id, providerPlaylist?.id, accountRevision, providerRevision) {
         if (providedSongs != null) {
             loading = false
         } else if (providerPlaylist != null) {
@@ -357,8 +360,8 @@ internal fun MeloXLibraryPlaylistDetailScreen(
                         tracks = filteredSongs,
                         foreground = foreground,
                         secondary = secondary,
-                         sourceLabel = displayed.providerPlaylist?.id?.source?.displayName
-                             ?: providedSongs?.firstOrNull()?.providerTrack?.id?.source?.displayName ?: "网易云音乐",
+                         sourceLabel = displayed.providerPlaylist?.id?.sourceId?.displayName
+                             ?: providedSongs?.firstOrNull()?.providerTrack?.id?.sourceId?.displayName ?: "网易云音乐",
                         onPlay = {
                             filteredSongs.firstOrNull()?.let { first ->
                                 PlaybackCommands.playQueue(
@@ -470,7 +473,7 @@ internal fun MeloXLibraryPlaylistDetailScreen(
                             },
                             onPlayNext = { PlaybackCommands.playNext(song) },
                             onPlayLast = { PlaybackCommands.addToQueue(song) },
-                             endAction = if (song.providerTrack?.id?.source?.let { it != melox.music.model.MusicSource.Netease } == true) null else if (ownedPlaylistId != null) {
+                             endAction = if (song.providerTrack?.id?.sourceId?.let { it.builtIn != melox.music.model.MusicSource.Netease } == true) null else if (ownedPlaylistId != null) {
                                 MeloXSwipeAction("从歌单移除", melox.ui.foundation.MeloXSymbol.Trash, Color(0xFFFF3B30)) {
                                     scope.launch {
                                         runCatching { operationsClient.removeSongFromPlaylist(song.id, ownedPlaylistId) }

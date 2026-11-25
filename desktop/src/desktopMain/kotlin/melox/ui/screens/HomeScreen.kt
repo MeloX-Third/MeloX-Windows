@@ -721,7 +721,7 @@ private fun CollectionRowRankings(
                         .background(
                             Brush.linearGradient(
                                 listOf(
-                                    MeloXColors.sourceColors[ranking.id.source.storageValue]?.copy(alpha = 0.85f)
+                                    MeloXColors.sourceColors[ranking.id.sourceId.value]?.copy(alpha = 0.85f)
                                         ?: HomeAccent.copy(alpha = 0.85f),
                                     HomeAccent.copy(alpha = 0.45f),
                                 )
@@ -764,7 +764,7 @@ private fun CollectionCard(
         ) {
             MeloXArtworkImage(
                 url = value.artworkUrl,
-                fallbackColor = MeloXColors.sourceColors[value.id.source.storageValue] ?: HomeAccent,
+                fallbackColor = MeloXColors.sourceColors[value.id.sourceId.value] ?: HomeAccent,
                 modifier = Modifier.fillMaxSize(),
             )
         }
@@ -860,7 +860,7 @@ private fun SongRow(song: MusicTrack, onClick: () -> Unit) {
         ) {
             MeloXArtworkImage(
                 url = song.artworkUrl,
-                fallbackColor = MeloXColors.sourceColors[song.id.source.storageValue] ?: HomeAccent,
+                fallbackColor = MeloXColors.sourceColors[song.id.sourceId.value] ?: HomeAccent,
                 modifier = Modifier.fillMaxSize(),
             )
         }

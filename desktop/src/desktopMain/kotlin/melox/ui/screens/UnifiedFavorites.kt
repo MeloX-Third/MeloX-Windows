@@ -147,9 +147,9 @@ private fun UnifiedFavoritesDetail(onBack: () -> Unit) {
         error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.testTag("unified-favorites-error")) }
         LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(bottom = 156.dp, top = 12.dp)) {
             if (tracks.getOrDefault(emptyList()).isEmpty() && tracks.isSuccess) item { Text("暂无收藏，可在歌曲菜单中添加", Modifier.padding(18.dp)) }
-            itemsIndexed(tracks.getOrDefault(emptyList()), key = { _, track -> "${track.id.source.storageValue}:${track.id.value}" }) { index, track ->
+            itemsIndexed(tracks.getOrDefault(emptyList()), key = { _, track -> "${track.id.sourceId.value}:${track.id.value}" }) { index, track ->
                 val song = MeloXLegacyUiBridge.track(track)
-                Column(Modifier.testTag("unified-favorites-track:$index").semantics { stateDescription = "${track.id.source.storageValue}|${track.id.value}" }) {
+                Column(Modifier.testTag("unified-favorites-track:$index").semantics { stateDescription = "${track.id.sourceId.value}|${track.id.value}" }) {
                     if (desktop) Box(Modifier.padding(horizontal = 34.dp)) {
                         melox.ui.desktop.DesktopCollectionTrackRow(index + 1, song, false, false, true,
                             { melox.playback.ProviderPlaybackCommands.playQueue(tracks.getOrThrow(), track.id) }, { anchor = it; menu = track }, showsArtwork = true)

@@ -34,7 +34,7 @@ internal fun MeloXProviderSongListDetail(
     onBack: () -> Unit,
 ) {
     val playlist = remember(title, songs) {
-        val source = songs.firstOrNull()?.providerTrack?.id?.source
+        val source = songs.firstOrNull()?.providerTrack?.id?.sourceId
         NeteasePlaylistSummary(
             id = -(title.hashCode().toLong() and 0x7fff_ffffL) - 1L,
             name = title,
@@ -51,7 +51,7 @@ internal fun MeloXProviderSongListDetail(
         var anchor by remember { mutableStateOf<androidx.compose.ui.unit.IntOffset?>(null) }
         melox.ui.desktop.MeloXDesktopCollectionDetail(
             kind = melox.ui.desktop.desktopString("ui.category.toplists"), title = title,
-            subtitle = songs.firstOrNull()?.providerTrack?.id?.source?.displayName,
+            subtitle = songs.firstOrNull()?.providerTrack?.id?.sourceId?.displayName,
             metadata = melox.ui.desktop.desktopFormat("ui.common.song_count", songs.size),
             description = null, artworkUrl = playlist.coverUrl,
             songs = songs.filter { filter.isBlank() || it.name.contains(filter, true) || it.artists.contains(filter, true) || it.album.contains(filter, true) },

@@ -613,7 +613,7 @@ private fun NeteasePlaylistSummary.asSearchItem() = MeloXSearchMediaItem(
 )
 
 private fun MusicTrack.toSearchSong() = MeloXLegacyUiBridge.track(this).let { song ->
-    if (id.source == MusicSource.Netease) song.copy(id = checkNotNull(song.neteaseSongId)) else song
+    if (id.sourceId.builtIn == MusicSource.Netease) song.copy(id = checkNotNull(song.neteaseSongId)) else song
 }
 
 private fun parseSongLink(value: String): Long? {
@@ -854,7 +854,7 @@ private fun ProviderSearchSongResults(
 ) {
     val downloads = remember { melox.download.MeloXProviderDownloadStore.get() }
     LazyColumn(Modifier.fillMaxSize().testTag("search-provider-results").semantics {
-        stateDescription = values.joinToString(">") { "${it.id.source.storageValue}:${it.id.value}" }
+        stateDescription = values.joinToString(">") { "${it.id.sourceId.value}:${it.id.value}" }
     }, contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = MeloXBottomContentClearanceDp)) {
         if (failures.isNotEmpty()) item {
             Text(failures.joinToString("；") { "${it.sourceId.displayName}：${it.message}" },
@@ -862,11 +862,11 @@ private fun ProviderSearchSongResults(
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = .46f), fontSize = 12.sp, lineHeight = 17.sp)
         }
         if (values.isEmpty()) item { Text(pinnedString("search_no_songs"), Modifier.padding(vertical = 20.dp).testTag("search-empty"), color = MaterialTheme.colorScheme.onSurface.copy(alpha = .46f)) }
-        items(values, key = { "${it.id.source.storageValue}:${it.id.value}" }) { track ->
+        items(values, key = { "${it.id.sourceId.value}:${it.id.value}" }) { track ->
             SearchSwipeSongRow(MeloXLegacyUiBridge.track(track), onPlay = { onPlay(track) }, onMore = null,
                 endAction = MeloXSwipeAction(pinnedString("search_download_local"), MeloXSymbol.Download, Color(0xFF0EA5E9)) { downloads.start(track) },
-                sourceLabel = track.id.source.displayName.takeIf { showSource },
-                modifier = Modifier.testTag("search-track-${track.id.source.storageValue}-${track.id.value}"))
+                sourceLabel = track.id.sourceId.displayName.takeIf { showSource },
+                modifier = Modifier.testTag("search-track-${track.id.sourceId.value}-${track.id.value}"))
             HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = .08f))
         }
     }

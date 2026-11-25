@@ -105,7 +105,9 @@ private fun SongActionsContent(
     val downloads = remember { MeloXDownloadStore.instance() }
     val track = song.providerTrack
     val neteaseId = song.neteaseSongId
-    val provider = remember(track?.id?.source) { track?.let { MeloXMusicProviders.create()[it.id.source] } }
+    val providerRegistry = remember { MeloXMusicProviders.create() }
+    val providerRevision by providerRegistry.changes.collectAsState()
+    val provider = remember(track?.id?.sourceId, providerRevision) { track?.let { providerRegistry[it.id.sourceId] } }
     val playlistWriter = provider as? PlaylistWriteCapability
     val playlistSync = provider as? PlaylistSyncCapability
     val favoriteReader = provider as? FavoriteStateCapability
@@ -620,7 +622,7 @@ private fun SongPlaylistRow(name: String, count: Int?, cover: String?, enabled: 
 
 @Composable
 private fun BilibiliOffset(song: SearchSong) {
-    val provider = song.providerTrack?.takeIf { it.id.source == MusicSource.Bilibili } ?: return
+    val provider = song.providerTrack?.takeIf { it.id.sourceId.builtIn == MusicSource.Bilibili } ?: return
     val persisted by melox.provider.bilibili.BilibiliLyricOffsetStore.state(provider.id.value)
     var displayed by remember(provider.id, persisted) { mutableStateOf(persisted) }
     Column(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 12.dp)) {
