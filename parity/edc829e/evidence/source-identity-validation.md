@@ -39,3 +39,7 @@ Android 功能基线 `edc829eaffa716b69d08681817414f9633abefc7`。
 `c5e059d` 增加独立的 SourceId 选择值及动态聚合白名单，保留旧内置来源选择接口；切换内置来源同步清除过期动态选中身份。插件参与聚合须显式加入白名单，动态集合最多 32 项，拒绝将内置来源写入插件白名单；设置变更触发 revision。
 
 命令 `gradle :shared:desktopTest --tests "melox.music.DynamicSourceSelectionTest" :desktop:compileKotlinDesktop` 成功，1 分 6 秒；XML 1 项通过、0 失败/错误/跳过。覆盖动态选中持久化、默认不加入聚合、显式增删白名单、切回内置来源后选中值同步及内置身份拒绝。测试结束恢复原偏好。桌面来源选择控件和实际插件管理仍未完成。
+
+`1d3d5d1` 将桌面聚合搜索接到动态白名单和注册表变更，推荐候选收集支持 SourceId，要求声明 HomeRecommendations 能力，并拒绝异源歌曲及来源变化后的结果。新增测试覆盖动态推荐去重、异源拒绝和收集期间禁用。
+
+命令 `gradle :shared:desktopTest :desktop:desktopTest :desktop:desktopJar` 成功，3 分 32 秒；完整 XML：共享层 511 项，0 失败/0 错误/0 跳过；桌面 16 项，10 通过/6 条件跳过，0 失败/0 错误；JAR 成功。实际插件加载与动态来源管理控件、动态播放和下载解析仍未完成，条件跳过不能算设备/真实窗口输入验收。

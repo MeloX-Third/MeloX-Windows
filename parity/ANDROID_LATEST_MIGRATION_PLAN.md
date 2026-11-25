@@ -84,6 +84,7 @@
 | 最新源码文件清单 | INVENTORIED | `android-edc829e-file-inventory.json` 登记 398 个变更 Kotlin 文件，同名候选不代表语义一致；`ANDROID_EDC829E_AUDIT.md` 记录已核对行为与缺口，其他文件仍 UNREVIEWED |
 | 动态音源身份基础类型 | PARTIAL | `70ac17a` 迁移 SourceId 和严格 SourceResourceUri；`fdd6d93` 将 MusicResourceId 接到完整身份，保留内置构造兼容，未知来源旧 API 明确拒绝。完整回归共享层 498 项通过、桌面 10 通过/6 条件跳过、JAR 成功；Provider、持久化及 UI 接线仍在迁移，不能视为插件可用 |
 | 存储设置下载控制 | IMPLEMENTED | `69a36ca` 增加暂停/继续/取消和暂停任务展示；暂停专项两项及桌面编译通过，真实传输/指针回放待验收 |
+| 动态 Provider 注册与搜索 | PARTIAL | `64ab50f` 注册表生命周期、`33c0a90` 共享动态注册及 SourceId 搜索分发、`c5e059d` 来源选择与聚合白名单持久化、`1d3d5d1` 桌面聚合查询及推荐候选收集校验；完整回归共享层 511 项通过、桌面 10 通过/6 条件跳过、JAR 成功。实际插件加载、动态来源管理控件、播放/下载解析及手机 UI 仍待迁移 |
 | 播放全量回归 | VALIDATED | 2026-11-25 最新完整运行共享层 474 项，0 失败/0 错误/0 跳过；包含 `02af178`。历史：首轮上一首测试受防抖影响，`6911501` 隔离场景；第二轮 PCM 缓冲静音等待超时，随后修复引擎启动暂停/恢复竞争。单轮通过不等于所有并发问题已关闭 |
 | 桌面测试和 JAR | VALIDATED | 同轮 `:desktop:desktopTest` 16 项，10 项通过、6 项按环境条件跳过，0 失败/0 错误；`:desktop:desktopJar` 成功。跳过项不能当作真实窗口输入验收，JAR 构建不等于 MSI/EXE 安装包验收 |
 | 双解码引擎启动暂停/恢复竞争 | IMPLEMENTED | `02af178` 将引擎发布和暂停状态读取、引擎暂停/恢复调用纳入同一 playbackLock；AutoMix 12 项专项通过，包含 20 次真实 FFmpeg 启动恢复/PCM 写入；随后共享层完整 474 项回归通过 |
