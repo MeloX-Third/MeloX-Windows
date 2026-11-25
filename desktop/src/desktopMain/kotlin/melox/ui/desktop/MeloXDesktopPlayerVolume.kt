@@ -20,7 +20,10 @@ import melox.playback.PlaybackCommands
 /** Same player volume endpoint, with the reference's mini white slider skin. */
 @Composable
 internal fun DesktopPlayerVolume(volume: Float) {
+    val dlna by melox.dlna.DlnaSession.state.collectAsState()
+    val enabled = dlna.device == null || dlna.device?.rendering != null
     var transient by remember { mutableStateOf<Float?>(null) }
+    LaunchedEffect(enabled) { if (!enabled) transient = null }
     fun update(x: Float, width: Float, inset: Float) {
         val value = ((x - inset) / (width - 2 * inset).coerceAtLeast(1f)).coerceIn(0f, 1f)
         transient = value
@@ -30,10 +33,13 @@ internal fun DesktopPlayerVolume(volume: Float) {
     Canvas(Modifier.width(130.dp).height(22.dp).testTag("desktop-full-volume").semantics {
         contentDescription = desktopString("ui.player.volume")
         progressBarRangeInfo = ProgressBarRangeInfo(fraction, 0f..1f)
-        setProgress { PlaybackCommands.playerController()?.setVolume(it.coerceIn(0f, 1f)); true }
-    }.pointerInput(Unit) {
+        if (enabled) setProgress { PlaybackCommands.playerController()?.setVolume(it.coerceIn(0f, 1f)); true }
+        else disabled()
+    }.pointerInput(enabled) {
+        if (!enabled) return@pointerInput
         detectTapGestures { update(it.x, size.width.toFloat(), 5.dp.toPx()); transient = null }
-    }.pointerInput(Unit) {
+    }.pointerInput(enabled) {
+        if (!enabled) return@pointerInput
         detectDragGestures(onDragStart = { update(it.x, size.width.toFloat(), 5.dp.toPx()) },
             onDragEnd = { transient = null }, onDragCancel = { transient = null }) { change, _ ->
             change.consume(); update(change.position.x, size.width.toFloat(), 5.dp.toPx())
@@ -44,10 +50,10 @@ internal fun DesktopPlayerVolume(volume: Float) {
         val height = 4.dp.toPx()
         val top = (size.height - height) / 2
         drawRoundRect(Color.White.copy(alpha = .10f), Offset(inset, top), Size(track, height), CornerRadius(height / 2))
-        drawRoundRect(Color.White, Offset(inset, top), Size(track * fraction, height), CornerRadius(height / 2))
+        drawRoundRect(Color.White.copy(alpha = if (enabled) 1f else .35f), Offset(inset, top), Size(track * fraction, height), CornerRadius(height / 2))
         val thumbWidth = 16.dp.toPx()
         val thumbHeight = 12.dp.toPx()
-        drawRoundRect(Color(0xFFE4E5E8), Offset(inset + track * fraction - thumbWidth / 2, (size.height - thumbHeight) / 2),
+        drawRoundRect(Color(0xFFE4E5E8).copy(alpha = if (enabled) 1f else .35f), Offset(inset + track * fraction - thumbWidth / 2, (size.height - thumbHeight) / 2),
             Size(thumbWidth, thumbHeight), CornerRadius(thumbHeight / 2))
     }
 }
