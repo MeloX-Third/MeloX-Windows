@@ -49,6 +49,12 @@ object LocalRecommendationStore {
         prefs().putString(TRACKS, array.toString())
     }
 
+    @Synchronized
+    fun recordPlaybackIfAllowed(trackKey: String, title: String, artist: String, completed: Boolean = false, skipped: Boolean = false) {
+        if (isAlgorithmEnabled() && hasPersonalizationConsent()) recordPlayback(trackKey, title, artist, completed, skipped)
+    }
+
+    @Synchronized
     fun recordPlayback(trackKey: String, title: String, artist: String, completed: Boolean = false, skipped: Boolean = false) {
         val current = readFeatures().toMutableList()
         val index = current.indexOfFirst { it.trackKey == trackKey }
@@ -137,6 +143,7 @@ object LocalRecommendationStore {
         }
     }
 
+    @Synchronized
     fun clearPersonalization() {
         prefs().apply {
             remove(TRACKS); remove(PREFERENCE_VECTOR); remove(PREFERENCE_UPDATED); remove("model_weights")

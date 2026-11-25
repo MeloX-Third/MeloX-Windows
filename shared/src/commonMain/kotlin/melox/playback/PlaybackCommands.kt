@@ -398,6 +398,10 @@ class MeloXDesktopPlayer internal constructor(
     private val _repeatMode = MutableStateFlow(MeloXPlaybackModePreferences.repeatMode())
     val repeatMode: StateFlow<Int> = _repeatMode.asStateFlow()
     private var lastSkipAtMs = Long.MIN_VALUE
+    private val recommendationWrites = kotlinx.coroutines.channels.Channel<Triple<MusicTrack, Boolean, Boolean>>(64)
+    private val recommendationSignals = melox.recommendation.PlaybackRecommendationSignals { track, completed, skipped ->
+        recommendationWrites.trySend(Triple(track, completed, skipped))
+    }
 
     private val _shuffleEnabled = MutableStateFlow(MeloXPlaybackModePreferences.shuffle())
     val shuffleEnabled: StateFlow<Boolean> = _shuffleEnabled.asStateFlow()
@@ -407,6 +411,17 @@ class MeloXDesktopPlayer internal constructor(
 
     init {
         AudioPlayer.setVolume(volume)
+        scope.launch(Dispatchers.IO) {
+            for ((track, completed, skipped) in recommendationWrites) runCatching {
+                if (melox.recommendation.LocalRecommendationStore.isAlgorithmEnabled() &&
+                    melox.recommendation.LocalRecommendationStore.hasPersonalizationConsent()) {
+                    melox.recommendation.LocalRecommendationStore.recordPlaybackIfAllowed(
+                        melox.music.model.SourceResourceUri.encode(track.id.sourceId, track.id.value),
+                        track.title, track.artistText, completed, skipped)
+                    melox.recommendation.LocalRecommendationEngine.start()
+                }
+            }
+        }
         positionJob = scope.launch {
             while (isActive) {
                 delay(2_000)
@@ -422,6 +437,13 @@ class MeloXDesktopPlayer internal constructor(
         maintenanceJob = scope.launch {
             while (isActive) {
                 delay(1_000)
+                if (PlaybackCommands.playerController() == this@MeloXDesktopPlayer) {
+                    val entry = items.getOrNull(currentMediaItemIndex)
+                    val selected = AudioPlayer.currentTrack.value
+                    val owns = entry != null && selected != null && classicQueueIndex(listOf(entry.song), 0, selected) == 0
+                    recommendationSignals.sample(selected.takeIf { owns }, AudioPlayer.state.value.isPlaying,
+                        AudioPlayer.getCurrentPositionMs(), AudioPlayer.getDurationMs())
+                }
                 if (PlaybackCommands.playerController() == this@MeloXDesktopPlayer) maintainAutoMix()
                 if (currentMediaItemIndex == items.lastIndex && items.isNotEmpty()) {
                     val duration = AudioPlayer.getDurationMs()
@@ -818,6 +840,7 @@ class MeloXDesktopPlayer internal constructor(
     }
 
     fun release() {
+        recommendationWrites.close()
         val active = PlaybackCommands.playerController() == this
         if (active) persistSnapshot()
         generation += 1
@@ -866,6 +889,10 @@ class MeloXDesktopPlayer internal constructor(
             else -> return
         }
         val incomingPosition = AudioPlayer.incomingMixPosition()
+        val selected = AudioPlayer.currentTrack.value
+        val entry = items.getOrNull(currentMediaItemIndex)
+        recommendationSignals.skip(selected.takeIf { entry != null && it != null && classicQueueIndex(listOf(entry.song), 0, it) == 0 },
+            AudioPlayer.getCurrentPositionMs())
         // Install the heard position before prepare can resolve/start the new
         // track. A second seek after selection races fast/inline resolution,
         // briefly opening at zero or letting that start overwrite the seek.
