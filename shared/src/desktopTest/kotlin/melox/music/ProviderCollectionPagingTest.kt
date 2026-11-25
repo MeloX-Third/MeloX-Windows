@@ -15,6 +15,25 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 class ProviderCollectionPagingTest {
+    @Test fun pluginPlaylistPagesAndNativeIdentityRemainProviderScoped() = runBlocking {
+        val source = requireNotNull(melox.music.model.SourceId.parse("plugin:example.paging"))
+        val playlist = MusicPlaylistSummary(MusicResourceId(source, "list"), "Plugin list")
+        val first = MusicTrack(MusicResourceId(source, "first"), "First", emptyList())
+        val target = first.copy(id = MusicResourceId(source, "target"))
+        val provider = object : PlaylistCapability {
+            override suspend fun playlistDetail(playlist: MusicPlaylistSummary, page: Int, pageSize: Int) =
+                MusicPlaylistDetail(playlist, if (page == 1) listOf(first) else listOf(target), 2, page == 1)
+        }
+        assertEquals(listOf(first, target), provider.loadAllPlaylistTracks(playlist, pageSize = 1).tracks)
+        assertEquals(true, provider.containsNativeTrack(playlist, target))
+        assertFailsWith<IllegalArgumentException> {
+            provider.containsNativeTrack(playlist, target.copy(id = MusicResourceId(MusicSource.Netease, "target")))
+        }
+        val song = melox.music.provider.MeloXLegacyUiBridge.track(target)
+        assertEquals(null, song.neteaseSongId)
+        assertEquals(null, song.copy(id = 123).neteaseSongId)
+    }
+
     private val playlist = MusicPlaylistSummary(MusicResourceId(MusicSource.YouTubeMusic, "list"), "List")
     private fun track(entry: String?) = MusicTrack(MusicResourceId(MusicSource.YouTubeMusic, "video"), "Video", emptyList(),
         providerMetadata = ProviderTrackMetadata.YouTube("video", entry))

@@ -9,7 +9,7 @@ import kotlinx.coroutines.ensureActive
 
 /** Do not infer "not liked" from a partial first page or silently truncated library. */
 internal suspend fun PlaylistCapability.containsNativeTrack(playlist: MusicPlaylistSummary, track: MusicTrack): Boolean {
-    require(playlist.id.source == track.id.source)
+    require(playlist.id.sourceId == track.id.sourceId)
     var count = 0L
     val signatures = mutableSetOf<List<String>>()
     for (page in 1..1_000) {
@@ -47,7 +47,7 @@ suspend fun PlaylistCapability.loadAllPlaylistTracks(
     var hasMore = first.hasMore
     // These services expose independently editable playlist entries, including
     // multiple entries pointing at the same track.
-    val preserveMemberships = playlist.id.source in setOf(MusicSource.YouTubeMusic, MusicSource.Jellyfin)
+    val preserveMemberships = playlist.id.sourceId.builtIn in setOf(MusicSource.YouTubeMusic, MusicSource.Jellyfin)
     while ((hasMore ?: (tracks.size < target)) && page <= 100) {
         val before = tracks.size
         val next = playlistDetail(playlist, page = page, pageSize = pageSize)

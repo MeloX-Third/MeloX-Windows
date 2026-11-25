@@ -28,7 +28,7 @@ data class SearchSong(
     /** Only provider-native NetEase IDs may reach its write/comment endpoints. */
     val neteaseSongId: Long?
         get() = providerTrack?.let { track ->
-            if (track.id.source == melox.music.model.MusicSource.Netease) track.id.value.toLongOrNull()?.takeIf { it > 0 }
+            if (track.id.sourceId.builtIn == melox.music.model.MusicSource.Netease) track.id.value.toLongOrNull()?.takeIf { it > 0 }
             else null
         } ?: id.takeIf { providerTrack == null && it > 0 }
 
