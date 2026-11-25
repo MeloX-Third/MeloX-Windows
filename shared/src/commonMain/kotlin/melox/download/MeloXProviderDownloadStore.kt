@@ -196,7 +196,7 @@ class MeloXProviderDownloadStore internal constructor(
                 check(registry.generation == generation && registry[track.id.sourceId] === provider) { "SOURCE_UNAVAILABLE" }
                 if (track.id.sourceId.builtIn == null) {
                     val plugin = provider as? melox.plugin.PluginMusicProvider ?: error("SOURCE_UNAVAILABLE")
-                    downloadPlugin(plugin, playable, staging) {
+                    downloadPlugin(plugin, playable, staging, registry.changes) {
                         registry.generation == generation && registry[track.id.sourceId] === provider
                     }
                 } else download(playable, staging)
@@ -262,8 +262,12 @@ class MeloXProviderDownloadStore internal constructor(
 
     @OptIn(kotlinx.coroutines.InternalCoroutinesApi::class)
     private suspend fun downloadPlugin(provider: melox.plugin.PluginMusicProvider,
-        resolution: PlaybackResolution.Playable, destination: File, current: () -> Boolean) {
+        resolution: PlaybackResolution.Playable, destination: File,
+        changes: kotlinx.coroutines.flow.StateFlow<Long>, current: () -> Boolean) = kotlinx.coroutines.coroutineScope {
         val broker = melox.plugin.PluginHttpBroker(provider.manifest, accountCurrent = current)
+        val observer = launch(Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
+            changes.collect { if (!current()) broker.close() }
+        }
         val cancellation = currentCoroutineContext()[Job]!!.invokeOnCompletion(onCancelling = true, invokeImmediately = true) { cause ->
             if (cause != null) broker.close()
         }
@@ -273,7 +277,7 @@ class MeloXProviderDownloadStore internal constructor(
                     destination.outputStream().use { output -> copyAudio(input, output) }
                 }
             }
-        } finally { cancellation.dispose() }
+        } finally { cancellation.dispose(); observer.cancel() }
     }
 
     @OptIn(kotlinx.coroutines.InternalCoroutinesApi::class)
