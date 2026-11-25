@@ -39,7 +39,8 @@
         "windowsCandidates":  [
 
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "MISSING",
+        "notes": "Android fixed blob reviewed; Windows policy, transport classification, playback and settings wiring remain missing."
     },
     {
         "android":  "core/autosync/AutoSyncDictionaryRepository.kt",
@@ -109,14 +110,16 @@
         "windowsCandidates":  [
                                   "shared/src/commonMain/kotlin/melox/download/MeloXDownloadStore.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "PARTIAL",
+        "notes": "512 MiB limit and lyric timing persistence migrated; fdd0ee2 adds pause/restart and owner cleanup. Other entry points and real transfer acceptance remain."
     },
     {
         "android":  "core/download/MeloXProviderDownloadStore.kt",
         "windowsCandidates":  [
                                   "shared/src/commonMain/kotlin/melox/download/MeloXProviderDownloadStore.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "PARTIAL",
+        "notes": "64f4305 preserves unknown index data and explicit removals. Durable task recovery, plugin transport and dynamic source integration remain missing."
     },
     {
         "android":  "core/download/PluginDownloadTransfer.kt",
@@ -128,16 +131,18 @@
     {
         "android":  "core/download/ProviderDownloadIndexCodec.kt",
         "windowsCandidates":  [
-
+                                  "shared/src/commonMain/kotlin/melox/download/ProviderDownloadIndexCodec.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "IMPLEMENTED",
+        "notes": "64f4305; compared to fixed Android blob. Two codec tests pass for unknown data preservation and explicit removal precedence."
     },
     {
         "android":  "core/download/ProviderDownloadTaskStore.kt",
         "windowsCandidates":  [
 
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "MISSING",
+        "notes": "Fixed Android blob reviewed: revision-scoped durable intent, interrupted recovery, quotas, unknown row preservation and account scope require migration."
     },
     {
         "android":  "core/library/NeteaseLibraryCache.kt",
