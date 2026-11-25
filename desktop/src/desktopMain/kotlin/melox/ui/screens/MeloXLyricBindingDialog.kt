@@ -30,6 +30,7 @@ internal fun MeloXLyricBindingDialog(track: MusicTrack, onDismiss: () -> Unit) {
     } }
     var source by remember { mutableStateOf(track.id.sourceId) }
     var query by remember { mutableStateOf("${track.title} ${track.artistText}".trim()) }
+    var amll by remember(source) { mutableStateOf(false) }
     var results by remember(source, generation) { mutableStateOf<List<MusicTrack>>(emptyList()) }
     var selected by remember(source, generation) { mutableStateOf<MusicTrack?>(null) }
     var preview by remember(source, generation) { mutableStateOf<LyricsDocument?>(null) }
@@ -37,6 +38,13 @@ internal fun MeloXLyricBindingDialog(track: MusicTrack, onDismiss: () -> Unit) {
     var busy by remember(source, generation) { mutableStateOf(false) }
     var searched by remember(source, generation) { mutableStateOf(false) }
     val scope = key(source, generation) { rememberCoroutineScope() }
+    fun amllQuery(candidate: MusicTrack): AmlldbLyricQuery? = when (candidate.id.sourceId.builtIn) {
+        MusicSource.Netease -> candidate.id.value.toLongOrNull()?.let { AmlldbLyricQuery.Netease(it) }
+        MusicSource.QQMusic -> AmlldbLyricQuery.QQ(candidate.id.value)
+        MusicSource.Spotify -> AmlldbLyricQuery.Spotify(candidate.id.value)
+        MusicSource.AppleMusic -> AmlldbLyricQuery.AppleMusic(candidate.id.value)
+        else -> null
+    }
     fun current(provider: MusicProvider, stamp: Long) = registry.generation == stamp && registry[provider.sourceId] === provider
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
       Surface(Modifier.widthIn(max = 560.dp).fillMaxWidth(.9f).testTag("lyric-binding-dialog"), shape = RoundedCornerShape(10.dp)) {
@@ -49,6 +57,11 @@ internal fun MeloXLyricBindingDialog(track: MusicTrack, onDismiss: () -> Unit) {
                     enabled = !busy, onClick = { source = provider.sourceId })
             }
             OutlinedTextField(query, { query = it }, label = { Text("歌曲或歌手") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+            if (source.builtIn in setOf(MusicSource.Netease, MusicSource.QQMusic, MusicSource.Spotify, MusicSource.AppleMusic)) {
+                DesktopSettingsButton(if (amll) "✓ AMLL 逐字歌词" else "使用 AMLL 逐字歌词", enabled = !busy) {
+                    amll = !amll; selected = null; preview = null; error = null
+                }
+            }
             Button(enabled = !busy && query.isNotBlank() && providers.any { it.sourceId == source }, onClick = {
                 val provider = registry[source] ?: return@Button
                 val stamp = registry.generation
@@ -72,7 +85,10 @@ internal fun MeloXLyricBindingDialog(track: MusicTrack, onDismiss: () -> Unit) {
                 scope.launch {
                     busy = true; error = null; selected = null; preview = null
                     try {
-                        val document = withContext(Dispatchers.IO) { (provider as LyricsCapability).lyrics(candidate, requestedLyricPreference()) }
+                        val document = withContext(Dispatchers.IO) {
+                            if (amll) AmlldbLyricsClient().lyrics(requireNotNull(amllQuery(candidate)), requestedLyricPreference())
+                            else (provider as LyricsCapability).lyrics(candidate, requestedLyricPreference())
+                        }
                         if (current(provider, stamp)) {
                             selected = candidate; preview = document
                             if (document.lines.none { it.syllables.isNotEmpty() }) error = "此结果没有逐字歌词，无法建立强绑定"
@@ -94,8 +110,9 @@ internal fun MeloXLyricBindingDialog(track: MusicTrack, onDismiss: () -> Unit) {
          DesktopSettingsButton("绑定歌词", enabled = !busy && selected != null && preview?.lines?.any { it.syllables.isNotEmpty() } == true, onClick = {
             val candidate = selected ?: return@DesktopSettingsButton
             if (registry[candidate.id.sourceId] == null) return@DesktopSettingsButton
-            LyricBindingStore.write(track.id, LyricBinding(BoundLyricSource.Provider, candidate.id.sourceId.builtIn,
-                candidate.id.value, candidate.title, candidate.artistText, candidate.durationMs ?: track.durationMs ?: 0,
+            LyricBindingStore.write(track.id, LyricBinding(if (amll) BoundLyricSource.AmlL else BoundLyricSource.Provider, candidate.id.sourceId.builtIn,
+                if (amll) requireNotNull(amllQuery(candidate)).bindingValue() else candidate.id.value,
+                candidate.title, candidate.artistText, candidate.durationMs ?: track.durationMs ?: 0,
                 candidate.id.sourceId))
             melox.settings.MeloXSettingsPreferences.setBoolean("lyrics_auto_select", true)
             melox.settings.MeloXSettingsPreferences.setBoolean("experimental_lyric_strong_binding", true)
