@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`bca000f` 宿主通信通道将每条 worker 消息绑定 invocation token、严格整型序号及总消息上限，结束/失败/撤销统一关闭 HostCalls；`ef4f038` 独立 JVM 执行一次 V8 脚本调用，Promise、宿主 storage 往返及不可访问 Java/Node/原始桥对象通过真实进程测试。`77819d8` 增加宿主八秒超时/取消、每次新进程、V8 heap/stack 配置与独立看门狗；真实阻塞 stdin 的进程退出码 74，重复调用脚本全局计数始终 1，取消释放阻塞通道且拒绝迟到结果。最终进程/通道专项与桌面 JAR 成功（39 秒）。这些进程测试使用测试专用 ProcessBuilder，不能证明 OS 权限隔离；Windows AppContainer 启动器和生产工厂仍在实现。
+
 `eab352f` 为独立 worker 增加长度前缀 UTF-8 帧；负数/零/超限长度在分配 payload 前拒绝，截断、非法 UTF-8、JSON 深度及输出上限有回归。`gradle :shared:desktopTest --tests "melox.plugin.PluginIpcFramesTest" :desktop:desktopJar` 成功（59 秒），3 项通过。仅证明通信基础边界，尚未接通 Windows 受限进程与生产工厂。
 
 `8476d2a` LAN/DLNA 代理识别插件私有输入并经受控流转发；不透明标识和上游请求头不发送给接收端。HEAD 关闭输入，来源撤销拒绝打开，代理关闭释放活动私有流；未实现范围读取，因此返回完整 200 并声明 Accept-Ranges: none / DLNA.ORG_OP=00。`gradle :shared:desktopTest --tests "melox.lan.*" --tests "melox.dlna.*" :desktop:desktopJar` 成功（2 分 2 秒），21 项全部通过、0 跳过。真实 DLNA 设备、随机跳转与公网服务仍待验收。

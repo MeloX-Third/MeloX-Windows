@@ -567,9 +567,11 @@
     {
         "android":  "core/plugin/PluginIsolatedService.kt",
         "windowsCandidates":  [
-
+                                  "shared/src/desktopMain/kotlin/melox/plugin/PluginWorkerMain.kt",
+                                  "shared/src/commonMain/kotlin/melox/plugin/PluginWorkerChannel.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "PARTIAL",
+        "notes": "ef4f038/bca000f/77819d8: fresh JVM/V8 worker, invocation-bound host calls, memory/stack settings, independent watchdog and host cancellation verified with real child process. Windows OS restricted launcher, production factory and install/account UI remain open. Unrestricted ProcessBuilder is test-only."
     },
     {
         "android":  "core/plugin/PluginJson.kt",
