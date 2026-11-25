@@ -55,7 +55,10 @@ object LocalRecommendationEngine {
             }.onFailure { if (it is CancellationException) throw it }.getOrDefault(emptyList())
             val candidateTracks = runCatching {
                 val registry = MeloXMusicProviders.create()
-                UnifiedMusicService(registry).collectRecommendationCandidates(MusicSource.entries.toSet(), limitPerProvider = 30)
+                val selection = melox.music.provider.MusicProviderSelectionStore
+                val dynamic = if (selection.unifiedEnabled()) selection.unifiedSourceIds().filter { it.builtIn == null } else emptyList()
+                val sources = MusicSource.entries.mapTo(linkedSetOf(), melox.music.model.SourceId::fromBuiltIn) + dynamic
+                UnifiedMusicService(registry).collectRecommendationCandidatesSourceIds(sources, limitPerProvider = 30)
             }.onFailure { if (it is CancellationException) throw it }.getOrDefault(emptyList())
             currentCoroutineContext().ensureActive()
             LocalRecommendationStore.progress.value = LocalAnalysisProgress(LocalAnalysisStage.Syncing, trainingTracks.size, trainingTracks.size + candidateTracks.size, message = "已采集 ${trainingTracks.size} 个训练来源和 ${candidateTracks.size} 个候选来源", isFullAnalysis = true)
