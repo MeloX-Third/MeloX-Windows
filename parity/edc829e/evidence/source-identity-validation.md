@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`d964980` 来源撤销及返回身份错误校验置于请求异常处理范围内，失败显示页面可重试错误；协程取消继续传播。修正此前 onSuccess 内校验异常可能逃逸页面协程的问题。`gradle :desktop:desktopTest :desktop:desktopJar` 成功（48 秒）。
+
 `29922b9` 搜索打开的 Provider 专辑/歌手详情以完整资源 ID 区分状态，并订阅注册表 generation；来源被停用时清除旧内容、显示不可用，迟到结果必须通过来源/generation 校验。`gradle :desktop:desktopTest :desktop:desktopJar` 成功（53 秒）。真实插件启停窗口验收仍待生产运行时接通。
 
 `f94bae0` 按 Android `edc829e` 更新 SpotifyTrackMatcher：动态候选身份不访问旧枚举；无时长且完整歌手名单一致时补时长分；保留已知时长误差拒绝，汽水优先分与基线一致。Spotify Provider 的自动回退仍仅选择内置 Provider，并按完整身份查找候选来源。`gradle :shared:desktopTest --tests "melox.provider.spotify.*" --tests "melox.music.*" :desktop:compileKotlinDesktop` 成功（1 分 5 秒），XML 48 项通过、0 失败/错误/跳过；新增缺时长/歌手不完整/动态候选和时长误差回归。真实 Spotify 服务未验收。
