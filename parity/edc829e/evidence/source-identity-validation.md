@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`fc4bac1` 收藏游标分页专项：`NeteaseLibrarySectionsTest` 七项及桌面 JAR 成功（1 分 25 秒）。实际 loopback EAPI fixture 解密请求体检查 checkPoint；覆盖翻页/保持顺序去重、重复游标停止、缺失 ids 明确失败，原独立分区/空收藏/HTTP 取消继续通过。仅服务端明确 hasMore 且游标前进才继续，最多 200 页；未声明分页仍单次请求。收藏回填与详情批次另行迁移。
+
 `07e7e91` 收藏系统歌单识别：模型/网络/缓存保留 specialType，快照、桌面保护 ID 和删除所有权判断优先 specialType=5，旧记录无该字段时保留基线回退。`gradle :shared:desktopTest --tests "melox.library.*" :desktop:desktopJar` 成功（2 分 9 秒），包含重排后的系统歌单保护及缓存字段往返；真实账号/收藏回填/分页另行验证。
 
 `e573b58` 库缓存新鲜度与分类隔离：`gradle :shared:desktopTest --tests "melox.library.NeteaseLibraryCacheRetentionTest" --tests "melox.library.NeteaseHomeCacheCompatibilityTest" :desktop:desktopJar` 成功（3 分 17 秒），四项测试覆盖收藏保护/独立配额、fresh/stale 自动刷新、String.hashCode 碰撞分类隔离和新旧首页 JSON 往返。四个页面在缓存缺失时仍触发刷新；该专项不替代后续整套回归或真实账号验收。
