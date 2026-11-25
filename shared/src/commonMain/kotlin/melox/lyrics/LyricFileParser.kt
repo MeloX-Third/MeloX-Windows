@@ -1,6 +1,9 @@
 package melox.lyrics
 
 import java.util.Base64
+import java.nio.ByteBuffer
+import java.nio.charset.CharacterCodingException
+import java.nio.charset.CodingErrorAction
 
 /** Detect synchronized lyric formats used by local sidecars. */
 object LyricFileParser {
@@ -9,7 +12,17 @@ object LyricFileParser {
             bytes[2] == 'c'.code.toByte() && bytes[3] == '1'.code.toByte()) {
             return clean(KugouKrcLyricsParser.decodeAndParse(Base64.getEncoder().encodeToString(bytes)))
         }
-        return parse(bytes.toString(Charsets.UTF_8))
+        return parse(decodeText(bytes))
+    }
+
+    /** Preserve valid UTF-8; Chinese legacy sidecars fall back to GB18030. */
+    private fun decodeText(bytes: ByteArray): String = try {
+        Charsets.UTF_8.newDecoder()
+            .onMalformedInput(CodingErrorAction.REPORT)
+            .onUnmappableCharacter(CodingErrorAction.REPORT)
+            .decode(ByteBuffer.wrap(bytes)).toString()
+    } catch (_: CharacterCodingException) {
+        String(bytes, charset("GB18030"))
     }
 
     fun parse(text: String): LyricsDocument {
