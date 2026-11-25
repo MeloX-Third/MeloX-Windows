@@ -19,7 +19,9 @@ class PluginHttpBroker internal constructor(
     private val manifest: PluginManifest,
     private val accountCurrent: () -> Boolean = { true },
     internalTransport: okhttp3.Interceptor? = null,
+    private val credential: PluginCredentialLease? = null,
 ) : Closeable {
+    init { require(credential == null || credential.source == manifest.sourceId) { "credential source mismatch" } }
     private val requests = AtomicInteger()
     private val calls = ConcurrentHashMap.newKeySet<Call>()
     @Volatile private var closed = false
@@ -38,8 +40,8 @@ class PluginHttpBroker internal constructor(
         require(input.opt("url") is String && (!input.has("method") || input.opt("method") is String) &&
             (!input.has("body") || input.opt("body") is String) &&
             (!input.has("headers") || input.opt("headers") is JSONObject)) { "invalid HTTP request model" }
-        // Credential references require the host vault integration; never silently send anonymously.
-        require(!input.has("credential")) { "LOGIN_REQUIRED" }
+        val wantsCredential = input.has("credential")
+        require(!wantsCredential || input.opt("credential") == "active") { "unknown credential reference" }
         var url = input.getString("url").toHttpUrl()
         var method = input.optString("method", "GET")
         require(method in setOf("GET", "POST"))
@@ -56,6 +58,10 @@ class PluginHttpBroker internal constructor(
                 require(headers.opt(name) is String && name.lowercase(java.util.Locale.ROOT) !in forbiddenHeaders)
                 val value = headers.getString(name)
                 require(value.length <= 4096)
+                builder.header(name, value)
+            }
+            if (wantsCredential) {
+                val (name, value) = credentialHeader(url)
                 builder.header(name, value)
             }
             if (method == "POST") builder.post(body.toRequestBody("application/json; charset=utf-8".toMediaType()))
@@ -94,6 +100,16 @@ class PluginHttpBroker internal constructor(
 
     fun authorizeMediaUrl(url: String) = authorize(url.toHttpUrl())
 
+    private fun credentialHeader(url: HttpUrl): Pair<String, String> {
+        val auth = manifest.authentication ?: error("PERMISSION_DENIED")
+        require(auth.type in setOf("apiToken", "oauth2Pkce") && url.host in auth.domains) { "PERMISSION_DENIED" }
+        val lease = credential ?: error("LOGIN_REQUIRED")
+        require(lease.policy == auth) { "AUTH_EXPIRED" }
+        val expiresAt = lease.expiresAt
+        check(lease.isCurrent() && (expiresAt == null || expiresAt > System.currentTimeMillis())) { "AUTH_EXPIRED" }
+        return auth.header to (auth.prefix + lease.token)
+    }
+
     /** No credentials, cookies or redirects, including redirects within the declared domain set. */
     internal fun imageBytes(url: String): ByteArray {
         val destination = url.toHttpUrl()
@@ -128,7 +144,7 @@ class PluginHttpBroker internal constructor(
         return output.toByteArray()
     }
 
-    private fun checkCurrent() { check(!closed && accountCurrent()) { "CANCELLED" } }
+    private fun checkCurrent() { check(!closed && accountCurrent() && (credential == null || credential.isCurrent())) { "CANCELLED" } }
     override fun close() {
         closed = true
         calls.forEach(Call::cancel)

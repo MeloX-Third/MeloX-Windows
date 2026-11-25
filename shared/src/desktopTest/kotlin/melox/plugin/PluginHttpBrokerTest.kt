@@ -20,7 +20,7 @@ class PluginHttpBrokerTest {
                 """{"url":"http://127.0.0.1"}""", """{"url":"https://foreign.example.com"}""",
                 """{"url":"https://api.example.com:444"}""", """{"url":"https://user:password@api.example.com"}""",
                 """{"url":"https://api.example.com","headers":{"Host":"private"}}""",
-                """{"url":"https://api.example.com","credential":"active"}""")) {
+                """{"url":"https://api.example.com","credential":"other"}""")) {
                 assertFailsWith<IllegalArgumentException>(raw) { broker.request(raw) }
             }
             broker.authorizeMediaUrl("https://api.example.com/audio.mp3")
@@ -95,5 +95,44 @@ class PluginHttpBrokerTest {
         PluginHttpBroker(manifest, internalTransport = Interceptor {
             response(it.request(), 200, "encoded-image", "Content-Type" to "image/png; charset=binary")
         }).use { broker -> assertEquals("encoded-image", broker.imageBytes("https://api.example.com/image").toString(Charsets.UTF_8)) }
+    }
+
+    @Test fun credentialInjectionRequiresMatchingSourcePolicySessionAndDestination(): Unit {
+        val auth = PluginAuthentication("apiToken", domains = setOf("api.example.com"))
+        val secured = manifest.copy(authentication = auth, networkDomains = manifest.networkDomains + "public.example.com")
+        val root = java.nio.file.Files.createTempDirectory("broker-vault").toFile()
+        try {
+            val protection = object : melox.platform.SecretProtection {
+                override fun protect(plain: ByteArray) = plain.reversedArray()
+                override fun unprotect(encrypted: ByteArray) = encrypted.reversedArray()
+            }
+            val vault = PluginAccountVault(manifest.sourceId, root, protection)
+            vault.importTokenAndActivate("Fixture", "host-only-token", auth)
+            val lease = assertNotNull(vault.lease())
+            var calls = 0
+            val transport = Interceptor {
+                calls++
+                assertEquals("Bearer host-only-token", it.request().header("Authorization"))
+                response(it.request())
+            }
+            PluginHttpBroker(secured, internalTransport = transport, credential = lease).use { broker ->
+                broker.request("""{"url":"https://api.example.com","credential":"active","headers":{"Authorization":"script-value"}}""")
+                assertFails { broker.request("""{"url":"https://public.example.com","credential":"active"}""") }
+                assertEquals(1, calls)
+                vault.activate(null)
+                assertFails { broker.request("""{"url":"https://api.example.com","credential":"active"}""") }
+                assertEquals(1, calls)
+            }
+            vault.activate(vault.accounts().single().id)
+            val selected = assertNotNull(vault.lease())
+            assertFails { PluginHttpBroker(secured.copy(sourceId = SourceId.parse("plugin:example.foreign")!!), credential = selected) }
+            PluginHttpBroker(secured.copy(authentication = auth.copy(prefix = "Changed ")), internalTransport = transport, credential = selected).use {
+                assertFails { it.request("""{"url":"https://api.example.com","credential":"active"}""") }
+            }
+            PluginHttpBroker(secured, internalTransport = transport).use {
+                assertFailsWith<IllegalStateException> { it.request("""{"url":"https://api.example.com","credential":"active"}""") }
+            }
+            assertEquals(1, calls)
+        } finally { root.deleteRecursively() }
     }
 }

@@ -20,9 +20,11 @@ class PluginAccountVault internal constructor(
     constructor(source: SourceId) : this(source, File(meloXDataDir()), DesktopSecretProtection.current)
     init { require(source.value.startsWith("plugin:")) }
     data class Account(val id: String, val displayName: String)
-    internal class Lease(val source: SourceId, val account: Account, val token: String,
-        val policy: PluginAuthentication, val refreshToken: String? = null, val expiresAt: Long? = null,
-        val selectionStamp: String? = null)
+    internal class Lease(override val source: SourceId, val account: Account, override val token: String,
+        override val policy: PluginAuthentication, val refreshToken: String? = null, override val expiresAt: Long? = null,
+        val selectionStamp: String? = null, private val current: () -> Boolean = { false }) : PluginCredentialLease {
+        override fun isCurrent(): Boolean = current()
+    }
     internal class Tokens(val accessToken: String, val refreshToken: String? = null, val expiresAt: Long? = null)
     private val root = File(base, "melox-plugin-accounts-v1/${PluginPackageTrust.sha256(source.value.toByteArray(Charsets.UTF_8))}")
     private val selectedFile get() = File(root, "selected")
@@ -126,7 +128,10 @@ class PluginAccountVault internal constructor(
     }
     internal fun lease(): Lease? = synchronized(lock) {
         val stamp = sessionStamp()
-        selected()?.let { id -> decrypt(id).let { Lease(source, it.account, it.token, it.policy, it.refreshToken, it.expiresAt, stamp) } }
+        selected()?.let { id -> decrypt(id).let {
+            Lease(source, it.account, it.token, it.policy, it.refreshToken, it.expiresAt, stamp,
+                current = { synchronized(lock) { sessionStamp() == stamp } })
+        } }
     }
     internal fun replaceTokens(previous: Lease, tokens: Tokens): Lease = synchronized(lock) {
         replaceAuthorization(previous, tokens, previous.policy, true)
