@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+截至 `25a6c5c` 完整回归：`gradle :shared:desktopTest :desktop:desktopTest :desktop:desktopJar` 成功（2 分 16 秒），共享层 XML 577 项通过、0 失败/错误/跳过；桌面 XML 17 项中 11 通过、6 条件跳过，0 失败/错误，桌面测试和 JAR 为最近成功结果的 UP-TO-DATE 复用。包含插件协议/账号/OAuth/独立 JVM 事务恢复及 LAN/分页改动。AutoMix 先前偶发连续交接失败本轮未复现，未定位原因，继续保留待查；此回归不代表桌面全量迁移或插件生产运行时完成。
+
 `0c8ff33` 管理器持久化异常专项：启用意图写入失败时注销未启用候选并关闭资源；停用意图写入失败时保留原 Provider、Enabled 状态和资源，恢复写入后可成功停用。`gradle :shared:desktopTest --tests "melox.plugin.*"` 成功（14 秒），新增边界测试通过；随后启动共享层完整回归，结果单独记录。
 
 `b730c87` 独立 JVM 事务恢复：生成两个真实 RSA-2048 发布者签名包，显式批准候选摘要后执行发布者轮换，子进程在 decision/archive/publisher durable 三个边界调用 Runtime.halt(73)，不执行 catch/finally 回滚。父进程等待退出并重建仓库，验证决策写入后保留旧包、归档落盘后恢复新包及对应发布者指纹、清除事务日志、二次重启结果稳定。`gradle :shared:desktopTest --tests "melox.plugin.*"` 成功（27 秒），XML 55 项通过、0 失败/错误/跳过。此证据覆盖独立进程非正常终止，不等同磁盘断电/缓存损失，也未包含管理 UI 发布者批准交互。
