@@ -497,7 +497,11 @@ object QQMusicMeiQrcDecoder {
     }
 
     private fun decompressZlib(data: ByteArray): ByteArray {
-        return InflaterInputStream(ByteArrayInputStream(data)).readBytes()
+        return InflaterInputStream(ByteArrayInputStream(data)).use { stream ->
+            val bytes = stream.readNBytes(4 * 1024 * 1024 + 1)
+            require(bytes.size <= 4 * 1024 * 1024) { "Decompressed QRC exceeds 4 MiB" }
+            bytes
+        }
     }
 
     fun byteArrayToHex(bytes: ByteArray): String {
