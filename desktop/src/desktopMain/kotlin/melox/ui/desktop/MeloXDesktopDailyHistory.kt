@@ -1,6 +1,7 @@
 package melox.ui.desktop
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -60,7 +61,8 @@ internal fun MeloXDesktopDailyHistory(onBack: () -> Unit) {
         return
     }
     val scroll = androidx.compose.foundation.lazy.rememberLazyListState()
-    LazyColumn(Modifier.fillMaxSize().desktopPromotedDragScroll(scroll).testTag("desktop-daily-history"),
+    LazyColumn(Modifier.fillMaxSize().background(melox.ui.theme.MeloXColors.pageBackground())
+        .desktopPromotedDragScroll(scroll).testTag("desktop-daily-history"),
         state = scroll, contentPadding = PaddingValues(34.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { DesktopDialogButton("ui.common.back", onClick = onBack) }
         item { Text(desktopPlatformString("daily-history"), style = MaterialTheme.typography.headlineLarge) }
