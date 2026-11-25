@@ -139,10 +139,10 @@
     {
         "android":  "core/download/ProviderDownloadTaskStore.kt",
         "windowsCandidates":  [
-
+                                  "shared/src/commonMain/kotlin/melox/download/ProviderDownloadTaskStore.kt"
                               ],
-        "review":  "MISSING",
-        "notes": "Fixed Android blob reviewed: revision-scoped durable intent, interrupted recovery, quotas, unknown row preservation and account scope require migration."
+        "review":  "IMPLEMENTED",
+        "notes": "38910c1 migrates revision-scoped retry intent, interrupted recovery, quotas, unknown row preservation and account scope; atomic file replacement on Windows. Storage tests pass. Production lifecycle tracked separately."
     },
     {
         "android":  "core/library/NeteaseLibraryCache.kt",
@@ -534,9 +534,10 @@
     {
         "android":  "core/plugin/PluginErrors.kt",
         "windowsCandidates":  [
-
+                                  "shared/src/commonMain/kotlin/melox/plugin/PluginErrors.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "IMPLEMENTED",
+        "notes": "38910c1 copies host-controlled messages and exception mapping from fixed Android baseline."
     },
     {
         "android":  "core/plugin/PluginHttpBroker.kt",
@@ -562,9 +563,10 @@
     {
         "android":  "core/plugin/PluginJson.kt",
         "windowsCandidates":  [
-
+                                  "shared/src/commonMain/kotlin/melox/plugin/PluginJson.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "IMPLEMENTED",
+        "notes": "38910c1 migrates bounded JSON validation; nesting, quoted delimiters and UTF-8 size boundary tests pass."
     },
     {
         "android":  "core/plugin/PluginManager.kt",
