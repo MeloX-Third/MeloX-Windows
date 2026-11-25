@@ -93,7 +93,7 @@ internal fun MeloXDesktopSearchScaffold(
                         desktopString("ui.desktop.search.empty.message"))
                     kind == MeloXSearchKind.Songs && (songs.isNotEmpty() || providerSongs.isNotEmpty()) -> {
                         if (songs.isNotEmpty()) DesktopSearchSongs(songs, onPlaySong, onSongMenu)
-                        else DesktopSearchProviderSongs(providerSongs, onPlayProvider)
+                         else DesktopSearchProviderSongs(providerSongs, onPlayProvider, onSongMenu)
                     }
                     songs.isEmpty() && providerSongs.isEmpty() && media.isEmpty() -> DesktopSearchUnavailable(
                         desktopString("ui.desktop.search.empty.title"), desktopString("ui.desktop.search.empty.message"))
@@ -192,13 +192,14 @@ private fun DesktopSearchSongs(songs: List<SearchSong>, onPlay: (SearchSong) -> 
 }
 
 @Composable
-private fun DesktopSearchProviderSongs(tracks: List<MusicTrack>, onPlay: (MusicTrack) -> Unit) {
+private fun DesktopSearchProviderSongs(tracks: List<MusicTrack>, onPlay: (MusicTrack) -> Unit,
+    onSongMenu: (SearchSong, IntOffset?) -> Unit) {
     val scroll = rememberLazyListState()
     LazyColumn(Modifier.fillMaxSize().desktopPromotedDragScroll(scroll), state = scroll,
         contentPadding = PaddingValues(horizontal = 34.dp, vertical = 24.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
         itemsIndexed(tracks, key = { _, it -> it.id }) { index, track ->
             DesktopCollectionTrackRow(index + 1, MeloXLegacyUiBridge.track(track), false, false, false,
-                { onPlay(track) }, onMore = null, showsArtwork = true)
+                { onPlay(track) }, onMore = { anchor -> onSongMenu(MeloXLegacyUiBridge.track(track), anchor) }, showsArtwork = true)
         }
     }
 }

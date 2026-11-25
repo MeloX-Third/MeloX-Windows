@@ -215,7 +215,8 @@ internal fun MeloXDesktopSongMenu(
             DesktopMenuDivider()
             DesktopSongMenuItem("ui.song.view_information", MeloXSymbol.Info, "information") {
                 song.neteaseSongId?.let { MeloXCollectionLaunchBus.open(MeloXCollectionTarget.Song(it, song)) }
-                    ?: MeloXSearchLaunchBus.post(song.name, MeloXSearchKind.Songs, track?.id?.source ?: MusicSource.Netease)
+                    ?: MeloXSearchLaunchBus.postSourceId(song.name, MeloXSearchKind.Songs,
+                        track?.id?.sourceId ?: melox.music.model.SourceId.fromBuiltIn(MusicSource.Netease))
                 onDismiss()
             }
             if (id != null) DesktopSongMenuItem(null, MeloXSymbol.Book, "wiki", !busy,
@@ -225,13 +226,15 @@ internal fun MeloXDesktopSongMenu(
             if (song.artists.isNotBlank()) DesktopSongMenuItem("ui.artist.go_to_generic", MeloXSymbol.Person, "artist") {
                 val artistId = song.artistId ?: track?.artists?.firstOrNull()?.id?.value?.toLongOrNull()
                 if (id != null && artistId != null) MeloXCollectionLaunchBus.open(MeloXCollectionTarget.Artist(artistId))
-                else MeloXSearchLaunchBus.post(song.artists, MeloXSearchKind.Artists, track?.id?.source ?: MusicSource.Netease)
+                else MeloXSearchLaunchBus.postSourceId(song.artists, MeloXSearchKind.Artists,
+                    track?.id?.sourceId ?: melox.music.model.SourceId.fromBuiltIn(MusicSource.Netease))
                 onDismiss()
             }
             if (song.album.isNotBlank()) DesktopSongMenuItem("ui.common.album", MeloXSymbol.Library, "album") {
                 val albumId = song.albumId ?: track?.album?.id?.value?.toLongOrNull()
                 if (id != null && albumId != null) MeloXCollectionLaunchBus.open(MeloXCollectionTarget.Album(albumId, song.album))
-                else MeloXSearchLaunchBus.post(song.album, MeloXSearchKind.Albums, track?.id?.source ?: MusicSource.Netease)
+                else MeloXSearchLaunchBus.postSourceId(song.album, MeloXSearchKind.Albums,
+                    track?.id?.sourceId ?: melox.music.model.SourceId.fromBuiltIn(MusicSource.Netease))
                 onDismiss()
             }
             DesktopSongMenuItem("ui.common.share", MeloXSymbol.Share, "share", songShareUrl(song) != null) {

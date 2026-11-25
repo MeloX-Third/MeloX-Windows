@@ -131,19 +131,21 @@ fun SearchScreen(
     val library = remember(cookie) { NeteaseLibraryClient(cookie) }
     val operations = remember(cookie) { NeteaseMusicOperationsClient(cookie) }
     val providerRegistry = remember { MeloXMusicProviders.create() }
+    var requestedSource by remember(source) { mutableStateOf<melox.music.model.SourceId?>(null) }
+    val effectiveSource = requestedSource ?: melox.music.model.SourceId.fromBuiltIn(source)
     val unifiedService = remember(providerRegistry) { melox.music.provider.UnifiedMusicService(providerRegistry) }
     val selectionRevision by melox.music.provider.MusicProviderSelectionStore.revision.collectAsState()
     val unifiedEnabled = remember(selectionRevision) { melox.music.provider.MusicProviderSelectionStore.unifiedEnabled() }
     val providerGeneration by providerRegistry.changes.collectAsState()
     val unifiedSources = remember(selectionRevision) { melox.music.provider.MusicProviderSelectionStore.unifiedSourceIds() }
     var unifiedFailures by remember(source) { mutableStateOf<List<melox.music.provider.UnifiedMusicService.SearchFailure>>(emptyList()) }
-    val currentProvider = remember(source) { runCatching { providerRegistry.require(source) }.getOrNull() }
+    val currentProvider = remember(effectiveSource, providerGeneration) { providerRegistry[effectiveSource] }
     val providerSongSearch = currentProvider as? SearchCapability
     val providerCatalog = currentProvider as? CatalogSearchCapability
 
     val podcastsEnabled = melox.settings.MeloXSettingsRuntime.podcastsEnabled
-    val availableKinds = remember(source, providerCatalog, podcastsEnabled) {
-        if (source == MusicSource.Netease) MeloXSearchKind.entries.filter { it != MeloXSearchKind.Podcasts || podcastsEnabled }
+    val availableKinds = remember(effectiveSource, providerCatalog, podcastsEnabled) {
+        if (effectiveSource.builtIn == MusicSource.Netease) MeloXSearchKind.entries.filter { it != MeloXSearchKind.Podcasts || podcastsEnabled }
         else buildList {
             add(MeloXSearchKind.Songs)
             if (providerCatalog != null) {
@@ -199,8 +201,10 @@ fun SearchScreen(
     val launch = melox.ui.navigation.MeloXSearchLaunchBus.request
     LaunchedEffect(launch, source) {
         if (launch == null || launch.source != null && launch.source != source) return@LaunchedEffect
+        requestedSource = launch.sourceId?.takeIf { it.builtIn == null }
+        if (requestedSource != null) libraryScope = false
         query = launch.query
-        kind = launch.kind.takeIf { it in availableKinds } ?: MeloXSearchKind.Songs
+        kind = launch.kind
         skipSearchDebounce = true
         searchTrigger += 1
         selectedDetail = null
@@ -209,20 +213,26 @@ fun SearchScreen(
         melox.ui.navigation.MeloXSearchLaunchBus.consume(launch)
     }
 
-    LaunchedEffect(source, availableKinds) {
+    LaunchedEffect(effectiveSource, availableKinds) {
         if (kind !in availableKinds || (MeloXSettingsRuntime.desktopLayoutEnabled && kind == MeloXSearchKind.Users)) {
             kind = MeloXSearchKind.Songs
         }
     }
-    LaunchedEffect(source, sessionRevision) {
-        if (source == MusicSource.Netease) {
+    LaunchedEffect(effectiveSource, sessionRevision, providerGeneration) {
+        recommendations = emptyList()
+        providerRecommendations = emptyList()
+        if (effectiveSource.builtIn == MusicSource.Netease) {
             runCatching { library.explorePlaylists("推荐歌单", 10) }
                 .onSuccess { recommendations = it }
                 .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
         } else {
             runCatching { withContext(Dispatchers.IO) {
                 (currentProvider as? HomeFeedCapability)?.homeFeed(playlistLimit = 10, newSongLimit = 0, rankingLimit = 0)
-            } }.onSuccess { providerRecommendations = it?.recommendedPlaylists.orEmpty() }
+            } }.onSuccess {
+                kotlinx.coroutines.currentCoroutineContext().ensureActive()
+                check(providerRegistry.generation == providerGeneration && providerRegistry[effectiveSource] === currentProvider) { "音源已变化" }
+                providerRecommendations = it?.recommendedPlaylists.orEmpty()
+            }
                 .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
         }
     }
@@ -235,18 +245,23 @@ fun SearchScreen(
         finally { categoryLoading = false }
     }
     // Suggestions are optional traffic: wait for input to settle and skip one-character prefixes.
-    LaunchedEffect(query, libraryScope, sessionRevision, source, MeloXSettingsRuntime.desktopLayoutEnabled) {
+    LaunchedEffect(query, libraryScope, sessionRevision, effectiveSource, MeloXSettingsRuntime.desktopLayoutEnabled) {
         searchSuggestions = emptyList()
-        if (!MeloXSettingsRuntime.desktopLayoutEnabled || source != MusicSource.Netease || query.trim().length < 2 || libraryScope) return@LaunchedEffect
+        if (!MeloXSettingsRuntime.desktopLayoutEnabled || effectiveSource.builtIn != MusicSource.Netease || query.trim().length < 2 || libraryScope) return@LaunchedEffect
         delay(600)
         try { searchSuggestions = universal.searchSuggestions(query) }
         catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
         catch (_: Exception) { searchSuggestions = emptyList() }
     }
 
-    LaunchedEffect(query, kind, source, searchTrigger, unifiedEnabled, unifiedSources, sessionRevision, libraryScope, providerGeneration) {
+    LaunchedEffect(query, kind, effectiveSource, searchTrigger, unifiedEnabled, unifiedSources, sessionRevision, libraryScope, providerGeneration) {
         unifiedFailures = emptyList()
         songLinkResult = false
+        songs = emptyList(); providerSongs = emptyList(); media = emptyList()
+        providerPlaylists = emptyList(); providerAlbums = emptyList(); providerArtists = emptyList()
+        fun checkProviderResult() {
+            check(providerRegistry.generation == providerGeneration && providerRegistry[effectiveSource] === currentProvider) { "音源已变化" }
+        }
         val keyword = query.trim()
         if (keyword.isBlank()) {
             songs = emptyList()
@@ -300,7 +315,7 @@ fun SearchScreen(
             return@LaunchedEffect
         }
         loading = true
-        val linkedId = if (source == MusicSource.Netease) parseSongLink(keyword) else null
+        val linkedId = if (effectiveSource.builtIn == MusicSource.Netease) parseSongLink(keyword) else null
         if (linkedId != null) {
             runCatching { universal.songDetail(linkedId) }
                 .onSuccess {
@@ -317,10 +332,11 @@ fun SearchScreen(
         when (kind) {
             MeloXSearchKind.Songs -> {
                 media = emptyList()
-                if (unifiedEnabled) {
+                if ((unifiedEnabled && requestedSource == null) || effectiveSource.builtIn == null) {
                     songs = emptyList()
                     providerSongs = emptyList()
-                    runCatching { unifiedService.searchSourceIds(keyword, unifiedSources, pageSizePerProvider = 25) }
+                    runCatching { unifiedService.searchSourceIds(keyword,
+                        if (requestedSource != null) setOf(effectiveSource) else unifiedSources, pageSizePerProvider = 25) }
                         .onSuccess { result ->
                             kotlinx.coroutines.currentCoroutineContext().ensureActive()
                             providerSongs = result.aggregated.mapNotNull { it.recommendation?.track }.ifEmpty { result.tracks }
@@ -329,7 +345,7 @@ fun SearchScreen(
                             if (failure is kotlinx.coroutines.CancellationException) throw failure
                             error = failure.message ?: "聚合搜索失败"
                         }
-                } else if (source == MusicSource.Netease) {
+                } else if (effectiveSource.builtIn == MusicSource.Netease) {
                     providerSongs = emptyList()
                     runCatching { songClient.ensureArtwork(songClient.searchSongs(keyword)) }
                         .onSuccess { kotlinx.coroutines.currentCoroutineContext().ensureActive(); songs = it }
@@ -339,10 +355,10 @@ fun SearchScreen(
                     val capability = providerSongSearch
                     if (capability == null) {
                         providerSongs = emptyList()
-                        error = "${source.displayName} 当前没有歌曲搜索能力"
+                        error = "${effectiveSource.displayName} 当前没有歌曲搜索能力"
                     } else {
                         runCatching { capability.searchSongs(keyword, page = 1, pageSize = 50).items }
-                            .onSuccess { providerSongs = it }
+                            .onSuccess { kotlinx.coroutines.currentCoroutineContext().ensureActive(); checkProviderResult(); providerSongs = it }
                             .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it; error = it.message ?: "搜索失败" }
                     }
                 }
@@ -350,29 +366,29 @@ fun SearchScreen(
             MeloXSearchKind.Playlists, MeloXSearchKind.Albums, MeloXSearchKind.Artists -> {
                 songs = emptyList()
                 providerSongs = emptyList()
-                if (source == MusicSource.Netease) {
+                if (effectiveSource.builtIn == MusicSource.Netease) {
                     runCatching { universal.searchMedia(keyword, kind) }
                         .onSuccess { media = it }
                         .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it; error = it.message ?: "搜索失败" }
                 } else {
                     media = emptyList()
                     val capability = providerCatalog
-                    if (capability == null) error = "${source.displayName} 当前没有${kind.title}搜索"
+                    if (capability == null) error = "${effectiveSource.displayName} 当前没有${kind.title}搜索"
                     else when (kind) {
                         MeloXSearchKind.Playlists -> runCatching { capability.searchPlaylists(keyword, page = 1, pageSize = 40).items }
-                            .onSuccess { providerPlaylists = it }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it; error = it.message ?: "搜索失败" }
+                            .onSuccess { kotlinx.coroutines.currentCoroutineContext().ensureActive(); checkProviderResult(); require(it.all { item -> item.id.sourceId == effectiveSource }); providerPlaylists = it }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it; error = it.message ?: "搜索失败" }
                         MeloXSearchKind.Albums -> runCatching { capability.searchAlbums(keyword, page = 1, pageSize = 40).items }
-                            .onSuccess { providerAlbums = it }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it; error = it.message ?: "搜索失败" }
+                            .onSuccess { kotlinx.coroutines.currentCoroutineContext().ensureActive(); checkProviderResult(); require(it.all { item -> item.id.sourceId == effectiveSource }); providerAlbums = it }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it; error = it.message ?: "搜索失败" }
                         MeloXSearchKind.Artists -> runCatching { capability.searchArtists(keyword, page = 1, pageSize = 40).items }
-                            .onSuccess { providerArtists = it }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it; error = it.message ?: "搜索失败" }
+                            .onSuccess { kotlinx.coroutines.currentCoroutineContext().ensureActive(); checkProviderResult(); require(it.all { item -> item.id.sourceId == effectiveSource }); providerArtists = it }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it; error = it.message ?: "搜索失败" }
                         else -> Unit
                     }
                 }
             }
             else -> {
-                if (source != MusicSource.Netease) {
+                if (effectiveSource.builtIn != MusicSource.Netease) {
                     media = emptyList()
-                    error = "${source.displayName} 不提供${kind.title}搜索"
+                    error = "${effectiveSource.displayName} 不提供${kind.title}搜索"
                 } else {
                     runCatching { universal.searchMedia(keyword, kind) }
                         .onSuccess { media = it; songs = emptyList() }
@@ -451,7 +467,7 @@ fun SearchScreen(
                 onKind = { kind = it },
                 loading = loading,
                 error = error,
-                sourceLabel = if (unifiedEnabled && kind == MeloXSearchKind.Songs) "聚合搜索" else source.displayName,
+                sourceLabel = if (unifiedEnabled && requestedSource == null && kind == MeloXSearchKind.Songs) "聚合搜索" else effectiveSource.displayName,
                 sourceFailures = unifiedFailures.map { "${it.sourceId.displayName}：${it.message}" },
                 searched = query.isNotBlank(),
                 songs = songs,
@@ -466,7 +482,7 @@ fun SearchScreen(
                 onRetry = { searchTrigger += 1 },
             )
             else -> Column(Modifier.fillMaxSize().padding(top = 26.dp).testTag("search-state").semantics {
-                stateDescription = if (unifiedEnabled) "Unified>${unifiedSources.sortedBy { it.value }.joinToString(">") { it.value }}" else "Provider>${source.storageValue}"
+                stateDescription = if (unifiedEnabled && requestedSource == null) "Unified>${unifiedSources.sortedBy { it.value }.joinToString(">") { it.value }}" else "Provider>${effectiveSource.value}"
             }) {
                 MeloXIosTopBar(title = pinnedString("tab_search"))
                 Spacer(Modifier.height(16.dp))
@@ -495,7 +511,7 @@ fun SearchScreen(
                             },
                             onClear = { clearSearchHistory(); history = emptyList() },
                         )
-                        query.isBlank() && source == MusicSource.Netease -> SearchDiscovery(
+                        query.isBlank() && effectiveSource.builtIn == MusicSource.Netease -> SearchDiscovery(
                             recommendations = recommendations,
                             onPlaylist = { selectedDetail = it.asSearchItem() },
                              onCategory = { category ->
@@ -509,7 +525,7 @@ fun SearchScreen(
                             onOpen = { selectedProviderPlaylist = providerRecommendations[it] })
                         query.isBlank() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                             Text(
-                                pinnedString("search_source_hint", source.displayName),
+                                pinnedString("search_source_hint", effectiveSource.displayName),
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = .48f),
                             )
                         }
@@ -519,7 +535,7 @@ fun SearchScreen(
                         error != null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                              Text(error.orEmpty(), modifier = Modifier.testTag("search-error"), color = MaterialTheme.colorScheme.error)
                         }
-                         kind == MeloXSearchKind.Songs && !songLinkResult && (unifiedEnabled || source != MusicSource.Netease) -> ProviderSearchSongResults(
+                          kind == MeloXSearchKind.Songs && !songLinkResult && (unifiedEnabled || effectiveSource.builtIn != MusicSource.Netease) -> ProviderSearchSongResults(
                              values = providerSongs,
                              failures = unifiedFailures,
                              showSource = unifiedEnabled,
@@ -545,17 +561,17 @@ fun SearchScreen(
                                         error = it.message ?: pinnedString("library_add_failed") }
                             } },
                         )
-                        source != MusicSource.Netease && kind == MeloXSearchKind.Playlists -> ProviderMediaResults(
+                         effectiveSource.builtIn != MusicSource.Netease && kind == MeloXSearchKind.Playlists -> ProviderMediaResults(
                             titles = providerPlaylists.map { it.title to (it.creatorName.orEmpty()) },
                             artworks = providerPlaylists.map { it.artworkUrl },
                             onOpen = { selectedProviderPlaylist = providerPlaylists[it] },
                         )
-                        source != MusicSource.Netease && kind == MeloXSearchKind.Albums -> ProviderMediaResults(
+                         effectiveSource.builtIn != MusicSource.Netease && kind == MeloXSearchKind.Albums -> ProviderMediaResults(
                             titles = providerAlbums.map { it.title to "" },
                             artworks = providerAlbums.map { it.artworkUrl },
                             onOpen = { selectedProviderAlbum = providerAlbums[it] },
                         )
-                        source != MusicSource.Netease && kind == MeloXSearchKind.Artists -> ProviderMediaResults(
+                         effectiveSource.builtIn != MusicSource.Netease && kind == MeloXSearchKind.Artists -> ProviderMediaResults(
                             titles = providerArtists.map { it.name to "" },
                             artworks = providerArtists.map { it.artworkUrl },
                             onOpen = { selectedProviderArtist = providerArtists[it] },
