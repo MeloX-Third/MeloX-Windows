@@ -613,23 +613,29 @@
     {
         "android":  "core/plugin/PluginOAuth.kt",
         "windowsCandidates":  [
-
+                                  "shared/src/commonMain/kotlin/melox/plugin/PluginOAuthContract.kt",
+                                  "shared/src/commonMain/kotlin/melox/plugin/PluginOAuthSession.kt",
+                                  "shared/src/desktopMain/kotlin/melox/plugin/PluginDesktopOAuth.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "PARTIAL",
+        "notes": "dde35c3 host PKCE/token exchange; dc346e3 claimed cancellable sessions and lifecycle-gated account commit; 51 plugin tests and desktop compile pass. Refresh/reauthorization and production UI/runtime integration remain under implementation."
     },
     {
         "android":  "core/plugin/PluginOAuthCallback.kt",
         "windowsCandidates":  [
-
+                                  "shared/src/commonMain/kotlin/melox/plugin/PluginOAuthSession.kt",
+                                  "shared/src/desktopMain/kotlin/melox/plugin/PluginOAuthBrowserLogin.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "PARTIAL",
+        "notes": "dc346e3 callback target/state binding, duplicate parameters/replay rejection, cancellation and expiration tests pass. Actual loopback socket acceptance still pending."
     },
     {
         "android":  "core/plugin/PluginOAuthCallbackActivity.kt",
         "windowsCandidates":  [
-
+                                  "shared/src/desktopMain/kotlin/melox/plugin/PluginOAuthBrowserLogin.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "PARTIAL",
+        "notes": "dc346e3 Windows loopback browser adapter replaces Android Activity; listener binds before browser and closes on coroutine completion. Production UI and real socket/browser validation pending."
     },
     {
         "android":  "core/plugin/PluginPackageStore.kt",
