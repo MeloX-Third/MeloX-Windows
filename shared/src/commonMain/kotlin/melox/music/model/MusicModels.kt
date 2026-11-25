@@ -63,6 +63,7 @@ data class MusicArtistDetail(
     val summary: MusicArtistSummary,
     val tracks: List<MusicTrack>,
     val totalTracks: Long? = null,
+    val hasMore: Boolean? = null,
 )
 
 data class MusicAlbumSummary(
@@ -78,6 +79,7 @@ data class MusicAlbumDetail(
     val summary: MusicAlbumSummary,
     val tracks: List<MusicTrack>,
     val totalTracks: Long? = null,
+    val hasMore: Boolean? = null,
 )
 
 enum class TrackAvailability {

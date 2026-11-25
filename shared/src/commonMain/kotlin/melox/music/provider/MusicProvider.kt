@@ -217,6 +217,10 @@ interface RankingCapability {
     ): MusicPage<MusicTrack>
 }
 
+interface RankingCatalogCapability : RankingCapability {
+    suspend fun rankings(page: Int = 1, pageSize: Int = 30): MusicPage<MusicRankingSummary>
+}
+
 interface AlbumCapability {
     suspend fun albumDetail(
         album: MusicAlbumSummary,
