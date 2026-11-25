@@ -35,3 +35,7 @@ Android 功能基线 `edc829eaffa716b69d08681817414f9633abefc7`。
 `33c0a90` 让应用 UI/播放注册表共享动态集合，聚合搜索提供 SourceId 入口及动态失败身份。查询结束时检查注册表 generation 和 provider 实例，来源变化时丢弃结果；保留 Windows 既有超时、父任务取消、去重和异源结果过滤行为。搜索失败文案使用动态来源显示名。
 
 命令 `gradle :shared:desktopTest --tests "melox.music.DynamicProviderRegistryTest" --tests "melox.music.UnifiedSearchLifecycleTest" :desktop:compileKotlinDesktop` 成功，57 秒。新增动态查询场景覆盖同来源去重、冒用网易身份过滤、查询期间禁用后结果丢弃及禁用来源不再可查。实际插件加载及搜索 UI 的动态选择仍待接通。
+
+`c5e059d` 增加独立的 SourceId 选择值及动态聚合白名单，保留旧内置来源选择接口；切换内置来源同步清除过期动态选中身份。插件参与聚合须显式加入白名单，动态集合最多 32 项，拒绝将内置来源写入插件白名单；设置变更触发 revision。
+
+命令 `gradle :shared:desktopTest --tests "melox.music.DynamicSourceSelectionTest" :desktop:compileKotlinDesktop` 成功，1 分 6 秒；XML 1 项通过、0 失败/错误/跳过。覆盖动态选中持久化、默认不加入聚合、显式增删白名单、切回内置来源后选中值同步及内置身份拒绝。测试结束恢复原偏好。桌面来源选择控件和实际插件管理仍未完成。
