@@ -60,6 +60,11 @@ private fun DesktopServiceProvider.source(): MusicSource = when (id) {
 @Composable
 internal fun MeloXDesktopProviderServices(navState: MeloXNavState, currentSource: MusicSource, onSourceSelected: (MusicSource) -> Unit) {
     val accounts = remember { ProviderAccountManager() }
+    val registry = remember { melox.music.provider.MeloXMusicProviders.create() }
+    val providerGeneration by registry.changes.collectAsState()
+    val selectionRevision by MusicProviderSelectionStore.revision.collectAsState()
+    val plugins = remember(providerGeneration) { registry.enabledDynamicProviders().sortedBy { it.sourceId.value } }
+    val pluginScope = remember(selectionRevision) { MusicProviderSelectionStore.unifiedSourceIds() }
     var revision by remember { mutableIntStateOf(0) }
     val youtubeRevision by melox.provider.youtubemusic.YouTubeSessionStore.revision.collectAsState()
     var unified by remember { mutableStateOf(MusicProviderSelectionStore.unifiedEnabled()) }
@@ -121,6 +126,24 @@ internal fun MeloXDesktopProviderServices(navState: MeloXNavState, currentSource
                 }
             }
             Spacer(Modifier.height(22.dp))
+            if (plugins.isNotEmpty()) {
+                DesktopSettingsForm {
+                    Text("插件音源", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                    plugins.forEach { provider ->
+                        Row(Modifier.fillMaxWidth().heightIn(min = 40.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Column(Modifier.weight(1f)) {
+                                Text(provider.displayName, fontSize = 13.sp)
+                                Text(provider.sourceId.value, fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            DesktopSettingsCheckbox(desktopPlatformString("services_in_search"), provider.sourceId in pluginScope,
+                                "desktop-service-scope:${provider.sourceId.value}", modifier = Modifier.widthIn(max = 150.dp)) {
+                                MusicProviderSelectionStore.setUnifiedPluginEnabled(provider.sourceId, it)
+                            }
+                        }
+                    }
+                }
+                Spacer(Modifier.height(22.dp))
+            }
             melox.ui.screens.LxServicesSettings(desktop = true)
             Spacer(Modifier.height(22.dp))
             DesktopSettingsForm {
