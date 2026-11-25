@@ -127,6 +127,7 @@ object PlaybackCommands {
             return
         }
 
+        melox.recommendation.MeloXHomeRecommendationPool.appendSongs(songs)
         val quality = melox.audio.MeloXNetworkQualityPolicy.effectiveQuality()
         MusicQualityRuntime.selected = quality
         MusicQualityRuntime.clear()

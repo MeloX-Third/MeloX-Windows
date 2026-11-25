@@ -21,6 +21,7 @@ object ProviderPlaybackCommands {
         onFailure: ((Throwable) -> Unit)? = null,
     ) {
         if (tracks.isEmpty()) return
+        melox.recommendation.MeloXHomeRecommendationPool.appendTracks(tracks)
         ProviderPlaybackRuntime.initialize()
         val neteaseQuality = melox.audio.MeloXNetworkQualityPolicy.effectiveQuality()
         MusicQualityRuntime.selected = neteaseQuality
