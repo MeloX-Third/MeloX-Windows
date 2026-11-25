@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+WindowsPluginWorkerBundle 的部署→AppContainer→Provider 工厂→标准分页搜索贯穿专项与 desktopJar 成功（25 秒），四项启动器专项均通过。可信 JVM/classpath 复制到唯一 staging、预部署 native DLL、固定 SID RX、原子发布且拒绝覆盖已有目录；测试从发布目录真实启动 JVM/V8 并调用 Provider。该 bundle API 已具备部署能力，应用启动时如何选择/复用版本与生产初始化仍待接通。
+
 `c5cc0bd` 使用可信 JVM 探针直接访问 OS：宿主私有文件读取、bundle 写入、本机 TCP 连接和创建子进程均被拒绝；宿主监听端 accept 超时，证明未收到连接。真实 V8/HostCalls 往返与探针联合启动器专项及 desktopJar 成功（15 秒）。`81c307c` Provider 工厂经独立运行时 __validate 校验声明方法，缺失方法拒绝并关闭运行时，合格 Provider 可执行标准分页搜索；进程专项 6 项与 desktopJar 成功（43 秒）。工厂默认生产初始化、安装/账号 UI 与网络 broker 公网验收仍未接通。
 
 `fc90f7e` 将实际 AppContainer JVM/V8 测试接入 PluginWorkerChannel/PluginHostCalls，异步脚本通过 token 绑定 IPC 在容器外宿主存储写入/读取中文及 emoji，返回值与宿主磁盘存储一致；测试 bundle 仍仅 RX，无宿主存储目录授权。三项启动器专项及 desktopJar 成功（14 秒）。该证明覆盖宿主存储 broker 往返，HTTP 公网及账号路径仍待验证。
