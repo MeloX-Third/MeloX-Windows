@@ -22,7 +22,7 @@ object ProviderPlaybackCommands {
     ) {
         if (tracks.isEmpty()) return
         ProviderPlaybackRuntime.initialize()
-        val neteaseQuality = MusicQualityPreferences.read()
+        val neteaseQuality = melox.audio.MeloXNetworkQualityPolicy.effectiveQuality()
         MusicQualityRuntime.selected = neteaseQuality
         val qualityTier = neteaseQuality.toCommonTier()
         val startIndex = selectedQueueIndex?.takeIf { it in tracks.indices && tracks[it].id == selectedTrackId }

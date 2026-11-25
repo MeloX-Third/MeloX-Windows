@@ -119,8 +119,10 @@ fun MeloXApp(onExit: () -> Unit = { kotlin.system.exitProcess(0) }) {
     }
     androidx.compose.runtime.DisposableEffect(Unit) {
         melox.cli.DesktopCliRuntime.attach()
+        melox.playback.MeloXNetworkQualityMonitor.start()
         onDispose {
             melox.cli.DesktopCliRuntime.detach()
+            melox.playback.MeloXNetworkQualityMonitor.stop()
             melox.remoteconfig.MeloXRemoteConfigRuntime.stop()
             melox.playback.MeloXSleepTimer.shutdown()
             melox.playback.MeloXListenTogetherCoordinator.shutdown()

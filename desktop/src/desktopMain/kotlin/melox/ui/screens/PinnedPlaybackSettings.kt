@@ -16,6 +16,7 @@ import melox.ui.glass.MeloXGlassDialog
 import melox.ui.glass.MeloXSettingsDropdown
 import melox.ui.legal.pinnedString
 import kotlin.math.abs
+import kotlinx.coroutines.launch
 
 internal fun qualityTitle(quality: MusicQuality) = pinnedString("settings_quality_" + when (quality) {
     MusicQuality.Standard -> "standard"; MusicQuality.High -> "high"; MusicQuality.Lossless -> "lossless"
@@ -47,6 +48,8 @@ internal fun PinnedPlaybackSettings() {
             listOf(240, 300, 360, 460, 600)) { pinnedString("settings_duration_ms", it) }
     }
     Spacer(Modifier.height(10.dp))
+    NetworkQualitySettings()
+    Spacer(Modifier.height(10.dp))
     EqualizerSettings()
     Spacer(Modifier.height(10.dp))
     PinnedAutoMixSettings()
@@ -63,6 +66,36 @@ internal fun PinnedPlaybackSettings() {
         clear = false
     }
     SettingsPlatformNote(pinnedString("settings_volume_slider"), pinnedString("settings_allow_other_apps"), pinnedString("settings_remember_last_song"))
+}
+
+@Composable
+private fun NetworkQualitySettings() {
+    val policy = melox.audio.MeloXNetworkQualityPolicy
+    var enabled by remember { mutableStateOf(policy.isEnabled()) }
+    var wifi by remember { mutableStateOf(policy.wifiQuality()) }
+    var mobile by remember { mutableStateOf(policy.mobileQuality()) }
+    val scope = rememberCoroutineScope()
+    fun refresh() { scope.launch { melox.playback.MeloXNetworkQualityMonitor.refresh() } }
+    SettingsGlassGroup {
+        SettingsExternalToggleRow("按网络自动选择音质", enabled, "network-quality-enabled") {
+            enabled = it; policy.setEnabled(it); refresh()
+        }
+        if (enabled) {
+            val choices = MusicQuality.entries.map { it to qualityTitle(it) }
+            if (MeloXSettingsRuntime.desktopLayoutEnabled) {
+             melox.ui.desktop.DesktopSettingsPicker("非计费网络音质", wifi, choices, "network-quality-wifi", true) {
+                wifi = it; policy.setWifiQuality(it); refresh()
+             }
+             melox.ui.desktop.DesktopSettingsPicker("计费网络音质", mobile, choices, "network-quality-mobile", true) {
+                mobile = it; policy.setMobileQuality(it); refresh()
+             }
+            } else {
+                MeloXSettingsDropdown("非计费网络音质", wifi, choices, { wifi = it; policy.setWifiQuality(it); refresh() }, grouped = true)
+                MeloXSettingsDropdown("计费网络音质", mobile, choices, { mobile = it; policy.setMobileQuality(it); refresh() }, grouped = true)
+            }
+            Text("Windows 按当前互联网连接的计费状态选择音质；网络未知时使用默认音质。", style = MaterialTheme.typography.bodySmall)
+        }
+    }
 }
 
 @Composable

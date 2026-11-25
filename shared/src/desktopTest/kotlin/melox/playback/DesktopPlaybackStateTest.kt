@@ -398,6 +398,28 @@ class DesktopPlaybackStateTest {
         } finally { MusicQualityPreferences.write(quality) }
     }
 
+    @Test fun networkQualityPreservesSavedDefaultAndPausedQueuePosition() = runTest {
+        val starts = mutableListOf<DesktopPlaybackStart>()
+        val player = player({ DesktopPlaybackRequest("resolved") }, starts)
+        PlaybackCommands.adoptController(player)
+        player.setMediaItems(listOf(song(1), song(2)), 1, 12_000)
+        player.prepare()
+        runCurrent()
+        player.pause()
+        val entries = player.entries()
+        val saved = MusicQualityPreferences.read()
+        val runtime = melox.audio.MusicQualityRuntime.selected
+        try {
+            PlaybackCommands.applyNetworkQuality(MusicQuality.Standard)
+            runCurrent()
+            assertEquals(saved, MusicQualityPreferences.read())
+            assertEquals(entries, player.entries())
+            assertEquals(1, player.currentMediaItemIndex)
+            assertEquals(12_000L, starts.last().positionMs)
+            assertFalse(starts.last().playWhenReady)
+        } finally { melox.audio.MusicQualityRuntime.selected = runtime }
+    }
+
     private fun mediaFailure(kind: AudioFailureKind = AudioFailureKind.Content) =
         AudioPlaybackFailure(kind, java.io.IOException("decoder failure"))
 

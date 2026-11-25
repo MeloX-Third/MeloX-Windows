@@ -127,7 +127,7 @@ object PlaybackCommands {
             return
         }
 
-        val quality = MusicQualityPreferences.read()
+        val quality = melox.audio.MeloXNetworkQualityPolicy.effectiveQuality()
         MusicQualityRuntime.selected = quality
         MusicQualityRuntime.clear()
         CrossProviderPlaybackRuntime.clear()
@@ -187,8 +187,13 @@ object PlaybackCommands {
 
     fun changeQuality(quality: MusicQuality) {
         MusicQualityPreferences.write(quality)
+        applyNetworkQuality(quality)
+    }
+
+    fun applyNetworkQuality(quality: MusicQuality) {
         MusicQualityRuntime.selected = quality
         MusicQualityRuntime.clear()
+        ProviderPlaybackQualityRuntime.clear()
         CrossProviderPlaybackRuntime.clear()
         val player = activeController as? MeloXDesktopPlayer ?: return
         val entries = player.entries()
