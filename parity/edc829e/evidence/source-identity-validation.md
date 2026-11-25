@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`c68d289` 修复桌面旧枚举入口：CLI 接受 SourceId、等待插件恢复、按当前注册表查找并检查搜索结果来源与 generation；探索歌单/榜单卡片键和颜色使用 SourceId；插件歌曲分享不再访问抛错的旧 `.source`。`gradle :desktop:desktopTest :desktop:desktopJar` 成功（48 秒）。尚无 CLI 动态插件端到端输入回放；LAN 同类入口另行验证。
+
 `1793416` 浏览器入口支持原账号重新授权；真实回环集成测试继续验证宿主刷新成功更新同一账号，以及交换期间取消选择后拒绝迟到 token、保留既有凭据。`gradle :shared:desktopTest --tests "melox.plugin.*" :desktop:compileKotlinDesktop` 成功（16 秒）。token 服务为内部 fixture；真实浏览器、服务授权和生产 UI 接线仍未完成。
 
 `29a4ab1` OAuth 重新授权与刷新：重新授权捕获旧账号租约并更新原槽位，刷新走固定 token 端点并以会话摘要比较交换写回；测试验证刷新保留 refresh token、重新授权不沿用旧 refresh token、策略替换及旧租约撤销。`gradle :shared:desktopTest --tests "melox.plugin.*" :desktop:compileKotlinDesktop` 成功（23 秒），XML 54 项通过、0 失败/错误/跳过。新增真实 127.0.0.1 HTTP 回调测试：错误 state 返回 400，正确回调返回 200/no-store，管理器提交账号后恢复 Provider，监听端口关闭；token HTTPS 服务仍为内部 fixture，账号集成用测试保护器，真实 DPAPI 另由仓库专项覆盖。生产账号 UI、实际浏览器与服务授权仍待验收。
