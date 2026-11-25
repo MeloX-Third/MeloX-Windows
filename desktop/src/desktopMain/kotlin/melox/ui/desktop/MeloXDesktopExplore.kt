@@ -17,6 +17,9 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.ensureActive
 import melox.account.NeteaseSessionStore
 import melox.library.NeteaseLibraryClient
 import melox.library.NeteasePlaylistSummary
@@ -24,6 +27,7 @@ import melox.model.SearchSong
 import melox.music.model.MusicPlaylistSummary
 import melox.music.model.MusicRankingSummary
 import melox.music.model.MusicSource
+import melox.music.model.SourceId
 import melox.music.provider.HomeFeedCapability
 import melox.music.provider.MeloXLegacyUiBridge
 import melox.music.provider.MeloXMusicProviders
@@ -39,6 +43,15 @@ import kotlin.math.floor
 @Composable
 internal fun MeloXDesktopExplore(source: MusicSource, onPlaylist: (NeteasePlaylistSummary) -> Unit,
     onProviderPlaylist: (MusicPlaylistSummary) -> Unit) {
+    val selectionRevision by melox.music.provider.MusicProviderSelectionStore.revision.collectAsState()
+    val effectiveSource = remember(source, selectionRevision) {
+        melox.music.provider.MusicProviderSelectionStore.selectedSourceId().takeIf { it.builtIn == null }
+            ?: SourceId.fromBuiltIn(source)
+    }
+    val registry = remember { MeloXMusicProviders.create() }
+    val generation by registry.changes.collectAsState()
+    val requestGeneration = generation
+    key(effectiveSource, generation) {
     var songs by remember(source) { mutableStateOf<List<SearchSong>>(emptyList()) }
     var playlists by remember(source) { mutableStateOf<List<DesktopExploreCard>>(emptyList()) }
     var artists by remember(source) { mutableStateOf<List<DesktopExploreArtist>>(emptyList()) }
@@ -53,7 +66,7 @@ internal fun MeloXDesktopExplore(source: MusicSource, onPlaylist: (NeteasePlayli
     LaunchedEffect(source, revision, retry) {
         loading = true; error = null
         try {
-            if (source == MusicSource.Netease) {
+            if (effectiveSource.builtIn == MusicSource.Netease) {
                 val cookie = NeteaseSessionStore.readCookie()
                 val client = NeteaseLibraryClient(cookieProvider = { cookie })
                 val details = NeteaseCollectionDetailsClient({ cookie })
@@ -80,10 +93,18 @@ internal fun MeloXDesktopExplore(source: MusicSource, onPlaylist: (NeteasePlayli
                     }
                 }
             } else {
-                val provider = MeloXMusicProviders.create().require(source)
-                val feed = (provider as? HomeFeedCapability)?.homeFeed(playlistLimit = 40, newSongLimit = 12, rankingLimit = 30)
+                val provider = registry[effectiveSource]
+                val home = (provider as? HomeFeedCapability)?.takeIf {
+                    provider.supports(melox.music.provider.MusicCapability.HomeRecommendations)
+                }
+                val feed = withContext(Dispatchers.IO) { home?.homeFeed(playlistLimit = 40, newSongLimit = 12, rankingLimit = 30) }
+                kotlinx.coroutines.currentCoroutineContext().ensureActive()
+                check(registry.generation == requestGeneration && registry[effectiveSource] === provider) { "音源已变化" }
                 if (feed == null) error = desktopString("ui.error.home.load_failed")
                 else {
+                    require(feed.newSongs.all { it.id.sourceId == effectiveSource } &&
+                        feed.recommendedPlaylists.all { it.id.sourceId == effectiveSource } &&
+                        feed.rankings.all { it.id.sourceId == effectiveSource }) { "发现内容来源不匹配" }
                     songs = feed.newSongs.map(MeloXLegacyUiBridge::track)
                     playlists = buildList {
                         feed.recommendedPlaylists.forEach { value ->
@@ -96,7 +117,7 @@ internal fun MeloXDesktopExplore(source: MusicSource, onPlaylist: (NeteasePlayli
                                 rankingTitle = value.title
                                 rankingRequest?.cancel()
                                 rankingRequest = scope.launch {
-                                    try { rankingSongs = melox.ui.screens.loadProviderRankingSongs(source, value) }
+                                    try { rankingSongs = melox.ui.screens.loadProviderRankingSongs(effectiveSource, value) }
                                     catch (cancelled: CancellationException) { throw cancelled }
                                     catch (failure: Exception) { error = failure.message ?: desktopString("ui.error.unknown") }
                                 }
@@ -163,6 +184,8 @@ internal fun MeloXDesktopExplore(source: MusicSource, onPlaylist: (NeteasePlayli
             }
         }
     }
+}
+
 }
 
 private data class DesktopExploreCard(val title: String, val subtitle: String, val artwork: String?, val playCount: Long,
