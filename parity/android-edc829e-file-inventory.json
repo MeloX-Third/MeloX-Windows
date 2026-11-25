@@ -151,7 +151,7 @@
                                   "shared/src/commonMain/kotlin/melox/library/NeteaseLibraryCache.kt"
                               ],
         "review":  "PARTIAL",
-        "notes": "edc829e audit confirms missing favorites protection, separate playlist quota, SHA-256 category keys, unique temporary files and 30-minute disk freshness gates. See ANDROID_EDC829E_AUDIT.md."
+        "notes": "b4e7540 protects favorites and separates playlist quotas with unique atomic writes; e573b58 adds SHA-256 category keys and 30-minute disk freshness with four tests and desktop JAR passing. specialType persistence is being verified; account and production cache behavior remain under audit."
     },
     {
         "android":  "core/library/NeteaseLibraryClient.kt",
