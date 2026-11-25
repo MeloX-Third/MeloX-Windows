@@ -683,10 +683,11 @@
     {
         "android":  "core/plugin/PluginRuntime.kt",
         "windowsCandidates":  [
-
+                                  "shared/src/desktopMain/kotlin/melox/plugin/PluginProcessRuntime.kt",
+                                  "shared/src/desktopMain/kotlin/melox/plugin/DesktopPluginRuntime.kt"
                               ],
         "review":  "PARTIAL",
-        "notes": "Fixed edc829e runtime/service reviewed: per-call isolated JS context, 8s worker kill, 128KiB result bound and token-bound host-call IPC. Windows PluginHostCalls/IpcPolicy and brokers exist, but restricted process launcher, worker JS execution and production Provider factory remain missing; in-process LX Javet is not equivalent."
+        "notes": "643f3c7/39bcfaf/d406f84/1b02dee: AppContainer JVM/V8, token-bound host IPC, isolated bundle, production Provider factory/startup and account-scoped refresh implemented. 593b6bc fixes bounded startup envelope for legal 128KiB scripts. Restricted process and OS probes pass; packaged runtime deployment, public OAuth/media and complete lifecycle acceptance remain open."
     },
     {
         "android":  "core/plugin/PluginStorage.kt",
@@ -2304,9 +2305,10 @@
     {
         "android":  "ui/settings/PluginSettings.kt",
         "windowsCandidates":  [
-
+                                  "desktop/src/desktopMain/kotlin/melox/ui/screens/PluginSettings.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "PARTIAL",
+        "notes": "25fd768: independent desktop management window connects package preview, digest-bound approval, install/update/enable/disable/uninstall, diagnostics, damaged records and accounts/OAuth. Desktop tests/JAR pass; native-window acceptance and Android phone layout remain open."
     },
     {
         "android":  "ui/settings/SettingsScreen.kt",

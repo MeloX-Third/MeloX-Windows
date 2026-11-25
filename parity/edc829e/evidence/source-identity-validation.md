@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`1b80539` Provider 媒体 `credential:"active"` 接通宿主账号租约：解析前捕获不透明授权快照，生产捕获前执行过期刷新；播放私有输入与下载 broker 显式注入凭据，限定 manifest 认证域名，拒绝脚本重复认证头。脚本结果、普通 headers 与原生解码输入均不包含宿主 token。新增授权/来源切换测试及 Provider、私有输入、动态播放、下载联合专项与 desktopJar 成功（17 秒）。宿主 transport fixture 验证注入/域名/撤销；真实公网媒体、强制刷新、下载单次重解析及完整回归仍待补。
+
 `2f8ec55` 私有播放输入遇首响应 HTTP 401/403/410 时调用同一 Provider 重新解析一次；第二次失败直接传播，其他状态不重试，已开始读取的流不重放。刷新前后保持 Provider 实例/generation 校验，迟到流关闭。输入/broker 专项及 JAR 成功（1 分 13 秒），DynamicProviderPlaybackTest 与真实 PluginMediaSocketTest 补充专项成功（4 秒）。当前仅覆盖播放打开重解析，下载重解析与强制 OAuth 刷新仍待接线。
 
 `593b6bc` 将 worker 启动 envelope 单独限制为 1 MiB，以容纳 128 KiB 合法脚本经 JSON 转义后的体积；脚本保持 128 KiB、参数保持 128 KiB、账号保持 4 KiB，结果/宿主通信默认帧仍为 128 KiB。真实 JVM 执行恰好 128 KiB、含大量转义字符的脚本返回 42；超限参数在创建进程前拒绝。worker/IPC/AppContainer 联合专项及 desktopJar 成功（2 分 2 秒），并未扩大结果或网络配额。
