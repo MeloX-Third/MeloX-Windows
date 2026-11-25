@@ -25,7 +25,9 @@ class LyricLanguageLoadingTest {
                 override suspend fun provider(track: MusicTrack, registry: MusicProviderRegistry?, preference: MeloXLyricPreference): LyricsDocument {
                     calls += preference.cacheKey()
                     delay(if (preference.languageTag == "en") 5_000 else 100)
-                    return TtmlLyricsParser.parse(LyricLanguageTest.InlineTtml, preference)
+                    // A Japanese original needs both requested translation tracks;
+                    // an English original now correctly drops redundant English.
+                    return TtmlLyricsParser.parse(LyricLanguageTest.InlineTtml.replace(">Original</span>", ">こんにちは世界</span>"), preference)
                 }
             }, backgroundScope)
             MeloXSettingsRuntime.lyricLanguage = "en"

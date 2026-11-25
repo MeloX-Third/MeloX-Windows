@@ -14,7 +14,7 @@ enum class MeloXLyricScript { Original, Simplified, Traditional;
     }
 }
 
-/** Android v0.6.5 translation-track selection and Chinese script preference. */
+/** Translation-track selection and Chinese script preference. */
 data class MeloXLyricPreference(val languageTag: String?, val script: MeloXLyricScript) {
     fun cacheKey(): String = "${languageTag ?: "zh"}:${script.name}"
 
@@ -47,10 +47,14 @@ fun requestedLyricPreference(): MeloXLyricPreference =
     MeloXLyricPreference.fromSetting(melox.settings.MeloXSettingsRuntime.lyricLanguage)
 
 fun applyLyricTranslationPreference(document: LyricsDocument, preference: MeloXLyricPreference): LyricsDocument {
-    val chineseOnly = document.source in setOf(LyricSource.Netease, LyricSource.QQMusic, LyricSource.Kugou)
-    val selected = if (preference.languageTag != null && chineseOnly) document.copy(lines = document.lines.map { line ->
-        line.copy(translation = null, accompaniment = line.accompaniment.map { it.copy(translation = null) })
-    }) else document
+    val decision = LyricTranslationPolicy.decide(LyricTranslationPolicy.detectLanguage(document), preference)
+    val translations = document.lines.flatMap { line ->
+        listOfNotNull(line.translation) + line.accompaniment.mapNotNull { it.translation }
+    }
+    val selected = if (decision != LyricTranslationDecision.NeedTranslation ||
+        !LyricTranslationPolicy.translationMatches(translations, preference)) {
+        LyricTranslationPolicy.withoutTranslations(document)
+    } else document
     return MeloXLyricScriptConverter.convert(selected, preference.script)
 }
 

@@ -24,7 +24,7 @@ import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withTimeoutOrNull
 import java.io.IOException
 
-/** Provider-first load/AMLL upgrade with Android v0.6.5 translation-language snapshots. */
+/** Provider-first load/AMLL upgrade with language snapshots and translation-only merging. */
 class MeloXLyricsLoad(
     private val sources: LyricDocumentSources = LyricDocumentSources(),
     private val workerScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
@@ -126,17 +126,36 @@ class MeloXLyricsLoad(
             if (current != null && current.lines.isNotEmpty()) {
                 val candidates = if (hasWordTiming(current)) listOf(LyricAutoSource.AmlL)
                     else order.filter { it != LyricAutoSource.Current }
-                return firstBetterTimedCandidate(jobs, candidates, includeLineTiming = current.isUnsynchronized) ?: current
+                val chosen = firstBetterTimedCandidate(jobs, candidates, includeLineTiming = current.isUnsynchronized) ?: current
+                return supplementTranslations(chosen, jobs.values.toList(), preference)
             }
             val candidates = order.filter { it != LyricAutoSource.Current }.mapIndexed { index, source ->
                 val timeout = if (source == LyricAutoSource.QQMusic) 30_000L else 12_000L
                 AutoLyricCandidate(index + 1, withTimeoutOrNull(timeout) { jobs.getValue(source).await() }
                     ?: LyricsDocument(emptyList()))
             }
-            return selectAutomaticLyricCandidate(candidates)?.document ?: LyricsDocument(emptyList())
+            val chosen = selectAutomaticLyricCandidate(candidates)?.document ?: LyricsDocument(emptyList())
+            return supplementTranslations(chosen, jobs.values.toList(), preference)
         } finally {
             jobs.values.forEach { it.cancel() }
         }
+    }
+
+    private suspend fun supplementTranslations(main: LyricsDocument, jobs: List<Deferred<LyricsDocument>>,
+        preference: MeloXLyricPreference): LyricsDocument {
+        if (LyricTranslationPolicy.decide(LyricTranslationPolicy.detectLanguage(main), preference) !=
+            LyricTranslationDecision.NeedTranslation) return main
+        var combined = applyLyricTranslationPreference(main, preference)
+        withTimeoutOrNull(2_000L) {
+            jobs.forEach { job ->
+                if (!job.isCompleted || job.isCancelled) return@forEach
+                val candidate = job.await()
+                if (LyricTranslationPolicy.translationMatches(candidate.lines.mapNotNull { it.translation }, preference)) {
+                    combined = LyricTranslationPolicy.combineTranslations(combined, candidate) ?: combined
+                }
+            }
+        }
+        return combined
     }
 
     private fun process(document: LyricsDocument, preference: MeloXLyricPreference): LyricsDocument =
