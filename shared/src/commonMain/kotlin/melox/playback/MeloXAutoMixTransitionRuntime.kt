@@ -2,6 +2,7 @@ package melox.playback
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import melox.music.model.MusicTrack
 
 data class MeloXAutoMixTransitionSnapshot(
@@ -19,10 +20,18 @@ data class MeloXAutoMixTransitionSnapshot(
 object MeloXAutoMixTransitionRuntime {
     private val mutable = MutableStateFlow(MeloXAutoMixTransitionSnapshot())
     val state = mutable.asStateFlow()
-    fun status(status: String, message: String? = null) { mutable.value = mutable.value.copy(status = status, message = message) }
-    fun update(outgoing: MusicTrack?, incoming: MusicTrack?, progress: Float, positionMs: Long) {
-        mutable.value = MeloXAutoMixTransitionSnapshot("mixing", true, progress.coerceIn(0f, 1f), false, outgoing, incoming, positionMs)
+    fun status(status: String, message: String? = null) {
+        mutable.update { it.copy(status = status, message = message) }
     }
-    fun handoff() { mutable.value = mutable.value.copy(status = "handoff", active = false, progress = 1f, handedOff = true) }
-    fun cancel(message: String? = null) { mutable.value = MeloXAutoMixTransitionSnapshot(if (message == null) "idle" else "fallback", message = message) }
+    fun update(outgoing: MusicTrack?, incoming: MusicTrack?, progress: Float, positionMs: Long) {
+        mutable.update {
+            MeloXAutoMixTransitionSnapshot("mixing", true, progress.coerceIn(0f, 1f), false, outgoing, incoming, positionMs)
+        }
+    }
+    fun handoff() {
+        mutable.update { it.copy(status = "handoff", active = false, progress = 1f, handedOff = true) }
+    }
+    fun cancel(message: String? = null) {
+        mutable.update { MeloXAutoMixTransitionSnapshot(if (message == null) "idle" else "fallback", message = message) }
+    }
 }
