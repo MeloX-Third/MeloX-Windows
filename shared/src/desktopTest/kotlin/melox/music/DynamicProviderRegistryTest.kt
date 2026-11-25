@@ -6,6 +6,31 @@ import kotlin.test.*
 import kotlinx.coroutines.*
 
 class DynamicProviderRegistryTest {
+    @Test fun recommendationsRequireDeclaredCapabilityAndMatchingLiveSource() = runBlocking {
+        val registry = MusicProviderRegistry(listOf(builtIn))
+        val id = SourceId.parse("plugin:example.catalog")!!
+        val own = MusicTrack(MusicResourceId(id, "123"), "Track", listOf(MusicArtistRef(name = "Artist")))
+        var foreign = false
+        var disable = false
+        val provider = object : MusicProvider, HomeFeedCapability {
+            override val sourceId = id
+            override val displayName = "Example"
+            override val capabilities = setOf(MusicCapability.HomeRecommendations)
+            override suspend fun homeFeed(playlistLimit: Int, newSongLimit: Int, rankingLimit: Int): MusicHomeFeed {
+                if (disable) registry.setDynamicEnabled(id, false)
+                return MusicHomeFeed(newSongs = listOf(if (foreign) own.copy(id = MusicResourceId(MusicSource.Netease, "123")) else own, own))
+            }
+        }
+        registry.registerDynamic(provider)
+        val service = UnifiedMusicService(registry)
+        assertEquals(listOf(own), service.collectRecommendationCandidatesSourceIds(setOf(id)))
+        foreign = true
+        assertTrue(service.collectRecommendationCandidatesSourceIds(setOf(id)).isEmpty())
+        foreign = false
+        disable = true
+        assertTrue(service.collectRecommendationCandidatesSourceIds(setOf(id)).isEmpty())
+    }
+
     @Test fun searchRejectsForeignIdentitiesAndResultsFromDisabledProvider() = runBlocking {
         val registry = MusicProviderRegistry(listOf(builtIn))
         val id = SourceId.parse("plugin:example.catalog")!!

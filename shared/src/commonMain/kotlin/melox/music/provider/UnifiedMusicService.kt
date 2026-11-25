@@ -139,20 +139,32 @@ class UnifiedMusicService(
     suspend fun collectRecommendationCandidates(
         sources: Set<MusicSource>,
         limitPerProvider: Int = 30,
+    ): List<MusicTrack> = collectRecommendationCandidatesSourceIds(sources.mapTo(linkedSetOf(), SourceId::fromBuiltIn), limitPerProvider)
+
+    suspend fun collectRecommendationCandidatesSourceIds(
+        sources: Set<SourceId>,
+        limitPerProvider: Int = 30,
     ): List<MusicTrack> = coroutineScope {
-        MusicSource.entries.filter(sources::contains).map { source ->
+        require(sources.size <= 64)
+        val generation = registry.generation
+        sources.sortedBy { it.value }.map { source ->
             async {
-                val feed = registry[source] as? HomeFeedCapability ?: return@async emptyList()
+                val provider = registry[source] ?: return@async emptyList()
+                val feed = (provider as? HomeFeedCapability)?.takeIf { provider.supports(melox.music.provider.MusicCapability.HomeRecommendations) }
+                    ?: return@async emptyList()
                 runCatching {
                     val home = feed.homeFeed(
                         playlistLimit = 6,
                         newSongLimit = limitPerProvider.coerceIn(1, 50),
                         rankingLimit = 4,
                     )
-                    home.newSongs + home.rankings.flatMap { it.previewTracks }
+                    check(registry.generation == generation && registry[source] === provider) { "source changed" }
+                    (home.newSongs + home.rankings.flatMap { it.previewTracks }).also { tracks ->
+                        require(tracks.all { it.id.sourceId == source }) { "recommendation source identity mismatch" }
+                    }
                 }.onFailure { if (it is CancellationException) throw it }.getOrDefault(emptyList())
             }
-        }.awaitAll().flatten().distinctBy { "${it.id.source.storageValue}:${it.id.value}" }
+        }.awaitAll().flatten().distinctBy { it.id }
     }
 
     private data class ProviderResult(

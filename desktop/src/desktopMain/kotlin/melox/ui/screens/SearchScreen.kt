@@ -134,7 +134,8 @@ fun SearchScreen(
     val unifiedService = remember(providerRegistry) { melox.music.provider.UnifiedMusicService(providerRegistry) }
     val selectionRevision by melox.music.provider.MusicProviderSelectionStore.revision.collectAsState()
     val unifiedEnabled = remember(selectionRevision) { melox.music.provider.MusicProviderSelectionStore.unifiedEnabled() }
-    val unifiedSources = remember(selectionRevision) { melox.music.provider.MusicProviderSelectionStore.unifiedSources() }
+    val providerGeneration by providerRegistry.changes.collectAsState()
+    val unifiedSources = remember(selectionRevision) { melox.music.provider.MusicProviderSelectionStore.unifiedSourceIds() }
     var unifiedFailures by remember(source) { mutableStateOf<List<melox.music.provider.UnifiedMusicService.SearchFailure>>(emptyList()) }
     val currentProvider = remember(source) { runCatching { providerRegistry.require(source) }.getOrNull() }
     val providerSongSearch = currentProvider as? SearchCapability
@@ -243,7 +244,7 @@ fun SearchScreen(
         catch (_: Exception) { searchSuggestions = emptyList() }
     }
 
-    LaunchedEffect(query, kind, source, searchTrigger, unifiedEnabled, unifiedSources, sessionRevision, libraryScope) {
+    LaunchedEffect(query, kind, source, searchTrigger, unifiedEnabled, unifiedSources, sessionRevision, libraryScope, providerGeneration) {
         unifiedFailures = emptyList()
         songLinkResult = false
         val keyword = query.trim()
@@ -319,7 +320,7 @@ fun SearchScreen(
                 if (unifiedEnabled && !MeloXSettingsRuntime.desktopLayoutEnabled) {
                     songs = emptyList()
                     providerSongs = emptyList()
-                    runCatching { unifiedService.searchSongs(keyword, unifiedSources, pageSizePerProvider = 25) }
+                    runCatching { unifiedService.searchSourceIds(keyword, unifiedSources, pageSizePerProvider = 25) }
                         .onSuccess { result ->
                             kotlinx.coroutines.currentCoroutineContext().ensureActive()
                             providerSongs = result.aggregated.mapNotNull { it.recommendation?.track }.ifEmpty { result.tracks }
@@ -463,7 +464,7 @@ fun SearchScreen(
                 onRetry = { searchTrigger += 1 },
             )
             else -> Column(Modifier.fillMaxSize().padding(top = 26.dp).testTag("search-state").semantics {
-                stateDescription = if (unifiedEnabled) "Unified>${unifiedSources.sortedBy { it.storageValue }.joinToString(">") { it.storageValue }}" else "Provider>${source.storageValue}"
+                stateDescription = if (unifiedEnabled) "Unified>${unifiedSources.sortedBy { it.value }.joinToString(">") { it.value }}" else "Provider>${source.storageValue}"
             }) {
                 MeloXIosTopBar(title = pinnedString("tab_search"))
                 Spacer(Modifier.height(16.dp))
