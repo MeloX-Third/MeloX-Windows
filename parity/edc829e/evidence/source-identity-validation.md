@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`4e64fc8` 目录 codec 映射歌单、专辑、歌手、榜单、账号及分页，保留 SourceId 与封面来源封装，检查返回分页与请求一致。`gradle :shared:desktopTest --tests "melox.plugin.*"` 成功，1 分 54 秒；首次编译因 Windows 歌单模型没有 Android isEditable 字段失败，移除该字段引用后通过。插件仍只声明读取能力，不提供 PlaylistWrite。实际 Provider 接线及生产运行时待完成。
+
 `165ab01` 移植标准歌曲结果解析与封面来源封装；插件歌曲、歌手和专辑 ID 保留 SourceId 和不透明资源字面值，封面仅接受清单允许的 HTTPS 域名并保存来源封装。`gradle :shared:desktopTest --tests "melox.plugin.*"` 成功，2 分 7 秒，XML 22 项通过、0 失败/错误/跳过。新增验证覆盖百分号资源 ID、相关模型来源、上游字段不猜测、非法数值和封面 URL 精确往返/域名/端口/凭据/重复查询拒绝。实际封面网络请求、缓存撤销和 PluginMusicProvider 仍待接线。
 
 `6b1d8ae` 将 MusicAccountSummary 主身份迁移到 SourceId，保留内置来源构造兼容；插件账号旧 source 访问明确报错。`gradle :shared:desktopTest --tests "melox.plugin.*" :desktop:compileKotlinDesktop` 成功，3 分 16 秒。新增账号测试验证同账号 ID 不同插件来源隔离、copy 保留来源、内置来源构造和认证状态。此项为公共账号模型，凭据仓库及插件账号 UI 尚未完成。

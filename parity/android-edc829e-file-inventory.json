@@ -508,9 +508,10 @@
     {
         "android":  "core/plugin/PluginArtwork.kt",
         "windowsCandidates":  [
-
+                                  "shared/src/commonMain/kotlin/melox/plugin/PluginArtwork.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "IMPLEMENTED",
+        "notes": "165ab01 source provenance wrapper and strict envelope parse, URL/domain/port/duplicate query tests pass. Windows image fetch and cache revocation remain separate pending work."
     },
     {
         "android":  "core/plugin/PluginArtworkFetcher.kt",
@@ -522,9 +523,10 @@
     {
         "android":  "core/plugin/PluginCatalogCodec.kt",
         "windowsCandidates":  [
-
+                                  "shared/src/commonMain/kotlin/melox/plugin/PluginCatalogCodec.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "IMPLEMENTED",
+        "notes": "4e64fc8 source-owned catalogs, accounts, artwork envelopes and strict pagination mapping; plugin tests pass. Production Provider/runtime connection pending."
     },
     {
         "android":  "core/plugin/PluginDiagnostics.kt",
@@ -657,9 +659,10 @@
     {
         "android":  "core/plugin/PluginResultValidator.kt",
         "windowsCandidates":  [
-
+                                  "shared/src/commonMain/kotlin/melox/plugin/PluginResultValidator.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "IMPLEMENTED",
+        "notes": "165ab01 standard track mapping preserves source-owned opaque IDs, rejects guessed fields and invalid numeric/URL input; 22 plugin tests pass."
     },
     {
         "android":  "core/plugin/PluginRuntime.kt",
