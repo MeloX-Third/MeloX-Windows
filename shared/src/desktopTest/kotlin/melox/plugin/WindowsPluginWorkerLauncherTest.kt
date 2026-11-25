@@ -60,6 +60,8 @@ class WindowsPluginWorkerLauncherTest {
             val target = File(classes, it.relativeTo(File("build/classes/kotlin/desktop/main")).path)
             target.parentFile.mkdirs(); it.copyTo(target, overwrite = true)
         }
+        val probeClass = "melox/plugin/WindowsContainerBoundaryProbe.class"
+        File("build/classes/kotlin/desktop/test", probeClass).copyTo(File(classes, probeClass), overwrite = true)
         val native = File(root, "native").apply { mkdirs() }
         jars.filter { it.name.startsWith("javet-v8") }.forEach { jar ->
             java.util.zip.ZipFile(jar).use { zip ->
@@ -103,7 +105,39 @@ class WindowsPluginWorkerLauncherTest {
                 assertEquals("中文😀", value.getString("value"))
                 assertEquals("中文😀", storage.execute("storage.get", "value"))
             }
+            val privateFile = File(storageRoot, "private.txt").apply { writeText("private-fixture") }
+            java.net.ServerSocket(0, 1, java.net.InetAddress.getByName("127.0.0.1")).use { server ->
+                val probe = WindowsPluginWorkerLauncher(listOf(File(runtime, "bin/java.exe").absolutePath,
+                    "-Xmx64m", "-XX:-UsePerfData", "-cp", classpath, "melox.plugin.WindowsContainerBoundaryProbe",
+                    privateFile.absolutePath, root.absolutePath, server.localPort.toString()), root)
+                probe.start().use { worker ->
+                    val report = JSONObject(executor.submit<String> { PluginIpcFrames.read(worker.input) }.get(10, TimeUnit.SECONDS))
+                    assertTrue(report.getBoolean("fileReadDenied"), report.toString())
+                    assertTrue(report.getBoolean("bundleWriteDenied"), report.toString())
+                    assertTrue(report.getBoolean("networkDenied"), report.toString())
+                    assertTrue(report.getBoolean("childDenied"), report.toString())
+                }
+                server.soTimeout = 200
+                assertFailsWith<java.net.SocketTimeoutException> { server.accept().close() }
+            }
         } finally { executor.shutdownNow(); storageRoot.deleteRecursively() }
+    }
+}
+
+/** Test-only trusted probe checks the JVM's OS permissions, independently of JavaScript bindings. */
+object WindowsContainerBoundaryProbe {
+    @JvmStatic fun main(args: Array<String>) {
+        val readDenied = runCatching { File(args[0]).readText() }.isFailure
+        val writeDenied = runCatching { File(args[1], "container-write-probe").writeText("forbidden") }.isFailure
+        val networkDenied = runCatching {
+            java.net.Socket().use { it.connect(java.net.InetSocketAddress("127.0.0.1", args[2].toInt()), 1000) }
+        }.isFailure
+        val childDenied = runCatching {
+            ProcessBuilder(File(System.getenv("SystemRoot"), "System32/cmd.exe").absolutePath, "/c", "exit", "0").start()
+                .also { it.destroyForcibly() }
+        }.isFailure
+        PluginIpcFrames.write(System.out, JSONObject().put("fileReadDenied", readDenied).put("bundleWriteDenied", writeDenied)
+            .put("networkDenied", networkDenied).put("childDenied", childDenied).toString())
     }
 }
 
