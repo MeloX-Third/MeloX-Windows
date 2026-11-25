@@ -1,0 +1,7 @@
+// Validation only: app-image needs no WiX executables, unlike EXE/MSI packages.
+// Compose 1.8.1 still reads wixToolsetDir to add it to the tool search path.
+gradle.projectsEvaluated {
+    gradle.rootProject.project(':desktop').tasks.named('createDistributable').configure {
+        wixToolsetDir.set(gradle.rootProject.layout.projectDirectory)
+    }
+}
