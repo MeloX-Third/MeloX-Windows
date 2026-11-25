@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`03a820d` 歌词绑定选择器对搜索、分页和预览分别应用 30 秒超时并显示可重试错误；外层页面关闭/来源切换取消仍向上传播。`gradle :desktop:desktopTest :desktop:desktopJar` 成功（41 秒）。真实超时窗口输入验收仍待完成。
+
 `d9fe705` 桌面搜索增加现有桌面 picker 控件：列出可见内置来源和具备搜索能力的已启用插件，通过完整 SourceId 导航保留关键词并保存来源。`gradle :desktop:desktopTest :desktop:desktopJar` 成功（49 秒）。此变更晚于 590 项完整共享回归；窗口输入/视觉验收仍待完成。
 
 截至 `4fcfe0a` 完整自动回归：`gradle :shared:desktopTest :desktop:desktopTest :desktop:desktopJar` 成功（2 分 19 秒）。共享 XML 590 项、0 失败/错误/跳过；桌面 UP-TO-DATE 复用此前 11 通过/6 条件跳过，JAR UP-TO-DATE。覆盖随后歌词绑定、网络音质及搜索来源修复；不代表真实插件生产运行、账号/网络/硬件或像素验收完成。AutoMix 历史偶发仍待定位。
