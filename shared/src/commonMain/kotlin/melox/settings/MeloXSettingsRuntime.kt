@@ -47,7 +47,7 @@ enum class MeloXLyricsFontWeight(val composeWeight: FontWeight) {
 object MeloXSettingsRuntime {
     var customBackgroundPath by mutableStateOf("")
         internal set
-    var desktopLayoutEnabled by mutableStateOf(false)
+    var desktopLayoutEnabled by mutableStateOf(true)
         internal set
     var closeToTrayEnabled by mutableStateOf(true)
         internal set
@@ -378,7 +378,7 @@ object MeloXSettingsRuntime {
     fun initializeCritical() {
         MeloXAppLanguage.initialize()
         customBackgroundPath = prefs().getString("player_custom_background_path", "").orEmpty()
-        desktopLayoutEnabled = prefs().getBoolean("general_desktop_layout", false)
+        desktopLayoutEnabled = prefs().getBoolean("general_desktop_layout", true)
         closeToTrayEnabled = prefs().getBoolean("windows_close_to_tray", true)
         immersiveCaptionEnabled = prefs().getBoolean("windows_immersive_caption", false)
         themeMode = runCatching {
@@ -464,7 +464,7 @@ object MeloXSettingsRuntime {
         smartQueueEnabled = MeloXPlaybackModePreferences.smartQueue()
         transitionUiEnabled = prefs().getBoolean("transition_ui_enabled", false)
         showLyricTranslation = prefs().getBoolean("lyrics_translation", true)
-        desktopLayoutEnabled = prefs().getBoolean("general_desktop_layout", false)
+        desktopLayoutEnabled = prefs().getBoolean("general_desktop_layout", true)
         closeToTrayEnabled = prefs().getBoolean("windows_close_to_tray", true)
         immersiveCaptionEnabled = prefs().getBoolean("windows_immersive_caption", false)
         splitScreenEnabled = prefs().getBoolean("general_split_screen", true)
