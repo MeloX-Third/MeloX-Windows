@@ -31,7 +31,8 @@ object DesktopPluginRuntime {
             }
         }) { plugin ->
             val accounts = PluginAccountInvocation(plugin.manifest, PluginAccountVault(plugin.manifest.sourceId), dataRoot)
-            PluginProcessRuntime(plugin, launcher, { _, _ -> error("missing account invocation context") }, context = accounts::capture)
+            PluginProcessRuntime(plugin, launcher, { _, _ -> error("missing account invocation context") }, context = accounts::capture,
+                diagnostic = PluginDiagnostics(plugin.manifest.sourceId)::record)
         }, cancelAuthorization = { source -> oauth.cancel(source) },
             readPersistentDiagnostics = { PluginDiagnostics(it).lines() },
             erasePersistentDiagnostics = { PluginDiagnostics(it).clear() })

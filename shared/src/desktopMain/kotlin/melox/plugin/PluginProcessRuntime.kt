@@ -38,6 +38,7 @@ internal class PluginProcessRuntime(
     private val account: () -> JSONObject? = { null },
     private val current: () -> Boolean = { true },
     private val context: ((String) -> PluginInvocationContext)? = null,
+    private val diagnostic: (String, String, Long) -> Unit = { _, _, _ -> },
 ) : Closeable {
     private val closed = AtomicBoolean()
     private val active = AtomicReference<Closeable?>()
@@ -47,6 +48,8 @@ internal class PluginProcessRuntime(
         check(!closed.get() && current()) { "CANCELLED" }
         require(PluginIpcPolicy.methodAllowed(plugin.manifest, method)) { "UNSUPPORTED_OPERATION" }
         require(busy.compareAndSet(false, true)) { "BUSY" }
+        val started = System.nanoTime()
+        var resultCode = "OK"
         try {
             val token = UUID.randomUUID().toString()
             val selected = context?.invoke(method)
@@ -77,7 +80,13 @@ internal class PluginProcessRuntime(
                 active.compareAndSet(owner, null)
                 try { owner.close() } finally { executor.shutdownNow() }
             }
-        } finally { busy.set(false) }
+        } catch (failure: Throwable) {
+            resultCode = PluginErrors.code(failure)
+            throw failure
+        } finally {
+            busy.set(false)
+            runCatching { diagnostic(method, resultCode, (System.nanoTime() - started) / 1_000_000) }
+        }
     }
 
     override fun close() {

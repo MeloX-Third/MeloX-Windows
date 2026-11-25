@@ -50,6 +50,7 @@ class PluginWorkerProcessTest {
         val source = requireNotNull(SourceId.parse("plugin:test.runtime"))
         val manifest = PluginManifest(source, "Runtime", "1.0.0", 1, "index.js", setOf(PluginCapability.Search), emptySet())
         var launches = 0
+        val diagnostics = PluginDiagnostics(source, root)
         val runtime = PluginProcessRuntime(PluginArchiveReader.Package(manifest,
             "let calls=0; globalThis.meloxPlugin={search:()=>++calls};"), PluginWorkerLauncher {
             launches++
@@ -59,10 +60,12 @@ class PluginWorkerProcessTest {
                 override val output = process.outputStream
                 override fun close() { process.destroyForcibly(); process.waitFor(5, TimeUnit.SECONDS) }
             }
-        }, { token, current -> PluginHostCalls(token, PluginHttpBroker(manifest), PluginStorage(source, base = root), current) })
+        }, { token, current -> PluginHostCalls(token, PluginHttpBroker(manifest), PluginStorage(source, base = root), current) }, diagnostic = diagnostics::record)
         try {
             repeat(2) { assertEquals("1", runtime.invoke("search", JSONArray())) }
             assertEquals(2, launches)
+            assertEquals(2, diagnostics.lines().size)
+            assertTrue(diagnostics.lines().all { it.contains("search") && it.contains("OK") })
             runtime.close()
             assertFailsWith<IllegalStateException> { runtime.invoke("search", JSONArray()) }
             assertEquals(2, launches)
