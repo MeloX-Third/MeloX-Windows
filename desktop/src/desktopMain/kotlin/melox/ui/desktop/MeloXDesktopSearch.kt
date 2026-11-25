@@ -63,6 +63,8 @@ internal fun MeloXDesktopSearchScaffold(
     onOpenMedia: (MeloXSearchMediaItem) -> Unit,
     onSongMenu: (SearchSong, IntOffset?) -> Unit,
     onRetry: () -> Unit,
+    sourceLabel: String = desktopString("ui.common.netease_cloud_music"),
+    sourceFailures: List<String> = emptyList(),
 ) {
     CompositionLocalProvider(LocalTextStyle provides androidx.compose.ui.text.TextStyle(fontFamily = MeloXDesktopTextFontFamily,
         fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)) {
@@ -71,9 +73,12 @@ internal fun MeloXDesktopSearchScaffold(
                 Spacer(Modifier.weight(1f))
                 DesktopSearchField(query, onQuery, onSubmit, suggestions, onSuggestion)
                 Spacer(Modifier.weight(1f))
-                DesktopSearchScope(libraryScope, onScope)
+                DesktopSearchScope(libraryScope, onScope, sourceLabel)
             }
             HorizontalDivider(thickness = .5.dp)
+            if (sourceFailures.isNotEmpty()) Text(sourceFailures.joinToString("；"),
+                modifier = Modifier.fillMaxWidth().testTag("desktop-search-source-failures").padding(horizontal = 34.dp, vertical = 8.dp),
+                color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
             if (query.isNotEmpty()) {
                 DesktopSearchKindPicker(kinds.filter { it != MeloXSearchKind.Users }, kind, onKind)
                 HorizontalDivider(thickness = .5.dp)
@@ -142,15 +147,15 @@ private fun DesktopSearchField(value: String, onChange: (String) -> Unit, onSubm
 }
 
 @Composable
-private fun DesktopSearchScope(library: Boolean, onScope: (Boolean) -> Unit) {
+private fun DesktopSearchScope(library: Boolean, onScope: (Boolean) -> Unit, sourceLabel: String) {
     Row(Modifier.width(236.dp).height(26.dp).clip(RoundedCornerShape(6.dp))
         .background(MaterialTheme.colorScheme.onSurface.copy(alpha = .07f)).padding(2.dp)) {
-        listOf(false to "ui.common.netease_cloud_music", true to "ui.navigation.library").forEach { (value, key) ->
+        listOf(false to sourceLabel, true to desktopString("ui.navigation.library")).forEach { (value, label) ->
             Box(Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(4.dp))
                 .background(if (value == library) MaterialTheme.colorScheme.surface else Color.Transparent)
                 .clickable { onScope(value) }.testTag("desktop-search-scope:${if (value) "library" else "catalog"}"),
                 contentAlignment = Alignment.Center) {
-                Text(desktopString(key), fontSize = 12.sp, maxLines = 1)
+                Text(label, fontSize = 12.sp, maxLines = 1)
             }
         }
     }

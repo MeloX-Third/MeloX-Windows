@@ -317,7 +317,7 @@ fun SearchScreen(
         when (kind) {
             MeloXSearchKind.Songs -> {
                 media = emptyList()
-                if (unifiedEnabled && !MeloXSettingsRuntime.desktopLayoutEnabled) {
+                if (unifiedEnabled) {
                     songs = emptyList()
                     providerSongs = emptyList()
                     runCatching { unifiedService.searchSourceIds(keyword, unifiedSources, pageSizePerProvider = 25) }
@@ -451,6 +451,8 @@ fun SearchScreen(
                 onKind = { kind = it },
                 loading = loading,
                 error = error,
+                sourceLabel = if (unifiedEnabled && kind == MeloXSearchKind.Songs) "聚合搜索" else source.displayName,
+                sourceFailures = unifiedFailures.map { "${it.sourceId.displayName}：${it.message}" },
                 searched = query.isNotBlank(),
                 songs = songs,
                 providerSongs = providerSongs,
