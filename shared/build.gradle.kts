@@ -14,6 +14,9 @@ tasks.withType<org.gradle.api.tasks.testing.Test>().configureEach {
     providers.gradleProperty("pluginWorkerJavaHome").orNull?.let {
         systemProperty("melox.test.workerJavaHome", it)
     }
+    providers.gradleProperty("pluginWorkerAppDirectory").orNull?.let {
+        systemProperty("melox.test.workerAppDirectory", it)
+    }
     doFirst {
         testHome.get().asFile.mkdirs()
         systemProperty("melox.test.workerClasspath", classpath.asPath)

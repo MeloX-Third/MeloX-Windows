@@ -14,8 +14,13 @@ class WindowsPluginWorkerLauncherTest {
         val entries = requireNotNull(System.getProperty("melox.test.workerClasspath")).split(File.pathSeparator).map(::File)
         val jars = entries.filter { it.isFile && (it.name.startsWith("kotlin-stdlib") || it.name.startsWith("json-") || it.name.startsWith("javet")) }
         val runtimeHome = File(System.getProperty("melox.test.workerJavaHome", System.getProperty("java.home")))
+        val packagedApp = System.getProperty("melox.test.workerAppDirectory")?.let(::File)
+        val workerClasspath = if (packagedApp == null) jars + File("build/classes/kotlin/desktop/main").absoluteFile
+            else packagedApp.listFiles().orEmpty().filter { it.isFile && it.extension == "jar" }.also {
+                assertTrue(it.isNotEmpty(), "Packaged app must contain application JARs")
+            }
         val launcher = WindowsPluginWorkerBundle.prepare(root, runtimeHome,
-            jars + File("build/classes/kotlin/desktop/main").absoluteFile)
+            workerClasspath)
         val storageRoot = java.nio.file.Files.createTempDirectory("container-factory-storage").toFile()
         val source = requireNotNull(melox.music.model.SourceId.parse("plugin:test.bundle"))
         val manifest = PluginManifest(source, "Bundle", "1.0.0", 1, "index.js", setOf(PluginCapability.Search), emptySet())
