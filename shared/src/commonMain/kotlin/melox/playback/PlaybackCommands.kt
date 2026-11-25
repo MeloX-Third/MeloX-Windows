@@ -390,6 +390,7 @@ class MeloXDesktopPlayer internal constructor(
 
     private val _repeatMode = MutableStateFlow(MeloXPlaybackModePreferences.repeatMode())
     val repeatMode: StateFlow<Int> = _repeatMode.asStateFlow()
+    private var lastSkipAtMs = Long.MIN_VALUE
 
     private val _shuffleEnabled = MutableStateFlow(MeloXPlaybackModePreferences.shuffle())
     val shuffleEnabled: StateFlow<Boolean> = _shuffleEnabled.asStateFlow()
@@ -848,6 +849,7 @@ class MeloXDesktopPlayer internal constructor(
 
     fun next() {
         if (melox.lan.MeloXLanRuntime.forwardGuestControl("next")) return
+        if (!acceptSkip()) return
         if (items.isEmpty()) return
         val nextIndex = when {
             currentMediaItemIndex < items.lastIndex -> currentMediaItemIndex + 1
@@ -863,6 +865,7 @@ class MeloXDesktopPlayer internal constructor(
 
     fun previous() {
         if (melox.lan.MeloXLanRuntime.forwardGuestControl("previous")) return
+        if (!acceptSkip()) return
         val position = AudioPlayer.getCurrentPositionMs().takeIf { it > 0L } ?: currentPosition
         if (melox.settings.MeloXSettingsRuntime.previousRestartsAfterFiveSeconds && position > 5000L) {
             seekTo(0L)
@@ -951,6 +954,13 @@ class MeloXDesktopPlayer internal constructor(
             PlaybackCommands.REPEAT_ALL -> PlaybackCommands.REPEAT_ONE
             else -> PlaybackCommands.REPEAT_OFF
         })
+    }
+
+    private fun acceptSkip(): Boolean {
+        val now = System.nanoTime() / 1_000_000L
+        if (lastSkipAtMs != Long.MIN_VALUE && now - lastSkipAtMs < 300L) return false
+        lastSkipAtMs = now
+        return true
     }
 
     fun setAutoplayEnabled(enabled: Boolean) {
