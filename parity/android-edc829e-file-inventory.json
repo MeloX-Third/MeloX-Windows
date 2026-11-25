@@ -683,7 +683,8 @@
         "windowsCandidates":  [
 
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "PARTIAL",
+        "notes": "Fixed edc829e runtime/service reviewed: per-call isolated JS context, 8s worker kill, 128KiB result bound and token-bound host-call IPC. Windows PluginHostCalls/IpcPolicy and brokers exist, but restricted process launcher, worker JS execution and production Provider factory remain missing; in-process LX Javet is not equivalent."
     },
     {
         "android":  "core/plugin/PluginStorage.kt",
