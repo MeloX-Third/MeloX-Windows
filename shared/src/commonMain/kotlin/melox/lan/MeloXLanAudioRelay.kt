@@ -24,6 +24,7 @@ internal class LanAudioRelay(private val bind: InetAddress, private val peer: In
     private val used = AtomicBoolean()
     private val active = AtomicBoolean(true)
     private val permits = Semaphore(4)
+    private val privateStreams = java.util.concurrent.ConcurrentHashMap.newKeySet<InputStream>()
     private val token = ByteArray(32).also { SecureRandom().nextBytes(it) }.joinToString("") { "%02x".format(it) }
     private val workers = Executors.newFixedThreadPool(4) { Thread(it, "MeloX-LAN-relay").apply { isDaemon = true } }
     private val server = HttpServer.create(InetSocketAddress(bind, 0), 4).apply {
@@ -51,7 +52,29 @@ internal class LanAudioRelay(private val bind: InetAddress, private val peer: In
                     val source = resolve(track)
                     val range = exchange.requestHeaders.getFirst("Range")
                     val uri = runCatching { URI(source.uri) }.getOrNull()
-                    if (uri?.scheme in listOf("http", "https")) {
+                    if (melox.plugin.PluginPlaybackInputs.isPrivate(source.uri)) {
+                        // Private progressive inputs have no byte-range metadata. HTTP permits
+                        // ignoring Range and returning the complete representation with 200.
+                        exchange.responseHeaders.set("Accept-Ranges", "none")
+                        policy.contentType?.let { exchange.responseHeaders.set("Content-Type", it) }
+                        if (policy.dlnaHeaders) exchange.responseHeaders.set("contentFeatures.dlna.org", "DLNA.ORG_OP=00;DLNA.ORG_CI=0")
+                        melox.plugin.PluginPlaybackInputs.open(source.uri).use { input ->
+                            privateStreams.add(input)
+                            try {
+                                check(active.get()) { "Audio relay closed" }
+                                failure = null
+                                exchange.sendResponseHeaders(200, if (exchange.requestMethod == "HEAD") -1 else 0)
+                                if (exchange.requestMethod != "HEAD") {
+                                    val buffer = ByteArray(32768)
+                                    while (active.get()) {
+                                        val count = input.read(buffer)
+                                        if (count < 0) break
+                                        exchange.responseBody.write(buffer, 0, count)
+                                    }
+                                }
+                            } finally { privateStreams.remove(input) }
+                        }
+                    } else if (uri?.scheme in listOf("http", "https")) {
                         val request = Request.Builder().url(source.uri).apply {
                             source.headers.forEach { (key, value) -> header(key, value) }
                             if (range != null) header("Range", range)
@@ -113,5 +136,11 @@ internal class LanAudioRelay(private val bind: InetAddress, private val peer: In
     fun resourceUrl(id: String): String {
         return "http://${bind.hostAddress}:${server.address.port}${policy.path}?token=$token&songId=${URLEncoder.encode(id, "UTF-8")}"
     }
-    override fun close() { if (active.compareAndSet(true, false)) { server.stop(0); workers.shutdownNow() } }
+    override fun close() {
+        if (active.compareAndSet(true, false)) {
+            server.stop(0)
+            privateStreams.forEach { runCatching { it.close() } }
+            workers.shutdownNow()
+        }
+    }
 }
