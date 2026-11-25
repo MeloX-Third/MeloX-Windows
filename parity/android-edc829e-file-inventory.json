@@ -493,9 +493,10 @@
     {
         "android":  "core/plugin/PluginAccountVault.kt",
         "windowsCandidates":  [
-
+                                  "shared/src/desktopMain/kotlin/melox/plugin/PluginAccountVault.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "PARTIAL",
+        "notes": "2350574 Windows DPAPI slots with source/account binding, durable session stamps and refresh CAS; 44 plugin tests pass, including 3 account tests without skips. Production account UI, OAuth and runtime integration pending."
     },
     {
         "android":  "core/plugin/PluginArchiveReader.kt",
@@ -516,9 +517,11 @@
     {
         "android":  "core/plugin/PluginArtworkFetcher.kt",
         "windowsCandidates":  [
-
+                                  "shared/src/commonMain/kotlin/melox/plugin/PluginArtworkAccess.kt",
+                                  "desktop/src/desktopMain/kotlin/melox/ui/artwork/PluginDesktopArtwork.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "PARTIAL",
+        "notes": "1a60ba6 source/generation guarded image transport; desktop image, palette and share paths skip plugin caches; dimension/pixel bounds and revocation tests pass, desktop tests/JAR pass. Live plugin runtime and network acceptance pending."
     },
     {
         "android":  "core/plugin/PluginCatalogCodec.kt",
