@@ -123,6 +123,7 @@ private fun NeteaseHome(
     var activeAction by remember { mutableStateOf<String?>(null) }
     var dailySongs by remember { mutableStateOf<List<melox.model.SearchSong>>(emptyList()) }
     var desktopActionKey by remember { mutableStateOf("daily_songs") }
+    var dailyHistoryOpen by remember { mutableStateOf(false) }
     var recentSongs by remember { mutableStateOf<List<melox.model.SearchSong>>(emptyList()) }
     var homePodcast by remember { mutableStateOf<melox.network.MeloXPodcast?>(null) }
     var homeEpisode by remember { mutableStateOf<Long?>(null) }
@@ -226,7 +227,18 @@ private fun NeteaseHome(
                             onOpenPlaylist(radar)
                         }
                         else -> {
-                            val songs = withContext(Dispatchers.IO) { action.run(client, session) }
+                            val archiveCookie = melox.account.NeteaseSessionStore.readCookie()
+                            val songs = withContext(Dispatchers.IO) {
+                                if (title == "每日推荐") melox.library.NeteaseLibraryClient(cookieProvider = { archiveCookie }).dailyRecommendedSongs()
+                                else action.run(client, session)
+                            }
+                            if (archiveCookie != melox.account.NeteaseSessionStore.readCookie()) return@launch
+                            if (title == "每日推荐" && archiveCookie == melox.account.NeteaseSessionStore.readCookie()) {
+                                val saved = melox.dailyhistory.DailyHistoryStore.instance.archive(
+                                    melox.dailyhistory.DailyHistoryStore.accountKey(archiveCookie),
+                                    java.time.LocalDate.now().toString(), songs)
+                                if (songs.isNotEmpty() && !saved) error = "每日推荐已加载，但历史记录保存失败"
+                            }
                             if (title == "心动模式") songs.firstOrNull()?.let {
                                 melox.playback.PlaybackCommands.playQueue(songs, it.id, heartMode = true)
                             } ?: run { error = "没有可播放的推荐歌曲" }
@@ -259,7 +271,10 @@ private fun NeteaseHome(
                     songs.firstOrNull()?.let { melox.playback.PlaybackCommands.playQueue(songs, it.id) }
                 } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
                 catch (failure: Exception) { error = failure.message }
-            } }, onPodcast = ::openHomePodcastItem, onTool = onOpenTool)
+             } }, onPodcast = ::openHomePodcastItem, onTool = onOpenTool, onDailyHistory = { dailyHistoryOpen = true })
+        melox.ui.navigation.MeloXDetailOverlay(dailyHistoryOpen.takeIf { it }, { dailyHistoryOpen = false }) {
+            melox.ui.desktop.MeloXDesktopDailyHistory { dailyHistoryOpen = false }
+        }
         melox.ui.navigation.MeloXDetailOverlay(dailySongs.takeIf { it.isNotEmpty() }, { dailySongs = emptyList() }) { songs ->
             DailySongsPage(songs, onBack = { dailySongs = emptyList() }, title = melox.ui.desktop.desktopString("ui.home.action.$desktopActionKey"))
         }

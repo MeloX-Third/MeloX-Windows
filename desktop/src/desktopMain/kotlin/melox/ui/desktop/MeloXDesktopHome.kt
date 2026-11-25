@@ -61,7 +61,8 @@ private val quickActions = listOf(
 @Composable
 internal fun MeloXDesktopHome(content: NeteaseHomeContent?, recentSongs: List<SearchSong>, activeAction: String?, loading: Boolean, error: String?,
     onAction: (String) -> Unit, onPlaylist: (NeteasePlaylistSummary) -> Unit, onPlayPlaylist: (NeteasePlaylistSummary) -> Unit,
-    onAlbum: (Long, String) -> Unit, onPlayAlbum: (Long) -> Unit, onPodcast: (melox.library.NeteaseHomePodcast) -> Unit, onTool: (String) -> Unit) {
+    onAlbum: (Long, String) -> Unit, onPlayAlbum: (Long) -> Unit, onPodcast: (melox.library.NeteaseHomePodcast) -> Unit, onTool: (String) -> Unit,
+    onDailyHistory: () -> Unit = {}) {
     val reserved = 0
     val currentTrack by AudioPlayer.currentTrack.collectAsState()
     val listState = rememberLazyListState()
@@ -81,7 +82,7 @@ internal fun MeloXDesktopHome(content: NeteaseHomeContent?, recentSongs: List<Se
             item("title") { Text(desktopString("ui.navigation.home"), Modifier.height(55.dp).wrapContentHeight(unbounded = true),
                 fontFamily = MeloXDesktopDisplayFontFamily, fontSize = 46.sp, lineHeight = 55.sp, fontWeight = FontWeight.Bold) }
             item("quick-actions") {
-                HomeSection(desktopString("ui.home.section.quick_actions")) {
+                HomeSection(desktopString("ui.home.section.quick_actions"), desktopPlatformString("daily-history"), onDailyHistory) {
                     DesktopHomePagingShelf(quickActions, { it.key }, heroWidth, 20.dp, reserved, "actions") { action ->
                         val artwork = when (action.key) {
                             "private_roaming" -> content?.radarPlaylists?.firstOrNull()?.coverUrl ?: content?.playlists?.firstOrNull()?.coverUrl
