@@ -60,7 +60,7 @@ class MeloXLyricsLoad(
         val key = key(track, registry, preference)
         val initial = load(key)
         emit(initial)
-        if (track.id.sourceId.builtIn == null || track.id.sourceId.builtIn == MusicSource.Bilibili || !key.automatic || initial.source == LyricSource.AmlL || initial.lines.isEmpty()) return@flow
+        if (key.binding != null && hasWordTiming(initial) || track.id.sourceId.builtIn == null || track.id.sourceId.builtIn == MusicSource.Bilibili || !key.automatic || initial.source == LyricSource.AmlL || initial.lines.isEmpty()) return@flow
         val upgrade = workerScope.async { safe { sources.amll(track, registry, key.preference) } }
         try {
             val authored = withTimeoutOrNull(15_000L) { upgrade.await() } ?: return@flow

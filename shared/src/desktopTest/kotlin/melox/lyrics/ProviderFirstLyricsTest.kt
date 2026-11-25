@@ -14,6 +14,28 @@ import melox.settings.MeloXSettingsRuntime
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ProviderFirstLyricsTest {
+    @Test fun explicitWordTimedBindingCannotBeReplacedByAutomaticAmllUpgrade() = runTest {
+        val selected = MusicTrack(MusicResourceId(MusicSource.Netease, "bound-upgrade-fixture"), "bound", emptyList())
+        val automatic = MeloXSettingsRuntime.automaticLyricSelectionEnabled
+        val strong = MeloXSettingsRuntime.lyricStrongBindingEnabled
+        val previous = LyricBindingStore.read(selected.id)
+        MeloXSettingsRuntime.automaticLyricSelectionEnabled = true
+        MeloXSettingsRuntime.lyricStrongBindingEnabled = true
+        LyricBindingStore.write(selected.id, LyricBinding(BoundLyricSource.Provider, MusicSource.QQMusic, "chosen", "bound", "artist", 1000))
+        try {
+            val loader = MeloXLyricsLoad(object : LyricDocumentSources() {
+                override suspend fun binding(binding: LyricBinding, preference: MeloXLyricPreference) = document("chosen", LyricSource.QQMusic, true)
+                override suspend fun amll(track: MusicTrack, registry: MusicProviderRegistry?, preference: MeloXLyricPreference): LyricsDocument =
+                    error("explicit binding must not start automatic upgrade")
+            }, backgroundScope)
+            assertEquals(listOf("chosen"), loader.observe(selected).toList().map { it.lines.single().text })
+        } finally {
+            if (previous == null) LyricBindingStore.remove(selected.id) else LyricBindingStore.write(selected.id, previous)
+            MeloXSettingsRuntime.automaticLyricSelectionEnabled = automatic
+            MeloXSettingsRuntime.lyricStrongBindingEnabled = strong
+        }
+    }
+
     private val track = MusicTrack(MusicResourceId(MusicSource.Netease, "test-fast-lyrics"), "song", emptyList())
     private fun document(text: String, source: LyricSource, word: Boolean = false) = LyricsDocument(
         listOf(LyricLine(1_000L, text = text, syllables = if (word) listOf(LyricSyllable(text, 1_000, 2_000)) else emptyList())),
