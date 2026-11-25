@@ -36,9 +36,14 @@ object MusicProviderSelectionStore {
         mutableRevision.update { it + 1 }
     }
 
-    fun unifiedSourceIds(): Set<SourceId> = unifiedSources().mapTo(linkedSetOf(), SourceId::fromBuiltIn) +
-        prefs().getStringSet(KeyUnifiedPlugins, emptySet()).orEmpty()
-            .mapNotNull(SourceId::parse).filter { it.builtIn == null }
+    fun unifiedSourceIds(): Set<SourceId> {
+        val preferences = prefs()
+        val builtIns = if (preferences.contains(KeyUnifiedSources)) unifiedSources() else
+            selectedSourceId().builtIn?.let { setOf(it) }.orEmpty()
+        return builtIns.mapTo(linkedSetOf(), SourceId::fromBuiltIn) +
+            preferences.getStringSet(KeyUnifiedPlugins, emptySet()).orEmpty()
+                .mapNotNull(SourceId::parse).filter { it.builtIn == null }
+    }
 
     fun setUnifiedPluginEnabled(source: SourceId, enabled: Boolean) {
         require(source.builtIn == null)
@@ -75,7 +80,7 @@ object MusicProviderSelectionStore {
     fun setUnifiedEnabled(enabled: Boolean) {
         val preferences = prefs()
         preferences.putBoolean(KeyUnifiedEnabled, enabled)
-        if (enabled && !preferences.contains(KeyUnifiedSources)) {
+        if (enabled && !preferences.contains(KeyUnifiedSources) && selectedSourceId().builtIn != null) {
             preferences.putStringSet(
                 KeyUnifiedSources,
                 setOf(selectedSource().storageValue),
