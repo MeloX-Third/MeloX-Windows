@@ -65,6 +65,8 @@ internal fun MeloXDesktopSearchScaffold(
     onRetry: () -> Unit,
     sourceLabel: String = desktopString("ui.common.netease_cloud_music"),
     sourceFailures: List<String> = emptyList(),
+    providerMedia: List<DesktopSearchProviderMedia> = emptyList(),
+    onOpenProviderMedia: (Int) -> Unit = {},
 ) {
     CompositionLocalProvider(LocalTextStyle provides androidx.compose.ui.text.TextStyle(fontFamily = MeloXDesktopTextFontFamily,
         fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)) {
@@ -95,7 +97,8 @@ internal fun MeloXDesktopSearchScaffold(
                         if (songs.isNotEmpty()) DesktopSearchSongs(songs, onPlaySong, onSongMenu)
                          else DesktopSearchProviderSongs(providerSongs, onPlayProvider, onSongMenu)
                     }
-                    songs.isEmpty() && providerSongs.isEmpty() && media.isEmpty() -> DesktopSearchUnavailable(
+                     providerMedia.isNotEmpty() -> DesktopSearchProviderMediaGrid(providerMedia, kind, onOpenProviderMedia)
+                     songs.isEmpty() && providerSongs.isEmpty() && media.isEmpty() -> DesktopSearchUnavailable(
                         desktopString("ui.desktop.search.empty.title"), desktopString("ui.desktop.search.empty.message"))
                     else -> DesktopSearchMediaGrid(media, kind, onOpenMedia)
                 }
@@ -203,6 +206,30 @@ private fun DesktopSearchProviderSongs(tracks: List<MusicTrack>, onPlay: (MusicT
         }
     }
 }
+
+@Composable
+private fun DesktopSearchProviderMediaGrid(items: List<DesktopSearchProviderMedia>, kind: MeloXSearchKind, onOpen: (Int) -> Unit) {
+    BoxWithConstraints(Modifier.fillMaxSize().padding(horizontal = 34.dp, vertical = 24.dp)) {
+        val count = floor((maxWidth.value + 20) / 150).toInt().coerceAtLeast(1)
+        val width = ((maxWidth.value - (count - 1) * 20) / count).coerceAtMost(210f).dp
+        val scroll = rememberLazyListState()
+        LazyColumn(Modifier.fillMaxSize().desktopPromotedDragScroll(scroll).testTag("desktop-search-provider-media-scroll"),
+            state = scroll, verticalArrangement = Arrangement.spacedBy(24.dp)) {
+            itemsIndexed(items.withIndex().toList().chunked(count), key = { _, row -> row.first().value.id }) { _, row ->
+                Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+                    row.forEach { (index, item) ->
+                        DesktopHomeMediaCard(item.title, item.subtitle, item.artworkUrl, width,
+                            "desktop-search-provider-result:${item.id}", item.trackCount,
+                            onOpen = { onOpen(index) }, isCircular = kind == MeloXSearchKind.Artists)
+                    }
+                }
+            }
+        }
+    }
+}
+
+internal data class DesktopSearchProviderMedia(val id: melox.music.model.MusicResourceId, val title: String,
+    val subtitle: String, val artworkUrl: String?, val trackCount: Long = 0)
 
 @Composable
 private fun DesktopSearchMediaGrid(items: List<MeloXSearchMediaItem>, kind: MeloXSearchKind, onOpen: (MeloXSearchMediaItem) -> Unit) {

@@ -473,6 +473,18 @@ fun SearchScreen(
                 songs = songs,
                 providerSongs = providerSongs,
                 media = media,
+                providerMedia = when (kind) {
+                    MeloXSearchKind.Playlists -> providerPlaylists.map { melox.ui.desktop.DesktopSearchProviderMedia(it.id, it.title, it.creatorName.orEmpty(), it.artworkUrl) }
+                    MeloXSearchKind.Albums -> providerAlbums.map { melox.ui.desktop.DesktopSearchProviderMedia(it.id, it.title, it.artists.joinToString(" / ") { artist -> artist.name }, it.artworkUrl, it.trackCount ?: 0) }
+                    MeloXSearchKind.Artists -> providerArtists.map { melox.ui.desktop.DesktopSearchProviderMedia(it.id, it.name, "", it.artworkUrl, it.songCount ?: 0) }
+                    else -> emptyList()
+                },
+                onOpenProviderMedia = { index -> when (kind) {
+                    MeloXSearchKind.Playlists -> selectedProviderPlaylist = providerPlaylists.getOrNull(index)
+                    MeloXSearchKind.Albums -> selectedProviderAlbum = providerAlbums.getOrNull(index)
+                    MeloXSearchKind.Artists -> selectedProviderArtist = providerArtists.getOrNull(index)
+                    else -> Unit
+                } },
                 onPlaySong = { song -> PlaybackCommands.playQueue(songs, song.id) },
                 onPlayProvider = { track -> ProviderPlaybackCommands.playQueue(
                     tracks = providerSongs, selectedTrackId = track.id,
