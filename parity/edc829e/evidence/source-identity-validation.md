@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`c8809d5` 旧 PlaybackFallbackChain 对动态来源明确返回无回退，不再访问会抛错的旧枚举；内置跨来源候选按完整 SourceId 比对。`gradle :shared:desktopTest --tests "melox.playback.*" --tests "melox.plugin.*" --tests "melox.download.*" :desktop:desktopTest :desktop:desktopJar` 成功（2 分 16 秒），共享层 XML 174 项通过、0 失败/错误/跳过。此为专项回归，不等于完整迁移验收。
+
 `90f9735` 插件下载在传输期间订阅注册表变化，generation/实例失效时主动关闭 broker，终止阻塞连接；传输结束取消监听。插件/下载专项及桌面编译成功（1 分 15 秒）。真实来源停用贯穿下载的窗口验收和账号撤销联动仍待完成。
 
 `e1eda90` 使用本地真实 TLS 服务验证媒体读取：默认系统信任拒绝测试自签证书；仅测试构造器注入信任该证书的 trust manager 后完成 TLS 握手并读取音频体，服务端请求包含 handshake。未关闭主机名验证，生产默认客户端保持系统信任与公网 DNS 策略。插件/下载专项及桌面编译成功（1 分 19 秒）。本地 TLS 的内部路由/DNS 注入不等于公网 DNS、真实插件服务或账号媒体验收。
