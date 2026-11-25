@@ -547,9 +547,10 @@
     {
         "android":  "core/plugin/PluginHttpBroker.kt",
         "windowsCandidates":  [
-
+                                  "shared/src/commonMain/kotlin/melox/plugin/PluginHttpBroker.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "PARTIAL",
+        "notes": "55a1453 isolated bounded HTTP/image broker, authorized redirects, request quotas and revocation checks; 40 plugin tests pass with deterministic HTTP fixtures. Credentials, OAuth token exchange, progressive media and runtime integration pending."
     },
     {
         "android":  "core/plugin/PluginIpcPolicy.kt",
