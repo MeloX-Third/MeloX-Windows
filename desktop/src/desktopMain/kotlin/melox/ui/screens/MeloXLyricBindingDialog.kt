@@ -72,7 +72,8 @@ internal fun MeloXLyricBindingDialog(track: MusicTrack, onDismiss: () -> Unit) {
                 scope.launch {
                     busy = true; searched = false; error = null; selected = null; preview = null; results = emptyList(); hasMore = false
                     try {
-                        val response = kotlinx.coroutines.withTimeout(30_000) { withContext(Dispatchers.IO) { (provider as SearchCapability).searchSongs(text, 1, 30) } }
+                        val response = kotlinx.coroutines.withTimeoutOrNull(30_000) { withContext(Dispatchers.IO) { (provider as SearchCapability).searchSongs(text, 1, 30) } }
+                            ?: error("搜索超时，请重试")
                         if (current(provider, stamp)) {
                             results = response.items.filter { it.id.sourceId == source }; searched = true
                             page = 1; hasMore = response.hasMore; searchedQuery = text
@@ -91,10 +92,10 @@ internal fun MeloXLyricBindingDialog(track: MusicTrack, onDismiss: () -> Unit) {
                 scope.launch {
                     busy = true; error = null; selected = null; preview = null
                     try {
-                        val document = withContext(Dispatchers.IO) {
+                        val document = kotlinx.coroutines.withTimeoutOrNull(30_000) { withContext(Dispatchers.IO) {
                             if (amll) AmlldbLyricsClient().lyrics(requireNotNull(amllQuery(candidate)), requestedLyricPreference())
                             else (provider as LyricsCapability).lyrics(candidate, requestedLyricPreference())
-                        }
+                        } } ?: error("歌词加载超时，请重试")
                         if (current(provider, stamp)) {
                             selected = candidate; preview = document
                             if (document.lines.none { it.syllables.isNotEmpty() }) error = "此结果没有逐字歌词，无法建立强绑定"
@@ -111,9 +112,9 @@ internal fun MeloXLyricBindingDialog(track: MusicTrack, onDismiss: () -> Unit) {
                 scope.launch {
                     busy = true; error = null
                     try {
-                        val response = kotlinx.coroutines.withTimeout(30_000) { withContext(Dispatchers.IO) {
+                        val response = kotlinx.coroutines.withTimeoutOrNull(30_000) { withContext(Dispatchers.IO) {
                             (provider as SearchCapability).searchSongs(searchedQuery, nextPage, 30)
-                        } }
+                        } } ?: error("加载超时，请重试")
                         if (current(provider, stamp)) {
                             results = (results + response.items.filter { it.id.sourceId == source }).distinctBy { it.id }
                             page = nextPage; hasMore = response.hasMore
