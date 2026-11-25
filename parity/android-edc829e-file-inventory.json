@@ -584,7 +584,7 @@
                                   "shared/src/commonMain/kotlin/melox/plugin/PluginManager.kt"
                               ],
         "review":  "PARTIAL",
-        "notes": "87615d8 shared lifecycle, upgrade approval, restore, account withdrawal and primary failure ownership; 15 plugin tests pass. Production factory/startup, diagnostics and real account lifecycle pending."
+        "notes": "87615d8 shared lifecycle; dc346e3 OAuth commit gate; 0c8ff33 failed enable persistence closes candidate and failed disable retains running provider. Production factory/startup, management UI and real account lifecycle pending."
     },
     {
         "android":  "core/plugin/PluginManifest.kt",
@@ -618,7 +618,7 @@
                                   "shared/src/desktopMain/kotlin/melox/plugin/PluginDesktopOAuth.kt"
                               ],
         "review":  "PARTIAL",
-        "notes": "dde35c3 host PKCE/token exchange; dc346e3 claimed cancellable sessions and lifecycle-gated account commit; 51 plugin tests and desktop compile pass. Refresh/reauthorization and production UI/runtime integration remain under implementation."
+        "notes": "dde35c3 host PKCE/token exchange; dc346e3 claimed cancellable sessions and lifecycle-gated account commit; 29a4ab1/1793416 refresh and captured-slot reauthorization, stale-session rejection. Real loopback test and desktop compile pass. Actual browser/service authorization and production UI/runtime integration pending."
     },
     {
         "android":  "core/plugin/PluginOAuthCallback.kt",
@@ -627,7 +627,7 @@
                                   "shared/src/desktopMain/kotlin/melox/plugin/PluginOAuthBrowserLogin.kt"
                               ],
         "review":  "PARTIAL",
-        "notes": "dc346e3 callback target/state binding, duplicate parameters/replay rejection, cancellation and expiration tests pass. Actual loopback socket acceptance still pending."
+        "notes": "dc346e3 callback target/state binding, duplicate parameters/replay rejection, cancellation and expiration; 29a4ab1 actual loopback socket rejects wrong state then accepts correct callback, commits account and closes port. External browser/service acceptance pending."
     },
     {
         "android":  "core/plugin/PluginOAuthCallbackActivity.kt",
@@ -635,7 +635,7 @@
                                   "shared/src/desktopMain/kotlin/melox/plugin/PluginOAuthBrowserLogin.kt"
                               ],
         "review":  "PARTIAL",
-        "notes": "dc346e3 Windows loopback browser adapter replaces Android Activity; listener binds before browser and closes on coroutine completion. Production UI and real socket/browser validation pending."
+        "notes": "dc346e3 Windows loopback browser adapter replaces Android Activity; listener binds before browser and closes on coroutine completion. 29a4ab1 real loopback socket test passes; production UI and real browser/service validation pending."
     },
     {
         "android":  "core/plugin/PluginPackageStore.kt",
@@ -643,7 +643,7 @@
                                   "shared/src/commonMain/kotlin/melox/plugin/PluginPackageStore.kt"
                               ],
         "review":  "PARTIAL",
-        "notes": "39e1bd3 Windows atomic package/publisher journal, enabled intent, quarantine and uninstall pin retention. Install/update/reload and five exception fault checkpoints pass. Independent process death and signed rotation recovery still pending."
+        "notes": "39e1bd3 Windows atomic package/publisher journal, enabled intent, quarantine and uninstall pin retention. b730c87 independent JVM halt during real RSA publisher rotation at decision/archive/publisher durable checkpoints recovers consistent archive/publisher and clears journal; 55 plugin tests pass. Production management and power-loss durability acceptance pending."
     },
     {
         "android":  "core/plugin/PluginPackageTrust.kt",
