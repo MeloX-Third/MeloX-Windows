@@ -298,7 +298,10 @@ fun MeloXApp(onExit: () -> Unit = { kotlin.system.exitProcess(0) }) {
     LaunchedEffect(searchLaunch) {
         if (searchLaunch != null) {
             closePlayer()
-            searchLaunch.source?.let { MusicProviderSelectionStore.setSelectedSource(it); selectedSource = it }
+            searchLaunch.sourceId?.let {
+                MusicProviderSelectionStore.setSelectedSourceId(it)
+                it.builtIn?.let { builtIn -> selectedSource = builtIn }
+            }
             melox.ui.navigation.MeloXCollectionLaunchBus.dismiss()
             selectedTab = AppTab.Search
         }

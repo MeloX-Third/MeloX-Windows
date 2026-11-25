@@ -131,14 +131,16 @@ fun SearchScreen(
     val library = remember(cookie) { NeteaseLibraryClient(cookie) }
     val operations = remember(cookie) { NeteaseMusicOperationsClient(cookie) }
     val providerRegistry = remember { MeloXMusicProviders.create() }
-    var requestedSource by remember(source) { mutableStateOf<melox.music.model.SourceId?>(null) }
+    val selectionRevision by melox.music.provider.MusicProviderSelectionStore.revision.collectAsState()
+    var requestedSource by remember(source, selectionRevision) {
+        mutableStateOf(melox.music.provider.MusicProviderSelectionStore.selectedSourceId().takeIf { it.builtIn == null })
+    }
     val effectiveSource = requestedSource ?: melox.music.model.SourceId.fromBuiltIn(source)
     val unifiedService = remember(providerRegistry) { melox.music.provider.UnifiedMusicService(providerRegistry) }
-    val selectionRevision by melox.music.provider.MusicProviderSelectionStore.revision.collectAsState()
     val unifiedEnabled = remember(selectionRevision) { melox.music.provider.MusicProviderSelectionStore.unifiedEnabled() }
     val providerGeneration by providerRegistry.changes.collectAsState()
     val unifiedSources = remember(selectionRevision) { melox.music.provider.MusicProviderSelectionStore.unifiedSourceIds() }
-    var unifiedFailures by remember(source) { mutableStateOf<List<melox.music.provider.UnifiedMusicService.SearchFailure>>(emptyList()) }
+    var unifiedFailures by remember(effectiveSource, providerGeneration) { mutableStateOf<List<melox.music.provider.UnifiedMusicService.SearchFailure>>(emptyList()) }
     val currentProvider = remember(effectiveSource, providerGeneration) { providerRegistry[effectiveSource] }
     val providerSongSearch = currentProvider as? SearchCapability
     val providerCatalog = currentProvider as? CatalogSearchCapability
@@ -160,30 +162,30 @@ fun SearchScreen(
     var searchTrigger by rememberSaveable(source.name) { mutableIntStateOf(0) }
     var skipSearchDebounce by rememberSaveable(source.name) { mutableStateOf(false) }
     var kind by rememberSaveable(source.name) { mutableStateOf(MeloXSearchKind.Songs) }
-    var songs by remember(source) { mutableStateOf<List<SearchSong>>(emptyList()) }
-    var providerSongs by remember(source) { mutableStateOf<List<MusicTrack>>(emptyList()) }
-    var providerPlaylists by remember(source) { mutableStateOf<List<MusicPlaylistSummary>>(emptyList()) }
-    var providerAlbums by remember(source) { mutableStateOf<List<MusicAlbumSummary>>(emptyList()) }
-    var providerArtists by remember(source) { mutableStateOf<List<MusicArtistSummary>>(emptyList()) }
-    var recommendations by remember(source) { mutableStateOf<List<NeteasePlaylistSummary>>(emptyList()) }
-    var providerRecommendations by remember(source) { mutableStateOf<List<MusicPlaylistSummary>>(emptyList()) }
+    var songs by remember(effectiveSource, providerGeneration) { mutableStateOf<List<SearchSong>>(emptyList()) }
+    var providerSongs by remember(effectiveSource, providerGeneration) { mutableStateOf<List<MusicTrack>>(emptyList()) }
+    var providerPlaylists by remember(effectiveSource, providerGeneration) { mutableStateOf<List<MusicPlaylistSummary>>(emptyList()) }
+    var providerAlbums by remember(effectiveSource, providerGeneration) { mutableStateOf<List<MusicAlbumSummary>>(emptyList()) }
+    var providerArtists by remember(effectiveSource, providerGeneration) { mutableStateOf<List<MusicArtistSummary>>(emptyList()) }
+    var recommendations by remember(effectiveSource, providerGeneration) { mutableStateOf<List<NeteasePlaylistSummary>>(emptyList()) }
+    var providerRecommendations by remember(effectiveSource, providerGeneration) { mutableStateOf<List<MusicPlaylistSummary>>(emptyList()) }
     var history by remember { mutableStateOf(searchHistory()) }
     var categoryLoading by remember(source, sessionRevision) { mutableStateOf(false) }
     var categoryError by remember(source, sessionRevision) { mutableStateOf<String?>(null) }
-    var media by remember(source) { mutableStateOf<List<MeloXSearchMediaItem>>(emptyList()) }
-    var categoryTitle by remember(source) { mutableStateOf<String?>(null) }
-    var categoryPlaylists by remember(source) { mutableStateOf<List<NeteasePlaylistSummary>>(emptyList()) }
-    var selectedDetail by remember(source) { mutableStateOf<MeloXSearchMediaItem?>(null) }
-    var selectedProviderPlaylist by remember(source) { mutableStateOf<MusicPlaylistSummary?>(null) }
-    var selectedProviderAlbum by remember(source) { mutableStateOf<MusicAlbumSummary?>(null) }
-    var selectedProviderArtist by remember(source) { mutableStateOf<MusicArtistSummary?>(null) }
+    var media by remember(effectiveSource, providerGeneration) { mutableStateOf<List<MeloXSearchMediaItem>>(emptyList()) }
+    var categoryTitle by remember(effectiveSource) { mutableStateOf<String?>(null) }
+    var categoryPlaylists by remember(effectiveSource) { mutableStateOf<List<NeteasePlaylistSummary>>(emptyList()) }
+    var selectedDetail by remember(effectiveSource, providerGeneration) { mutableStateOf<MeloXSearchMediaItem?>(null) }
+    var selectedProviderPlaylist by remember(effectiveSource, providerGeneration) { mutableStateOf<MusicPlaylistSummary?>(null) }
+    var selectedProviderAlbum by remember(effectiveSource, providerGeneration) { mutableStateOf<MusicAlbumSummary?>(null) }
+    var selectedProviderArtist by remember(effectiveSource, providerGeneration) { mutableStateOf<MusicArtistSummary?>(null) }
     val destinationFocus = remember { FocusRequester() }
     LaunchedEffect(selectedDetail?.id, selectedProviderPlaylist?.id, selectedProviderAlbum?.id, selectedProviderArtist?.id, categoryTitle) {
         destinationFocus.requestFocus()
     }
     var loading by remember(source) { mutableStateOf(false) }
     var error by remember(source) { mutableStateOf<String?>(null) }
-    var selectedActionSong by remember(source) { mutableStateOf<SearchSong?>(null) }
+    var selectedActionSong by remember(effectiveSource, providerGeneration) { mutableStateOf<SearchSong?>(null) }
     var actionAnchor by remember(source) { mutableStateOf<androidx.compose.ui.unit.IntOffset?>(null) }
     // DesktopSearchView scope: catalog vs the signed-in user's library.
     var libraryScope by remember { mutableStateOf(false) }
@@ -235,7 +237,7 @@ fun SearchScreen(
                 .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
         }
     }
-    LaunchedEffect(categoryTitle, source, sessionRevision) {
+    LaunchedEffect(categoryTitle, effectiveSource, sessionRevision) {
         val category = categoryTitle ?: return@LaunchedEffect
         categoryLoading = true; categoryError = null; categoryPlaylists = emptyList()
         try { categoryPlaylists = library.explorePlaylists(category, 50) }
