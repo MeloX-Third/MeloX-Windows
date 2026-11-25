@@ -329,9 +329,10 @@
     {
         "android":  "core/music/model/SourceId.kt",
         "windowsCandidates":  [
-
+                                  "shared/src/commonMain/kotlin/melox/music/model/SourceId.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "IMPLEMENTED",
+        "notes": "70ac17a; strict namespace and canonical URI codec. Boundary tests passed; downstream source wiring tracked separately."
     },
     {
         "android":  "core/music/provider/MeloXLegacyUiBridge.kt",
@@ -359,7 +360,8 @@
         "windowsCandidates":  [
                                   "shared/src/commonMain/kotlin/melox/music/provider/MusicProvider.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "PARTIAL",
+        "notes": "64ab50f migrates dynamic registry lifecycle and SourceId provider interface; tests and desktop compilation pass. Other newly added capability interfaces and production plugin wiring still require migration."
     },
     {
         "android":  "core/music/provider/MusicProviderSelectionStore.kt",
