@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`9349aac` 将全量本地推荐分析的候选收集接到显式启用的动态白名单，保留内置候选来源范围；`31e9a3e` 将动态播放标准歌曲 JSON 接到 PluginJson 的 128 KiB/32 层解析前检查。命令 `gradle :shared:desktopTest --tests "melox.playback.DynamicProviderPlaybackTest" --tests "melox.recommendation.*" --tests "melox.plugin.PluginJsonTest"` 成功，57 秒。
+
 `38910c1` 迁移 ProviderDownloadTaskStore、PluginJson 和受控 PluginErrors：任务只保存完整 track/音质/版本/错误码/账号摘要；pending 恢复为 DOWNLOAD_INTERRUPTED；按资源身份及版本删除，旧取消不会删除新重试。最多 100 条/1 MiB，JSON 最深 32 层；保留未知行，损坏文件不覆盖，Windows 使用临时文件及 ATOMIC_MOVE。
 
 命令 `gradle :shared:desktopTest --tests "melox.download.ProviderDownloadTaskStoreTest" --tests "melox.plugin.PluginJsonTest"` 成功，54 秒。覆盖重建实例恢复、旧版本删除隔离、未知行保留、损坏文件保护、非法版本/错误码拒绝，以及 JSON 深度/UTF-8 字节边界。此提交只有存储基础，尚未接入生产下载生命周期。
