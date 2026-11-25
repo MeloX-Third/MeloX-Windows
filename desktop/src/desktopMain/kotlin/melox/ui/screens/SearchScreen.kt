@@ -856,7 +856,7 @@ private fun ProviderSearchSongResults(
         stateDescription = values.joinToString(">") { "${it.id.source.storageValue}:${it.id.value}" }
     }, contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = MeloXBottomContentClearanceDp)) {
         if (failures.isNotEmpty()) item {
-            Text(failures.joinToString("；") { "${it.source.displayName}：${it.message}" },
+            Text(failures.joinToString("；") { "${it.sourceId.displayName}：${it.message}" },
                 Modifier.padding(horizontal = 20.dp, vertical = 8.dp).testTag("search-provider-failures"),
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = .46f), fontSize = 12.sp, lineHeight = 17.sp)
         }

@@ -3,8 +3,33 @@ package melox.music
 import melox.music.model.*
 import melox.music.provider.*
 import kotlin.test.*
+import kotlinx.coroutines.*
 
 class DynamicProviderRegistryTest {
+    @Test fun searchRejectsForeignIdentitiesAndResultsFromDisabledProvider() = runBlocking {
+        val registry = MusicProviderRegistry(listOf(builtIn))
+        val id = SourceId.parse("plugin:example.catalog")!!
+        var disableDuringSearch = false
+        val own = MusicTrack(MusicResourceId(id, "123"), "Track", listOf(MusicArtistRef(name = "Artist")))
+        val provider = object : MusicProvider, SearchCapability {
+            override val sourceId = id
+            override val displayName = "Example"
+            override val capabilities = setOf(MusicCapability.Search)
+            override suspend fun searchSongs(query: String, page: Int, pageSize: Int): MusicPage<MusicTrack> {
+                if (disableDuringSearch) registry.setDynamicEnabled(id, false)
+                return MusicPage(listOf(own, own, own.copy(id = MusicResourceId(MusicSource.Netease, "123"))), page, pageSize)
+            }
+        }
+        registry.registerDynamic(provider)
+        val service = UnifiedMusicService(registry)
+        val result = service.searchSourceIds("query", setOf(id))
+        assertEquals(listOf(own), result.tracks)
+        assertEquals(id, result.failures.single().sourceId)
+        disableDuringSearch = true
+        assertTrue(service.searchSourceIds("query", setOf(id)).tracks.isEmpty())
+        assertTrue(service.searchSourceIds("query", setOf(id)).tracks.isEmpty())
+    }
+
     private fun plugin(capabilities: Set<MusicCapability> = emptySet()) = object : MusicProvider {
         override val sourceId = SourceId.parse("plugin:example.catalog")!!
         override val displayName = "Example"

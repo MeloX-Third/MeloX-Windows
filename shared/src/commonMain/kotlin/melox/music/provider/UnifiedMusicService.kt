@@ -1,6 +1,7 @@
 package melox.music.provider
 
 import melox.music.model.MusicSource
+import melox.music.model.SourceId
 import melox.music.model.MusicTrack
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -24,9 +25,12 @@ class UnifiedMusicService(
     private val providerTimeoutMs: Long = 12_000L,
 ) {
     data class SearchFailure(
-        val source: MusicSource,
+        val sourceId: SourceId,
         val message: String,
-    )
+    ) {
+        constructor(source: MusicSource, message: String) : this(SourceId.fromBuiltIn(source), message)
+        val source: MusicSource get() = sourceId.builtIn ?: error("Dynamic search failure: ${sourceId.value}")
+    }
 
     data class SearchResult(
         val tracks: List<MusicTrack>,
@@ -39,11 +43,20 @@ class UnifiedMusicService(
         sources: Set<MusicSource>,
         page: Int = 1,
         pageSizePerProvider: Int = 20,
+    ): SearchResult = searchSourceIds(query, sources.mapTo(linkedSetOf(), SourceId::fromBuiltIn), page, pageSizePerProvider)
+
+    suspend fun searchSourceIds(
+        query: String,
+        sources: Set<SourceId>,
+        page: Int = 1,
+        pageSizePerProvider: Int = 20,
     ): SearchResult = coroutineScope {
         val normalized = query.trim()
         if (normalized.isEmpty() || sources.isEmpty()) return@coroutineScope SearchResult(emptyList())
 
-        val orderedSources = MusicSource.entries.filter(sources::contains)
+        require(page > 0 && pageSizePerProvider in 1..100 && sources.size <= 64)
+        val generation = registry.generation
+        val orderedSources = sources.sortedBy { it.value }
         val requests = orderedSources.map { source ->
             async {
                 val provider = registry[source]
@@ -63,7 +76,10 @@ class UnifiedMusicService(
                         ).items }
                     }.fold(
                         onSuccess = { tracks ->
-                            val valid = tracks.filter { it.id.source == source }.distinctBy { it.id }
+                            if (registry.generation != generation || registry[source] !== provider) {
+                                return@fold ProviderResult(source, emptyList(), SearchFailure(source, "音源状态已变化"))
+                            }
+                            val valid = tracks.filter { it.id.sourceId == source }.distinctBy { it.id }
                             ProviderResult(source, valid, if (valid.size < tracks.distinctBy { it.id }.size)
                                 SearchFailure(source, "来源返回的歌曲身份不匹配") else null)
                         },
@@ -140,8 +156,11 @@ class UnifiedMusicService(
     }
 
     private data class ProviderResult(
-        val source: MusicSource,
+        val source: SourceId,
         val tracks: List<MusicTrack>,
         val failure: SearchFailure?,
-    )
+    ) {
+        constructor(source: MusicSource, tracks: List<MusicTrack>, failure: SearchFailure?) :
+            this(SourceId.fromBuiltIn(source), tracks, failure)
+    }
 }
