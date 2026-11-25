@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`f2e4721` 当选择动态来源且不存在已保存的内置聚合白名单时，不再用旧内置选择填充查询；开启聚合也不隐式写入内置来源，插件仍需明确加入白名单。原有内置白名单保留。`gradle :shared:desktopTest --tests "melox.music.*" :desktop:compileKotlinDesktop` 成功（1 分 16 秒），包含默认无请求、开启聚合不增加内置来源和显式插件白名单回归。
+
 `a03a130` 桌面目录搜索展示 Provider 歌单/专辑/歌手网格，卡片使用完整 MusicResourceId，点击进入对应 Provider 详情；保留桌面卡片布局和滚动适配。`gradle :desktop:desktopTest :desktop:desktopJar` 成功（49 秒）。未执行真实插件目录查询或同内容像素验收。
 
 `bd78218` 歌曲菜单的歌曲/歌手/专辑搜索使用完整 SourceId，经搜索导航总线指定插件单来源查询；插件未安装时显示该来源失败，不回退网易。桌面动态歌曲搜索结果接入歌曲菜单；切换来源或注册表变更时清空旧搜索结果，目录结果校验来源和 generation。`gradle :desktop:desktopTest :desktop:desktopJar` 成功（48 秒）。生产插件运行时、目录结果窗口交互与插件实际查询尚待验收。
