@@ -1,4 +1,5 @@
 package melox.ui.screens
+import kotlinx.coroutines.ensureActive
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -99,10 +100,15 @@ fun HomeScreen(
     onOpenPlaylist: (melox.library.NeteasePlaylistSummary) -> Unit = {},
     onOpenProviderPlaylist: (MusicPlaylistSummary) -> Unit = {},
 ) {
-    if (source == MusicSource.Netease) {
+    val selectionRevision by melox.music.provider.MusicProviderSelectionStore.revision.collectAsState()
+    val selectedId = remember(source, selectionRevision) {
+        melox.music.provider.MusicProviderSelectionStore.selectedSourceId().takeIf { it.builtIn == null }
+            ?: melox.music.model.SourceId.fromBuiltIn(source)
+    }
+    if (selectedId.builtIn == MusicSource.Netease) {
         NeteaseHome(onOpenTool, onOpenPlaylist)
     } else {
-        ProviderHome(source, onOpenProviderPlaylist)
+        ProviderHome(selectedId, onOpenProviderPlaylist)
     }
 }
 
@@ -517,7 +523,13 @@ private fun NeteaseSongRow(song: melox.model.SearchSong, onClick: () -> Unit) {
 }
 
 @Composable
-private fun ProviderHome(source: MusicSource, onOpenPlaylist: (MusicPlaylistSummary) -> Unit) {
+private fun ProviderHome(source: melox.music.model.SourceId, onOpenPlaylist: (MusicPlaylistSummary) -> Unit) {
+    val registry = remember { melox.music.provider.MeloXMusicProviders.create() }
+    val generation by registry.changes.collectAsState()
+    val requestGeneration = generation
+    val provider = remember(source, generation) { registry[source] }
+    val sourceLabel = provider?.displayName ?: source.builtIn?.displayName ?: source.value
+    key(source, generation) {
     val scope = key(source) { rememberCoroutineScope() }
     var rankingRequest by remember(source) { mutableStateOf<kotlinx.coroutines.Job?>(null) }
     var feed by remember(source) { mutableStateOf<MusicHomeFeed?>(null) }
@@ -527,22 +539,28 @@ private fun ProviderHome(source: MusicSource, onOpenPlaylist: (MusicPlaylistSumm
     var rankingTitle by remember(source) { mutableStateOf("") }
     var retry by remember(source) { mutableIntStateOf(0) }
     LaunchedEffect(source, feed) {
-        melox.recommendation.MeloXHomeRecommendationPool.ensureSource(source.storageValue, feed?.newSongs.orEmpty())
+        melox.recommendation.MeloXHomeRecommendationPool.ensureSource(source.value, feed?.newSongs.orEmpty())
     }
     LaunchedEffect(source, retry) {
         loading = true
-        val registry = melox.music.provider.MeloXMusicProviders.create()
-        val provider = runCatching { registry.require(source) }.getOrNull()
-        val home = provider as? melox.music.provider.HomeFeedCapability
-        if (home == null) { error = "${source.displayName} 暂未提供首页数据"; loading = false; return@LaunchedEffect }
-        runCatching { withContext(Dispatchers.IO) { home.homeFeed() } }
+        val home = (provider as? melox.music.provider.HomeFeedCapability)?.takeIf {
+            provider.supports(melox.music.provider.MusicCapability.HomeRecommendations)
+        }
+        if (home == null) { error = "$sourceLabel 暂未提供首页数据"; loading = false; return@LaunchedEffect }
+        runCatching { withContext(Dispatchers.IO) { home.homeFeed() }.also {
+            kotlinx.coroutines.currentCoroutineContext().ensureActive()
+            check(registry.generation == requestGeneration && registry[source] === provider) { "音源已变化" }
+            require(it.newSongs.all { track -> track.id.sourceId == source } &&
+                it.recommendedPlaylists.all { playlist -> playlist.id.sourceId == source } &&
+                it.rankings.all { ranking -> ranking.id.sourceId == source }) { "首页内容来源不匹配" }
+        } }
             .onSuccess { feed = it; error = null }
             .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it; error = it.message ?: "首页加载失败" }
         loading = false
     }
     if (melox.settings.MeloXSettingsRuntime.desktopLayoutEnabled) {
         Box(Modifier.fillMaxSize()) {
-            melox.ui.desktop.MeloXDesktopProviderHome(source, feed, loading, error, { retry++ }, onOpenPlaylist) { ranking ->
+            melox.ui.desktop.MeloXDesktopProviderHome(source, sourceLabel, feed, loading, error, { retry++ }, onOpenPlaylist) { ranking ->
                 rankingTitle = ranking.title
                 rankingRequest?.cancel()
                 rankingRequest = scope.launch {
@@ -573,8 +591,8 @@ private fun ProviderHome(source: MusicSource, onOpenPlaylist: (MusicPlaylistSumm
             )
         }
         item { Text(homeGreeting(), Modifier.padding(horizontal = 20.dp), style = MeloXTypography.headline, color = MeloXColors.pageOnBackground().copy(alpha = 0.58f)) }
-        if (recommended.isNotEmpty()) { item { SectionTitle("推荐歌单", source.displayName) }; item { CollectionRow(recommended, onOpenPlaylist) } }
-        if (rankings.isNotEmpty()) { item { SectionTitle("排行榜", source.displayName) }; item { CollectionRowRankings(rankings) { ranking ->
+        if (recommended.isNotEmpty()) { item { SectionTitle("推荐歌单", sourceLabel) }; item { CollectionRow(recommended, onOpenPlaylist) } }
+        if (rankings.isNotEmpty()) { item { SectionTitle("排行榜", sourceLabel) }; item { CollectionRowRankings(rankings) { ranking ->
             rankingTitle = ranking.title
             error = null
             rankingRequest?.cancel()
@@ -587,13 +605,14 @@ private fun ProviderHome(source: MusicSource, onOpenPlaylist: (MusicPlaylistSumm
         } } }
         if (newSongs.isNotEmpty()) { item { SectionTitle("为你推荐", "新歌") }; item { ThreeLineSongCarousel(newSongs) { track -> melox.playback.ProviderPlaybackCommands.playQueue(newSongs, track.id) } } }
         if (recommended.isEmpty() && rankings.isEmpty() && newSongs.isEmpty()) {
-            item { Text(error ?: "${source.displayName} 当前没有返回可展示内容", Modifier.padding(horizontal = 20.dp), color = if (error != null) MeloXColors.Error else MeloXColors.pageOnBackground().copy(alpha = .5f)) }
+            item { Text(error ?: "$sourceLabel 当前没有返回可展示内容", Modifier.padding(horizontal = 20.dp), color = if (error != null) MeloXColors.Error else MeloXColors.pageOnBackground().copy(alpha = .5f)) }
         }
         if (error != null && (recommended.isNotEmpty() || rankings.isNotEmpty() || newSongs.isNotEmpty())) item {
             Text(error.orEmpty(), Modifier.padding(horizontal = 20.dp), color = MeloXColors.Error)
         }
     }
     melox.ui.navigation.MeloXDetailOverlay(rankingSongs, { rankingSongs = null }) { MeloXProviderSongListDetail(it, rankingTitle) { rankingSongs = null } }
+    }
     }
 }
 

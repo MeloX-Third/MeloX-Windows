@@ -20,6 +20,7 @@ import melox.music.provider.MeloXMusicProviders
 import melox.music.provider.RankingCapability
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.ensureActive
 
 /**
  * 0.6.5 `HomeSongListDetail`: quick actions and rankings open the canonical
@@ -82,15 +83,27 @@ internal fun MeloXProviderSongListDetail(
 internal suspend fun loadProviderRankingSongs(
     source: melox.music.model.MusicSource,
     ranking: MusicRankingSummary,
+): List<SearchSong> = loadProviderRankingSongs(melox.music.model.SourceId.fromBuiltIn(source), ranking)
+
+internal suspend fun loadProviderRankingSongs(
+    source: melox.music.model.SourceId,
+    ranking: MusicRankingSummary,
 ): List<SearchSong> = withContext(Dispatchers.IO) {
-    val capability = MeloXMusicProviders.create().require(source) as? RankingCapability
-        ?: error("${source.displayName} 当前不提供排行榜详情")
+    require(ranking.id.sourceId == source) { "排行榜来源不匹配" }
+    val registry = MeloXMusicProviders.create()
+    val generation = registry.generation
+    val provider = registry[source]
+    val capability = (provider as? RankingCapability)?.takeIf {
+        provider.supports(melox.music.provider.MusicCapability.Rankings)
+    } ?: error("${provider?.displayName ?: source.value} 当前不提供排行榜详情")
     val tracks = linkedMapOf<MusicResourceId, melox.music.model.MusicTrack>()
     var page = 1
     while (true) {
-        val result = capability.rankingTracks(ranking, page = page, pageSize = 200)
+        val result = capability.rankingTracks(ranking, page = page, pageSize = 100)
+        kotlinx.coroutines.currentCoroutineContext().ensureActive()
+        check(registry.generation == generation && registry[source] === provider) { "音源已变化" }
         val before = tracks.size
-        result.items.forEach { tracks[it.id] = it }
+        result.items.forEach { require(it.id.sourceId == source) { "排行榜歌曲来源不匹配" }; tracks[it.id] = it }
         if (!result.hasMore || tracks.size == before || result.items.isEmpty()) break
         page++
     }

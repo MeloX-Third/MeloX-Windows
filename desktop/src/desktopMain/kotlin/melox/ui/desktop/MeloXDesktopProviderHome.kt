@@ -17,7 +17,7 @@ import melox.playback.PlaybackCommands
 
 /** Provider-native feed with Desktop geometry and complete actionable ranking routes. */
 @Composable
-internal fun MeloXDesktopProviderHome(source: MusicSource, feed: MusicHomeFeed?, loading: Boolean, error: String?,
+internal fun MeloXDesktopProviderHome(source: SourceId, sourceLabel: String, feed: MusicHomeFeed?, loading: Boolean, error: String?,
     onRetry: () -> Unit, onPlaylist: (MusicPlaylistSummary) -> Unit, onRanking: (MusicRankingSummary) -> Unit) {
     val scroll = rememberLazyListState()
     val queue by PlaybackCommands.queue.collectAsState()
@@ -25,18 +25,18 @@ internal fun MeloXDesktopProviderHome(source: MusicSource, feed: MusicHomeFeed?,
     CompositionLocalProvider(LocalTextStyle provides androidx.compose.ui.text.TextStyle(
         fontFamily = melox.ui.theme.MeloXDesktopTextFontFamily, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)) {
     LazyColumn(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).desktopPromotedDragScroll(scroll)
-        .testTag("desktop-provider-home:${source.name}"), state = scroll,
+        .testTag("desktop-provider-home:${source.builtIn?.name ?: source.value}"), state = scroll,
         contentPadding = PaddingValues(start = 34.dp, end = 34.dp, top = 28.dp, bottom = 150.dp),
         verticalArrangement = Arrangement.spacedBy(28.dp)) {
         item("title") { Column {
             Text(desktopString("ui.navigation.home"), fontSize = 32.sp, fontWeight = FontWeight.Bold)
-            Text(source.displayName, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
+            Text(sourceLabel, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 13.sp)
         } }
         if (loading && feed == null) item("loading") { CircularProgressIndicator(Modifier.size(22.dp)) }
         if (feed?.recommendedPlaylists?.isNotEmpty() == true) item("playlists") {
             Text(desktopString("ui.home.section.recommended_playlists"), fontSize = 21.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(14.dp))
-            DesktopHomePagingShelf(feed.recommendedPlaylists, { it.id.value }, 175.dp, 20.dp, 0, "provider-home-playlists:${source.name}") { playlist ->
+            DesktopHomePagingShelf(feed.recommendedPlaylists, { it.id.value }, 175.dp, 20.dp, 0, "provider-home-playlists:${source.value}") { playlist ->
                 DesktopHomeMediaCard(playlist.title, playlist.creatorName.orEmpty(), playlist.artworkUrl, 175.dp,
                     "desktop-provider-home-playlist:${playlist.id.value}", playlist.playCount ?: 0, onOpen = { onPlaylist(playlist) })
             }
@@ -44,7 +44,7 @@ internal fun MeloXDesktopProviderHome(source: MusicSource, feed: MusicHomeFeed?,
         if (feed?.rankings?.isNotEmpty() == true) item("rankings") {
             Text(desktopString("ui.category.toplists"), fontSize = 21.sp, fontWeight = FontWeight.Bold)
             Spacer(Modifier.height(14.dp))
-            DesktopHomePagingShelf(feed.rankings, { it.id.value }, 175.dp, 20.dp, 0, "provider-home-rankings:${source.name}") { ranking ->
+            DesktopHomePagingShelf(feed.rankings, { it.id.value }, 175.dp, 20.dp, 0, "provider-home-rankings:${source.value}") { ranking ->
                 DesktopHomeMediaCard(ranking.title, ranking.subtitle.orEmpty(), ranking.artworkUrl, 175.dp,
                     "desktop-provider-home-ranking:${ranking.id.value}", onOpen = { onRanking(ranking) })
             }
