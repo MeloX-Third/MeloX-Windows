@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`1b02dee` 非验证调用前刷新即将过期的 OAuth，宿主 token broker 交换并以 vault CAS 更新，保留未返回的新 refresh token；验证调用不刷新，刷新失败保留账号且过期 credential 仍显式拒绝。账号/worker 联合专项成功（56 秒），账号元数据收尾后账号专项与 desktopJar 再次成功（17 秒）。token 服务为 fixture，不构成真实公网授权验收。
+
 `d406f84` 每次 worker 调用捕获账号会话、账号元数据和 HostCalls，存储按本地账号 ID 隔离，凭据仅留宿主 HTTP broker。真实 Windows DPAPI 与独立 JVM 回归验证两账号依次调用元数据/存储一致、无互读、切换撤销旧上下文、JSON 不含 token；两项账号专项及 desktopJar 成功（15 秒），前一轮账号/worker 联合专项成功（49 秒）。该增量晚于上方 618 项完整回归，媒体租约与生产初始化仍待补。
 
 覆盖代码至 `643f3c7` 的最新完整回归：`gradle :shared:desktopTest :desktop:desktopTest :desktop:desktopJar` 成功（3 分 30 秒）。共享 618 项通过、0 跳过；桌面 19 项中 13 通过、6 条件跳过；失败 0。该结果覆盖私有音频、LAN 转发、IPC、独立 worker、AppContainer 权限探针、bundle 与 Provider 工厂；不代表生产插件管理/账号 UI、媒体账号租约与重解析、手机 UI 或硬件验收完成。
