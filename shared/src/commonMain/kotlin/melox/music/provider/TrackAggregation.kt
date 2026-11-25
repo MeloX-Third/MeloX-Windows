@@ -123,7 +123,7 @@ object TrackAggregation {
             TrackAvailability.LoginRequired, TrackAvailability.SubscriptionRequired -> 2
             else -> 0
         }
-        val sourceBonus = when (track.id.source) {
+        val sourceBonus = when (track.id.sourceId.builtIn) {
             MusicSource.QQMusic -> 2
             MusicSource.Netease -> 1
             MusicSource.Kugou, MusicSource.KugouLite -> 1
@@ -137,10 +137,11 @@ object TrackAggregation {
             MusicSource.YouTubeMusic -> 0
             MusicSource.Jellyfin -> 0
             MusicSource.Local -> 0
+            null -> 0
         }
         return AggregatedTrackCandidate(track, identity, version, quality, availability,
             identity + version + quality + availability + sourceBonus,
-            "版本 ${key.version} · ${track.id.source.displayName} · ${tier?.name ?: "音质未知"}")
+            "版本 ${key.version} · ${track.id.sourceId.displayName} · ${tier?.name ?: "音质未知"}")
     }
 
     fun similarity(left: MusicTrack, right: MusicTrack): Float {

@@ -10,6 +10,23 @@ import java.util.UUID
 import kotlin.test.*
 
 class UnifiedFavoritesTest {
+    @Test fun dynamicFavoritesReloadAndCrossSourceQualitySelectionRemainUsable() = runBlocking {
+        val preferences = prefs()
+        val store = UnifiedFavoritesStore(preferences)
+        store.initialize(emptySet()) { emptyList() }
+        val plugin = track(tier = AudioQualityTier.Lossless).copy(
+            id = MusicResourceId(SourceId.parse("plugin:example.catalog")!!, "native"),
+            providerMetadata = ProviderTrackMetadata.Empty)
+        store.set(plugin, true)
+        assertEquals(plugin, UnifiedFavoritesStore(preferences).tracks().single())
+        store.set(track(tier = AudioQualityTier.High), true)
+        assertEquals(plugin.id, store.tracks().single().id)
+        store.initialize(emptySet()) { emptyList() }
+        assertEquals(plugin.id, store.tracks().single().id)
+        store.set(plugin, false)
+        assertTrue(store.tracks().isEmpty())
+    }
+
     private fun prefs() = getPreferences("unified_favorites_test_${UUID.randomUUID()}")
     private fun track(source: MusicSource = MusicSource.QQMusic, title: String = "歌曲", tier: AudioQualityTier = AudioQualityTier.High) = MusicTrack(
         MusicResourceId(source, "native-${source.storageValue}"), title,

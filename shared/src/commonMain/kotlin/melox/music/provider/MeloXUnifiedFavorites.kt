@@ -52,7 +52,7 @@ open class UnifiedFavoritesStore(private val prefs: MeloXPreferences) {
         else if (index < 0) current.add(track)
         else {
             val existing = current[index]
-            current[index] = if (track.id.source != existing.id.source && qualityRank(track) < qualityRank(existing)) {
+            current[index] = if (track.id.sourceId != existing.id.sourceId && qualityRank(track) < qualityRank(existing)) {
                 existing.copy(title = track.title, artists = track.artists, album = track.album ?: existing.album,
                     artworkUrl = track.artworkUrl ?: existing.artworkUrl)
             } else track
@@ -75,7 +75,7 @@ open class UnifiedFavoritesStore(private val prefs: MeloXPreferences) {
             currentCoroutineContext().ensureActive()
             try {
                 val loaded = loader(source)
-                check(loaded.all { it.id.source == source }) { "来源返回了不匹配的曲目身份" }
+                check(loaded.all { it.id.sourceId.builtIn == source }) { "来源返回了不匹配的曲目身份" }
                 imported += loaded
             } catch (cancelled: CancellationException) { throw cancelled }
             catch (failure: Exception) { failures += Failure(source, failure.message ?: "收藏读取失败") }
