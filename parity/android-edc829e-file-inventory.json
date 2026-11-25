@@ -205,7 +205,8 @@
         "windowsCandidates":  [
                                   "shared/src/commonMain/kotlin/melox/lyrics/LyricBindingStore.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "IMPLEMENTED",
+        "notes": "5efda2f migrates dynamic providerSourceId and SourceId storage keys, preserving built-in format. Dynamic binding round-trip and source isolation tests pass."
     },
     {
         "android":  "core/lyrics/LyricFileParser.kt",
