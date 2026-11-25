@@ -7,6 +7,7 @@
 - 桌面 UI 另以 `parity/desktop-a41ea0e/MATRIX.md` 锁定的 MeloX Desktop `a41ea0e1e1fa69fb543d827b853fe3aff5420951` 为唯一桌面视觉/交互真源。Android 手机页面不得直接充当 Windows 桌面页面模板；业务、模型、持久化及服务可以复用。
 - 手机 UI 在桌面完成并回归后，以 Android `edc829e` 的 Android 页面与交互为真源，独立实施和验收。
 - Android 工作区存在用户未提交修改。只读比较提交内容，不覆盖、不暂存、不清理 Android 工作区。
+- 原子提交：每完成一个独立功能或修改一个功能，验证后立即本地 commit；计划和文档另行提交，不混入无关功能。不自动 push。
 - 本计划按“已实现 / 部分实现 / 缺失 / 平台不适用 / 受外部验收阻塞”逐项登记。代码存在不等于迁移完成；需要测试、桌面生产场景或设备证据的分别验证。
 
 ## 已知起点
@@ -65,6 +66,8 @@
 | 默认电脑 UI | DONE | `MeloXSettingsRuntime.kt` 两个缺省读取均为 `true`；显式偏好不覆盖 |
 | repeat 持久化 + 切歌防抖 | DONE | `MeloXPlaybackModePreferences.kt`、`PlaybackCommands.kt`；桌面编译成功 |
 | 最新提交 AutoMix race / system lyrics job | AUDIT | 先按 Windows PCM/歌词任务模型做生命周期审计，再落等价修复和测试 |
+| AutoMix 状态读改写竞争 | IMPLEMENTED | `a812694` 使用 StateFlow 原子更新；10,000 轮 status/handoff 并发回归及完整快照测试通过；不代表所有 PCM 生命周期竞争已关闭 |
+| 桌面音量条显示开关 | IN_PROGRESS | 对应 Android `c82ac33` / `6b26dc3`，保存/即时状态/桌面完整播放器和底部播放器接线；正在编译和回归 |
 | 桌面 UI 全量差分 | IN_PROGRESS | 逐页盘点和实现，完成后才进入手机 UI |
 | Android 0.7.5+ 255 提交全量差分 | IN_PROGRESS | 逐 subsystem 比对；不按提交数机械复制 |
 | 手机 UI 全量差分 | BLOCKED_BY_PHASE_A | 桌面阶段结束后执行 |
@@ -73,3 +76,4 @@
 ## 变更日志
 
 - 初版：锁定 Android 最新提交 `edc829e` 和独立 Desktop UI 真源；纠正旧计划仍以 0.6.5 为活跃 Android 基线的问题。
+- 原子提交约定已落地：计划 `4bb6237`、默认桌面布局 `30f35c9`、循环模式持久化 `9df75fe`、切歌防抖 `12cc1bb`、AutoMix 状态原子更新 `a812694`。原合并播放提交已拆分为两项独立提交。
