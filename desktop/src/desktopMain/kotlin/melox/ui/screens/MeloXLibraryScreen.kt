@@ -121,6 +121,12 @@ fun LibraryScreen(
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 private fun LibrarySourceContent(navState: MeloXNavState?, requestedPage: String?) {
+    val selectionRevision by MusicProviderSelectionStore.revision.collectAsState()
+    val sourceId = remember(selectionRevision) { MusicProviderSelectionStore.selectedSourceId() }
+    if (sourceId.builtIn == null) {
+        MeloXProviderLibraryScreen(sourceId, requestedPage) {}
+        return
+    }
     val requestedSource = MusicProviderSelectionStore.selectedSource()
     val openSourceLogin: () -> Unit = {
         melox.ui.navigation.MeloXLoginRequestBus.request(requestedSource)

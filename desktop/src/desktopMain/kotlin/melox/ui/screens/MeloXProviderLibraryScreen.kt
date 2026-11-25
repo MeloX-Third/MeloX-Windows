@@ -25,6 +25,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.ensureActive
 import melox.music.model.*
 import melox.music.provider.*
 import melox.settings.MeloXContentLayout
@@ -42,12 +43,19 @@ private data class ProviderLibraryEntry(
 /** Source-native collections; data is shared, phone and Desktop presentation stay independent. */
 @Composable
 internal fun MeloXProviderLibraryScreen(source: MusicSource, requestedPage: String?, onLogin: () -> Unit) {
-    val revision = when (source) {
+    MeloXProviderLibraryScreen(SourceId.fromBuiltIn(source), requestedPage, onLogin)
+}
+
+@Composable
+internal fun MeloXProviderLibraryScreen(source: SourceId, requestedPage: String?, onLogin: () -> Unit) {
+    val registry = remember { MeloXMusicProviders.create() }
+    val generation by registry.changes.collectAsState()
+    val revision = when (source.builtIn) {
         MusicSource.Spotify -> melox.provider.spotify.SpotifySessionStore.revision.collectAsState().value
         MusicSource.YouTubeMusic -> melox.provider.youtubemusic.YouTubeSessionStore.revision.collectAsState().value
         else -> 0L
     }
-    key(source, revision) {
+    key(source, revision, generation) {
         val textStyle = if (MeloXSettingsRuntime.desktopLayoutEnabled) androidx.compose.ui.text.TextStyle(
             fontFamily = melox.ui.theme.MeloXDesktopTextFontFamily, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)
             else LocalTextStyle.current
@@ -56,17 +64,25 @@ internal fun MeloXProviderLibraryScreen(source: MusicSource, requestedPage: Stri
 }
 
 @Composable
-private fun ProviderLibraryContent(source: MusicSource, requestedPage: String?, onLogin: () -> Unit) {
-    val provider = remember(source) { MeloXMusicProviders.create().require(source) }
-    val pages = MeloXContentLayout.libraryPages(source)
-    var section by remember(source) { mutableStateOf(MeloXContentLayout.initialLibraryPage(source)) }
+private fun ProviderLibraryContent(source: SourceId, requestedPage: String?, onLogin: () -> Unit) {
+    val registry = remember { MeloXMusicProviders.create() }
+    val generation = remember { registry.generation }
+    val provider = remember(source) { registry[source] }
+    val sourceLabel = provider?.displayName ?: source.displayName
+    val sourceTag = source.builtIn?.name ?: source.value
+    val pages = source.builtIn?.let(MeloXContentLayout::libraryPages) ?: buildList {
+        if (provider?.supports(MusicCapability.Library) == true && provider is UserLibraryCapability) add("Playlists")
+        if (provider is LibraryCollectionCapability && provider.supports(MusicCapability.Albums)) add("Albums")
+        if (provider is LibraryCollectionCapability && provider.supports(MusicCapability.Artists)) add("Artists")
+    }
+    var section by remember(source) { mutableStateOf(source.builtIn?.let(MeloXContentLayout::initialLibraryPage) ?: pages.firstOrNull().orEmpty()) }
     LaunchedEffect(source, requestedPage) { requestedPage?.takeIf { it in pages }?.let { section = it } }
-    LaunchedEffect(source, section) { MeloXContentLayout.rememberLibraryPage(source, section) }
+    LaunchedEffect(source, section) { source.builtIn?.let { MeloXContentLayout.rememberLibraryPage(it, section) } }
     var entries by remember(source, section) { mutableStateOf<List<ProviderLibraryEntry>>(emptyList()) }
     var tracks by remember(source, section) { mutableStateOf<List<MusicTrack>>(emptyList()) }
     var loading by remember(source, section) { mutableStateOf(true) }
     var error by remember(source, section) { mutableStateOf<String?>(null) }
-    var loggedIn by remember(source) { mutableStateOf(source == MusicSource.Local) }
+    var loggedIn by remember(source) { mutableStateOf(source.builtIn == MusicSource.Local) }
     var page by remember(source, section) { mutableIntStateOf(1) }
     var more by remember(source, section) { mutableStateOf(false) }
     var reload by remember { mutableIntStateOf(0) }
@@ -78,33 +94,45 @@ private fun ProviderLibraryContent(source: MusicSource, requestedPage: String?, 
     val scope = key(source, section) { rememberCoroutineScope() }
     val desktop = MeloXSettingsRuntime.desktopLayoutEnabled
     val title = when (section) { "Songs" -> "歌曲"; "Albums" -> "收藏专辑"; "Artists" -> "关注歌手"; else -> "歌单" }
+    suspend fun <T> currentResult(block: suspend () -> T): T = withContext(Dispatchers.IO) { block() }.also {
+        kotlinx.coroutines.currentCoroutineContext().ensureActive()
+        check(registry.generation == generation && registry[source] === provider) { "音源已变化" }
+    }
+    fun checkIdentity(id: MusicResourceId) { require(id.sourceId == source) { "音乐库内容来源不匹配" } }
     suspend fun load(next: Int) {
         loading = true; error = null
         try {
-                if (source != MusicSource.Local) loggedIn = withContext(Dispatchers.IO) { (provider as? UserLibraryCapability)?.accountSummary() } != null
+                check(provider != null && pages.isNotEmpty()) { "$sourceLabel 暂不提供音乐库" }
+                if (source.builtIn != MusicSource.Local) loggedIn = currentResult { (provider as? UserLibraryCapability)?.accountSummary() }?.also {
+                    require(it.sourceId == source) { "账号来源不匹配" }
+                } != null
                 if (!loggedIn) { entries = emptyList(); tracks = emptyList(); more = false; return }
                 val size = 50
                 when (section) {
                     "Songs" -> {
-                        val result = withContext(Dispatchers.IO) { (provider as LocalAggregationCapability).aggregationTracks(next, size) }
+                        val result = currentResult { (provider as LocalAggregationCapability).aggregationTracks(next, size) }
+                        result.items.forEach { checkIdentity(it.id) }
                         tracks = (if (next == 1) result.items else tracks + result.items).distinctBy { it.id }
                         more = result.hasMore
                     }
                     "Albums" -> {
-                        val result = withContext(Dispatchers.IO) { (provider as LibraryCollectionCapability).savedAlbums(next, size) }
+                        val result = currentResult { (provider as LibraryCollectionCapability).savedAlbums(next, size) }
+                        result.items.forEach { checkIdentity(it.id) }
                         val values = result.items.map { ProviderLibraryEntry(it.id.value, it.title, it.artists.joinToString { a -> a.name }, it.artworkUrl, album = it) }
                         entries = (if (next == 1) values else entries + values).distinctBy { it.key }; more = result.hasMore
                     }
                     "Artists" -> {
-                        val result = withContext(Dispatchers.IO) { (provider as LibraryCollectionCapability).followedArtists(next, size) }
-                        val values = result.items.map { ProviderLibraryEntry(it.id.value, it.name, source.displayName, it.artworkUrl, artist = it) }
+                        val result = currentResult { (provider as LibraryCollectionCapability).followedArtists(next, size) }
+                        result.items.forEach { checkIdentity(it.id) }
+                        val values = result.items.map { ProviderLibraryEntry(it.id.value, it.name, sourceLabel, it.artworkUrl, artist = it) }
                         entries = (if (next == 1) values else entries + values).distinctBy { it.key }; more = result.hasMore
                     }
                     else -> {
-                        val result = withContext(Dispatchers.IO) {
-                            if (source == MusicSource.Local) (provider as PlaylistWriteCapability).writablePlaylists(next, size)
+                        val result = currentResult {
+                            if (source.builtIn == MusicSource.Local) (provider as PlaylistWriteCapability).writablePlaylists(next, size)
                             else (provider as UserLibraryCapability).userPlaylists(next, size)
                         }
+                        result.items.forEach { checkIdentity(it.id) }
                         val values = result.items.map { ProviderLibraryEntry(it.id.value, it.title, it.creatorName.orEmpty(), it.artworkUrl, playlist = it) }
                         entries = (if (next == 1) values else entries + values).distinctBy { it.key }; more = result.hasMore
                     }
@@ -121,7 +149,7 @@ private fun ProviderLibraryContent(source: MusicSource, requestedPage: String?, 
     var createError by remember(source) { mutableStateOf<String?>(null) }
     val writer = provider as? PlaylistSyncCapability
     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
-        .testTag(if (desktop) "desktop-provider-library:${source.name}" else "mobile-provider-library:${source.name}")
+        .testTag(if (desktop) "desktop-provider-library:$sourceTag" else "mobile-provider-library:$sourceTag")
         .semantics { stateDescription = "$section;count=${if (section == "Songs") tracks.size else entries.size};more=$more" }) {
         val scroll = key(source, section) { rememberLazyListState() }
         Column(Modifier.fillMaxSize()) {
@@ -141,9 +169,15 @@ private fun ProviderLibraryContent(source: MusicSource, requestedPage: String?, 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
                         Text(title, fontWeight = FontWeight.Bold, fontSize = if (desktop) 32.sp else 28.sp)
-                        Text(source.displayName, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
+                        Text(sourceLabel, color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 12.sp)
                     }
                     if (section == "Playlists" && writer != null && loggedIn) TextButton({ createError = null; creating = true }, Modifier.testTag("provider-library-create")) { Text("新建歌单") }
+                }
+                if (source.builtIn == null && pages.size > 1) {
+                    Spacer(Modifier.height(14.dp))
+                    melox.ui.desktop.DesktopSettingsPicker("音乐库分类", section, pages.map { value ->
+                        value to when (value) { "Albums" -> "专辑"; "Artists" -> "歌手"; else -> "歌单" }
+                    }, "desktop-plugin-library-section") { section = it }
                 }
             }
             if (loading && entries.isEmpty() && tracks.isEmpty()) item { CircularProgressIndicator(Modifier.size(22.dp)) }
@@ -152,11 +186,12 @@ private fun ProviderLibraryContent(source: MusicSource, requestedPage: String?, 
                     TextButton({ reload++ }, Modifier.testTag("provider-library-retry")) { Text("重试") } }
             } }
             if (!loading && !loggedIn && error == null) item("login") {
-                Text("请先登录 ${source.displayName}")
-                TextButton(onLogin, Modifier.testTag("provider-library-login")) { Text("登录") }
+                Text("请先登录 $sourceLabel")
+                if (source.builtIn != null) TextButton(onLogin, Modifier.testTag("provider-library-login")) { Text("登录") }
+                else Text("插件账号尚未授权", color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             if (!loading && loggedIn && entries.isEmpty() && tracks.isEmpty() && error == null) item("empty") {
-                Text("${source.displayName} 暂无$title", color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("provider-library-empty"))
+                Text("$sourceLabel 暂无$title", color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.testTag("provider-library-empty"))
             }
             if (desktop && entries.isNotEmpty()) item("grid") {
                 BoxWithConstraints(Modifier.fillMaxWidth()) {
@@ -165,13 +200,13 @@ private fun ProviderLibraryContent(source: MusicSource, requestedPage: String?, 
                     Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
                         entries.chunked(columns).forEach { row -> Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                             row.forEach { entry -> DesktopHomeMediaCard(entry.title, entry.subtitle, entry.artwork, width,
-                                "provider-library-card:${source.name}:${entry.key}", onOpen = { detail = entry }, isCircular = section == "Artists") }
+                                "provider-library-card:$sourceTag:${entry.key}", onOpen = { detail = entry }, isCircular = section == "Artists") }
                         } }
                     }
                 }
             } else items(entries, key = { it.key }) { entry ->
                 Row(Modifier.fillMaxWidth().height(66.dp).clickable { detail = entry }
-                    .testTag("provider-library-card:${source.name}:${entry.key}").padding(horizontal = 18.dp), verticalAlignment = Alignment.CenterVertically) {
+                    .testTag("provider-library-card:$sourceTag:${entry.key}").padding(horizontal = 18.dp), verticalAlignment = Alignment.CenterVertically) {
                     MeloXArtworkImage(entry.artwork, MaterialTheme.colorScheme.surfaceVariant, Modifier.size(44.dp).clip(
                         if (section == "Artists") androidx.compose.foundation.shape.CircleShape else RoundedCornerShape(6.dp)))
                     Column(Modifier.padding(start = 14.dp)) { Text(entry.title, fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
@@ -209,11 +244,11 @@ private fun ProviderLibraryContent(source: MusicSource, requestedPage: String?, 
             key(source, entry.key, section) {
                 if (entry.playlist != null) PlaylistDetailScreen(MeloXLegacyUiBridge.playlist(entry.playlist), onBack = { detail = null })
                 else ProviderCollectionDetail(entry.title, entry.subtitle, entry.artwork, load = {
-                    withContext(Dispatchers.IO) {
+                    currentResult {
                         if (entry.album != null) (provider as AlbumCapability).albumDetail(entry.album, pageSize = 100).tracks
                         else (provider as ArtistCapability).artistDetail(requireNotNull(entry.artist), pageSize = 100).tracks
-                    }
-                }, onBack = { detail = null })
+                    }.also { values -> values.forEach { checkIdentity(it.id) } }
+                }, onBack = { detail = null }, resourceId = entry.album?.id ?: entry.artist?.id)
             }
         }
     }
