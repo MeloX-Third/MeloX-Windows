@@ -74,6 +74,7 @@
 | 本地推荐候选播放身份 | IMPLEMENTED | `d3bf0de` 保存完整 track 并校验内外身份，避免重载丢失 QQ mediaMid 等播放元数据；两项专项覆盖元数据/音质保留、旧记录兼容、身份不匹配/未知音源/损坏嵌套拒绝；动态 SourceId 仍待迁移 |
 | 歌词本地编码 | IMPLEMENTED | `abe2e8f` 有效 UTF-8 优先、非法 UTF-8 回退 GB18030；UTF-8/BOM/GBK/GB18030 中文与扩展字符专项通过 |
 | QRC 解压边界 | IMPLEMENTED | `ac179e7` 将 QRC 解压限制为 4 MiB 并关闭 inflater；正常文本/上限/超限 zlib 专项通过，KRC 已有同等大小限制 |
+| 歌词翻译语言与补译 | IMPLEMENTED | `26dee80` 按正文/目标语言去重或筛选译文、简繁转换、已完成跨来源候选按时间/文本补译；歌词专项通过。拉丁文字无法可靠区分英/土等语言时保留来源已选译文；不等待慢候选以保持首次展示时序。包含此提交的完整回归运行中 |
 | 最新源码文件清单 | INVENTORIED | `android-edc829e-file-inventory.json` 登记 398 个变更 Kotlin 文件，同名候选不代表语义一致；`ANDROID_EDC829E_AUDIT.md` 记录已核对行为与缺口，其他文件仍 UNREVIEWED |
 | 播放全量回归 | VALIDATED | 2026-11-25 最新完整运行共享层 474 项，0 失败/0 错误/0 跳过；包含 `02af178`。历史：首轮上一首测试受防抖影响，`6911501` 隔离场景；第二轮 PCM 缓冲静音等待超时，随后修复引擎启动暂停/恢复竞争。单轮通过不等于所有并发问题已关闭 |
 | 桌面测试和 JAR | VALIDATED | 同轮 `:desktop:desktopTest` 16 项，10 项通过、6 项按环境条件跳过，0 失败/0 错误；`:desktop:desktopJar` 成功。跳过项不能当作真实窗口输入验收，JAR 构建不等于 MSI/EXE 安装包验收 |
