@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`8031044` 加入公开插件媒体强 ETag 续传：Range/If-Range 精确校验，200 先截断并同步旧字节再写新 validator，错误范围/作用域变化丢弃片段；仅持久化 scope 摘要、ETag、长度。`cdf571e` 的预算幂等释放、续传两项与 Provider 生命周期两项专项均通过，桌面 JAR 成功（5 分 8 秒）。该专项构建期间仍有后续修改，因此完整回归另行执行；初次全量构建因工作区编译时序交叉而失败，不计为通过。当前续传仅支持同一 Store 会话/generation 的公开媒体；认证媒体和跨重启续传保持未完成，启动清理旧片段且不自动联网。
+
 应用目录构建通过（23 秒）：`gradle :desktop:createDistributable -x downloadWix -x unzipWix -I parity/edc829e/app-image-without-wix.gradle`；验证脚本只为 app-image 设置有效工具搜索目录，不提供 WiX，也不验证 EXE/MSI。产物 `desktop/build/compose/binaries/main/app/MeloX-Desktop` 内的 runtime 和全部应用 JAR 用于 `WindowsPluginWorkerLauncherTest.productionBundleRunsValidatedProvider`，参数 `-PpluginWorkerJavaHome=D:/MeloX-Windows/desktop/build/compose/binaries/main/app/MeloX-Desktop/runtime -PpluginWorkerAppDirectory=D:/MeloX-Windows/desktop/build/compose/binaries/main/app/MeloX-Desktop/app`，专项成功（24 秒）。RX bundle 与 AppContainer 内工厂/搜索使用实际分发字节；尚未验证应用窗口内插件管理操作或 MSI 安装。
 
 `f36ba8e` 修复 Compose 1.8.1 默认 jlink `--strip-native-commands` 导致安装运行时无 java.exe：保留同一精简 runtime 的 Java 启动命令。`createRuntimeImage` 成功（19 秒），实际 java.exe -version 成功；使用该精简 runtime 的 productionBundleRunsValidatedProvider 专项通过（26 秒），覆盖 RX bundle→AppContainer→JVM/V8→Provider 工厂→搜索。完整 createDistributable 首次被 GitHub WiX 下载无响应阻断；该结果不能作为安装应用贯穿完成证据。
