@@ -10,6 +10,7 @@ import org.json.JSONObject
 
 /** Persistent metadata cache with one network refresh per cold-start process. */
 class NeteaseLibraryCache(private val directory: File = File(meloXDataDir(), "netease_library_cache")) {
+    val cacheDir: File get() = directory
 
     suspend fun loadSnapshot(userId: Long): NeteaseLibrarySnapshot? = readJson(
         file = File(directory, "library_$userId.json"),
@@ -81,20 +82,27 @@ class NeteaseLibraryCache(private val directory: File = File(meloXDataDir(), "ne
     private suspend fun writeJson(file: File, value: () -> JSONObject) = withContext(Dispatchers.IO) {
         directory.mkdirs()
         val encoded = value().toString()
-        val temporary = File(file.parentFile, "${file.name}.tmp")
-        temporary.writeText(encoded)
-        if (!temporary.renameTo(file)) {
-            file.writeText(encoded)
-            temporary.delete()
-        }
+        val temporary = File.createTempFile("${file.name}.", ".tmp", file.parentFile)
+        try {
+            temporary.writeText(encoded)
+            java.nio.file.Files.move(temporary.toPath(), file.toPath(),
+                java.nio.file.StandardCopyOption.ATOMIC_MOVE, java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+        } finally { temporary.delete() }
         pruneCache()
     }
 
-    private fun pruneCache() {
+    internal fun pruneCache() {
         val files = directory.listFiles()?.filter { it.isFile && !it.name.endsWith(".tmp") }.orEmpty()
+        var playlistBytes = 0L
+        files.filter { it.name.startsWith("playlist_") }.sortedByDescending(File::lastModified)
+            .forEachIndexed { index, cached ->
+                playlistBytes += cached.length()
+                if (index >= MAX_PLAYLIST_CACHE_FILES || playlistBytes > MAX_PLAYLIST_CACHE_BYTES) cached.delete()
+            }
+        val transient = files.filterNot { it.name.startsWith("library_") || it.name.startsWith("playlist_") }
             .sortedByDescending(File::lastModified)
         var retainedBytes = 0L
-        files.forEachIndexed { index, cached ->
+        transient.forEachIndexed { index, cached ->
             retainedBytes += cached.length()
             if (index >= MAX_CACHE_FILES || retainedBytes > MAX_CACHE_BYTES) cached.delete()
         }
@@ -130,6 +138,8 @@ class NeteaseLibraryCache(private val directory: File = File(meloXDataDir(), "ne
 
         private const val MAX_CACHE_FILES = 128
         private const val MAX_CACHE_BYTES = 32L * 1024L * 1024L
+        private const val MAX_PLAYLIST_CACHE_FILES = 48
+        private const val MAX_PLAYLIST_CACHE_BYTES = 64L * 1024L * 1024L
         private const val MAX_CACHE_AGE_MS = 30L * 24L * 60L * 60L * 1_000L
         private const val MAX_REFRESH_KEYS = 256
     }
