@@ -9,7 +9,7 @@ import kotlin.test.*
 
 @OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class, ObsoleteCoroutinesApi::class)
 class ProviderDownloadLifecycleTest {
-    @Test fun missingSourceRestoresAsManualRetryAndSuccessfulRetryCommitsLocalFile() = runBlocking {
+    @Test fun missingSourceRestoresAsManualRetryAndDynamicFileCannotBypassBroker() = runBlocking {
         val main = newSingleThreadContext("provider-download-main")
         Dispatchers.setMain(main)
         val directory = Files.createTempDirectory("provider-lifecycle").toFile()
@@ -34,9 +34,18 @@ class ProviderDownloadLifecycleTest {
             })
             withContext(main) { restored.retry(track.id) }
             awaitIdle(restored)
-            assertTrue(restored.isDownloaded(track.id))
-            assertTrue(ProviderDownloadTaskStore(directory).load().isEmpty())
-            assertEquals(listOf<Byte>(1, 2, 3, 4), java.io.File(java.net.URI(restored.localPlaybackUri(track.id)!!)).readBytes().toList())
+            assertFalse(restored.isDownloaded(track.id))
+            assertEquals("SOURCE_UNAVAILABLE", ProviderDownloadTaskStore(directory).load().single().errorCode)
+            assertNull(restored.localPlaybackUri(track.id))
+            assertFalse(directory.listFiles()!!.any { it.extension == "part" })
+            registry.replaceDynamic(melox.plugin.PluginMusicProvider(
+                melox.plugin.PluginManifest(source, "Example", "1.0.0", 1, "index.js",
+                    setOf(melox.plugin.PluginCapability.Download), emptySet()),
+                melox.plugin.PluginInvoker { _, _ -> """{"type":"playable","url":"${audio.toURI()}","format":"flac"}""" }))
+            withContext(main) { restored.retry(track.id) }
+            awaitIdle(restored)
+            assertFalse(restored.isDownloaded(track.id))
+            assertEquals("INVALID_ARGUMENT", ProviderDownloadTaskStore(directory).load().single().errorCode)
             assertFalse(directory.listFiles()!!.any { it.extension == "part" })
         } finally { Dispatchers.resetMain(); main.close(); directory.deleteRecursively() }
     }

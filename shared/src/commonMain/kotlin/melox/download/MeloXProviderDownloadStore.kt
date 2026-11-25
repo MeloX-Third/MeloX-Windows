@@ -193,7 +193,13 @@ class MeloXProviderDownloadStore internal constructor(
                 val fileName = "${digest(idKey)}.$extension"
                 val target = File(directory, fileName)
                 destination = target
-                download(playable, staging)
+                check(registry.generation == generation && registry[track.id.sourceId] === provider) { "SOURCE_UNAVAILABLE" }
+                if (track.id.sourceId.builtIn == null) {
+                    val plugin = provider as? melox.plugin.PluginMusicProvider ?: error("SOURCE_UNAVAILABLE")
+                    downloadPlugin(plugin, playable, staging) {
+                        registry.generation == generation && registry[track.id.sourceId] === provider
+                    }
+                } else download(playable, staging)
                 currentCoroutineContext().ensureActive()
                 check(registry.generation == generation && registry[track.id.sourceId] === provider) { "SOURCE_UNAVAILABLE" }
                 java.nio.file.Files.move(staging.toPath(), target.toPath(),
@@ -252,6 +258,22 @@ class MeloXProviderDownloadStore internal constructor(
             }
         }
         job.start()
+    }
+
+    @OptIn(kotlinx.coroutines.InternalCoroutinesApi::class)
+    private suspend fun downloadPlugin(provider: melox.plugin.PluginMusicProvider,
+        resolution: PlaybackResolution.Playable, destination: File, current: () -> Boolean) {
+        val broker = melox.plugin.PluginHttpBroker(provider.manifest, accountCurrent = current)
+        val cancellation = currentCoroutineContext()[Job]!!.invokeOnCompletion(onCancelling = true, invokeImmediately = true) { cause ->
+            if (cause != null) broker.close()
+        }
+        try {
+            broker.use {
+                it.openMedia(resolution.url, resolution.requestHeaders).use { input ->
+                    destination.outputStream().use { output -> copyAudio(input, output) }
+                }
+            }
+        } finally { cancellation.dispose() }
     }
 
     @OptIn(kotlinx.coroutines.InternalCoroutinesApi::class)
