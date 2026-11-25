@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`02c71b3` 将音频引擎曲目键和歌词显示中的内置来源判断改用 SourceId。完整命令 `gradle :shared:desktopTest :desktop:desktopTest :desktop:desktopJar` 成功，5 分 53 秒：共享 XML 520 项通过、0 失败/错误/跳过；桌面 16 项、10 通过/6 条件跳过、0 失败/错误；JAR 成功。此轮包含动态歌词和下载生命周期改动。先前 AutoMix 连续交接失败此轮未复现，原因仍未定位，不将本次通过表述为已修复偶发问题。PluginVersion 尚未纳入本轮编译与验证。
+
 `5efda2f` 接通动态 Provider 歌词与绑定 SourceId，动态歌曲只请求当前来源，保留通用时间轴/语言处理；缓存键包含注册表 generation，Provider 调用完成后检查实例与 generation，启停后不复用旧缓存。绑定持久化保留有效未安装来源和原内置格式。命令 `gradle :shared:desktopTest --tests "melox.lyrics.*" :desktop:compileKotlinDesktop` 成功，2 分 40 秒；歌词 XML 59 项通过。新增动态 Provider 当前来源限定、禁用缓存失效、动态绑定往返及不同来源同 ID 隔离测试。真实插件歌词窗口和翻译账号仍未验收。
 
 `bba0598` 接入生产 Provider 下载任务恢复、手动重试和失败记录移除，使用版本独立临时文件及原子完成文件替换；来源 generation/实例变化拒绝提交。取消会关闭 HTTP 请求，复制按块检查取消，移除等待传输所有者退出后再清理文件/索引，清理期间阻止重启。恢复账号摘要但账号系统未接通时阻止重试。`d40efe5` 补桌面下载任务、重试、移除和取消入口。
