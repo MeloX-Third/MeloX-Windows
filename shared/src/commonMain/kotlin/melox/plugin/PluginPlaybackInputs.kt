@@ -11,26 +11,26 @@ import melox.music.provider.MusicProviderRegistry
 
 /** Opaque process-local decoder inputs. Native decoders never receive provider URLs or headers. */
 internal object PluginPlaybackInputs {
-    internal data class MediaRequest(val url: String, val headers: Map<String, String>, val expiresAt: Long?)
+    internal data class MediaRequest(val url: String, val headers: Map<String, String>, val expiresAt: Long?, val access: PluginMediaAccess? = null)
     private const val Prefix = "melox-plugin-audio:"
     private data class Source(val expires: Long, val current: () -> Boolean, val open: () -> InputStream)
     private val sources = ConcurrentHashMap<String, Source>()
 
     fun register(provider: PluginMusicProvider, registry: MusicProviderRegistry, generation: Long,
         url: String, headers: Map<String, String>, expiresAt: Long?,
-        refresh: (() -> MediaRequest)? = null): String {
-        val current = { registry.generation == generation && registry[provider.sourceId] === provider }
+        refresh: (() -> MediaRequest)? = null, access: PluginMediaAccess? = null): String {
+        val current = { registry.generation == generation && registry[provider.sourceId] === provider && (access?.current?.invoke() ?: true) }
         val requestHeaders = headers.toMap()
         PluginMediaFormats.check(url)
         PluginHttpBroker(provider.manifest).use { it.authorizeMediaUrl(url) }
         fun open(request: MediaRequest): InputStream {
             check(current()) { "CANCELLED" }
             check(request.expiresAt?.let { it > System.currentTimeMillis() } != false) { "AUTH_EXPIRED" }
-            val broker = PluginHttpBroker(provider.manifest, accountCurrent = current)
+            val broker = request.access?.broker(current) ?: PluginHttpBroker(provider.manifest, accountCurrent = current)
             val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
             scope.launch { registry.changes.collect { if (!current()) broker.close() } }
             try {
-                val input = broker.openMedia(request.url, request.headers)
+                val input = broker.openMedia(request.url, request.headers, request.access != null)
                 return object : java.io.FilterInputStream(input) {
                     override fun close() { try { super.close() } finally { scope.cancel(); broker.close() } }
                 }
@@ -38,7 +38,7 @@ internal object PluginPlaybackInputs {
                 scope.cancel(); broker.close(); throw failure
             }
         }
-        val initial = MediaRequest(url, requestHeaders, expiresAt)
+        val initial = MediaRequest(url, requestHeaders, expiresAt, access)
         return register(expiresAt, current) {
             openWithRefresh(current, { open(initial) }, refresh?.let { resolve -> { open(resolve()) } })
         }

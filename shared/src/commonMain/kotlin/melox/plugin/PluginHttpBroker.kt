@@ -106,7 +106,7 @@ class PluginHttpBroker internal constructor(
     fun authorizeMediaUrl(url: String) = authorize(url.toHttpUrl())
 
     /** Stream remains owned by this broker until closed; callers never receive a shared client. */
-    internal fun openMedia(url: String, headers: Map<String, String> = emptyMap()): java.io.InputStream {
+    internal fun openMedia(url: String, headers: Map<String, String> = emptyMap(), activeCredential: Boolean = false): java.io.InputStream {
         PluginMediaFormats.check(url)
         val destination = url.toHttpUrl()
         authorize(destination)
@@ -114,6 +114,11 @@ class PluginHttpBroker internal constructor(
         val builder = Request.Builder().url(destination)
         headers.forEach { (name, value) ->
             require(name.lowercase(java.util.Locale.ROOT) !in forbiddenHeaders && value.length <= 4096)
+            builder.header(name, value)
+        }
+        if (activeCredential) {
+            val (name, value) = credentialHeader(destination)
+            require(headers.keys.none { it.equals(name, true) }) { "PERMISSION_DENIED" }
             builder.header(name, value)
         }
         checkCurrent()

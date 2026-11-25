@@ -5,6 +5,7 @@ import org.json.JSONArray
 
 /** Validates the candidate through its isolated runtime before exposing it to PluginManager. */
 internal class PluginProcessProviderFactory(
+    private val mediaAccess: ((PluginArchiveReader.Package) -> PluginMediaAccess)? = null,
     private val createRuntime: (PluginArchiveReader.Package) -> PluginProcessRuntime,
 ) : PluginManager.ProviderFactory {
     override fun prepare(plugin: PluginArchiveReader.Package): PluginManager.LoadedProvider {
@@ -17,7 +18,9 @@ internal class PluginProcessProviderFactory(
                 declared.getString(index)
             }
             require(plugin.manifest.capabilities.all { capability -> methods.containsAll(capability.methods) }) { "INVALID_PLUGIN" }
-            return PluginManager.LoadedProvider(PluginMusicProvider(plugin.manifest, PluginInvoker(runtime::invoke)), runtime)
+            val provider = PluginMusicProvider(plugin.manifest, PluginInvoker(runtime::invoke))
+            mediaAccess?.let { capture -> provider.mediaAccess = { capture(plugin) } }
+            return PluginManager.LoadedProvider(provider, runtime)
         } catch (failure: Throwable) {
             runtime.close()
             throw failure

@@ -16,6 +16,7 @@ class PluginMusicProvider(val manifest: PluginManifest, private val runtime: Plu
     ArtistCapability, RankingCatalogCapability, HomeFeedCapability, UserLibraryCapability, LibraryCollectionCapability,
     FavoriteCapability, FavoriteStateCapability, AuthenticationCapability, PlaybackCapability, DownloadCapability,
     FallbackPlaybackCapability, LyricsCapability {
+    internal var mediaAccess: (() -> PluginMediaAccess)? = null
     override val sourceId = manifest.sourceId
     override val displayName = manifest.name
     override val capabilities = manifest.capabilities.mapTo(mutableSetOf()) {
@@ -127,12 +128,16 @@ class PluginMusicProvider(val manifest: PluginManifest, private val runtime: Plu
     private suspend fun resolveAudio(capability: PluginCapability, method: String, track: MusicTrack,
         quality: AudioQualityTier, external: Boolean = false): PlaybackResolution {
         if (!external) checkTrack(track)
+        // Bind authorization before script execution, so a switch cannot authorize an old URL.
+        val capturedAccess = if (!external) mediaAccess?.let { runCatching(it).getOrNull() } else null
         val value = JSONObject(call(capability, method, trackJson(track), wire(quality.name)))
         return when (value.getString("type")) {
             "playable" -> {
                 val url = value.getString("url"); validateMediaUrl(url, external)
-                // A host media lease must be connected before credential references can be consumed.
-                require(!value.has("credential")) { "PERMISSION_DENIED" }
+                val access = if (value.has("credential")) {
+                    require(!external && value.getString("credential") == "active") { "PERMISSION_DENIED" }
+                    checkNotNull(capturedAccess) { "LOGIN_REQUIRED" }.also { check(it.current()) { "AUTH_EXPIRED" } }
+                } else null
                 val raw = value.optJSONObject("headers")
                 val headers = buildMap {
                     raw?.keys()?.forEach { key ->
@@ -145,7 +150,8 @@ class PluginMusicProvider(val manifest: PluginManifest, private val runtime: Plu
                 PlaybackResolution.Playable(url, headers, quality,
                     actualQuality = codec.optionalText(value, "actualQuality")?.let { text -> AudioQualityTier.entries.first { wire(it.name) == text } },
                     bitrate = codec.optionalLong(value, "bitrate")?.toInt(),
-                    format = if (value.has("format")) value.getString("format") else null, expiresAtEpochMs = expires)
+                     format = if (value.has("format")) value.getString("format") else null, expiresAtEpochMs = expires,
+                     pluginMediaAccess = access)
             }
             "preview" -> {
                 val url = value.getString("url"); validateMediaUrl(url, external)

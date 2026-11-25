@@ -215,14 +215,14 @@ class ResolvedRequest(
             }
             check(providers.generation == generation && providers[source] === provider) { "CANCELLED" }
             when (updated) {
-                is PlaybackResolution.Playable -> melox.plugin.PluginPlaybackInputs.MediaRequest(updated.url, updated.requestHeaders, updated.expiresAtEpochMs)
+                is PlaybackResolution.Playable -> melox.plugin.PluginPlaybackInputs.MediaRequest(updated.url, updated.requestHeaders, updated.expiresAtEpochMs, updated.pluginMediaAccess)
                 is PlaybackResolution.Preview -> melox.plugin.PluginPlaybackInputs.MediaRequest(updated.url, emptyMap(), null)
                 else -> throw IOException("Music source audio unavailable after refresh")
             }
         }
         return when (resolution) {
             is PlaybackResolution.Playable -> ResolvedRequest(melox.plugin.PluginPlaybackInputs.register(
-                plugin, providers, generation, resolution.url, resolution.requestHeaders, resolution.expiresAtEpochMs, refresh),
+                plugin, providers, generation, resolution.url, resolution.requestHeaders, resolution.expiresAtEpochMs, refresh, resolution.pluginMediaAccess),
                 expiresAtEpochMs = resolution.expiresAtEpochMs)
             is PlaybackResolution.Preview -> ResolvedRequest(melox.plugin.PluginPlaybackInputs.register(
                 plugin, providers, generation, resolution.url, emptyMap(), null, refresh))

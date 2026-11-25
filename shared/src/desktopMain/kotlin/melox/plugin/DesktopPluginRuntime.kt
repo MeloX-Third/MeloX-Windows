@@ -19,7 +19,17 @@ object DesktopPluginRuntime {
             File(System.getProperty("java.home")), classpath)
     }
     private val lifecycle: PluginManager by lazy {
-        PluginManager(PluginPackageStore(), MeloXMusicProviders.create(), PluginProcessProviderFactory { plugin ->
+        PluginManager(PluginPackageStore(), MeloXMusicProviders.create(), PluginProcessProviderFactory(mediaAccess = { plugin ->
+            val vault = PluginAccountVault(plugin.manifest.sourceId)
+            PluginAccountInvocation(plugin.manifest, vault, dataRoot).capture("resolvePlayback")
+            val stamp = vault.sessionStamp()
+            val lease = vault.lease() ?: error("LOGIN_REQUIRED")
+            require(lease.policy == plugin.manifest.authentication) { "AUTH_EXPIRED" }
+            check(vault.sessionStamp() == stamp) { "CANCELLED" }
+            PluginMediaAccess({ lease.isCurrent() && vault.sessionStamp() == stamp }) { active ->
+                PluginHttpBroker(plugin.manifest, accountCurrent = active, credential = lease)
+            }
+        }) { plugin ->
             val accounts = PluginAccountInvocation(plugin.manifest, PluginAccountVault(plugin.manifest.sourceId), dataRoot)
             PluginProcessRuntime(plugin, launcher, { _, _ -> error("missing account invocation context") }, context = accounts::capture)
         }, cancelAuthorization = { source -> oauth.cancel(source) },

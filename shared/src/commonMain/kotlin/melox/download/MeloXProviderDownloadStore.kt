@@ -264,7 +264,8 @@ class MeloXProviderDownloadStore internal constructor(
     private suspend fun downloadPlugin(provider: melox.plugin.PluginMusicProvider,
         resolution: PlaybackResolution.Playable, destination: File,
         changes: kotlinx.coroutines.flow.StateFlow<Long>, current: () -> Boolean) = kotlinx.coroutines.coroutineScope {
-        val broker = melox.plugin.PluginHttpBroker(provider.manifest, accountCurrent = current)
+        val broker = resolution.pluginMediaAccess?.broker(current)
+            ?: melox.plugin.PluginHttpBroker(provider.manifest, accountCurrent = current)
         val observer = launch(Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
             changes.collect { if (!current()) broker.close() }
         }
@@ -273,7 +274,7 @@ class MeloXProviderDownloadStore internal constructor(
         }
         try {
             broker.use {
-                it.openMedia(resolution.url, resolution.requestHeaders).use { input ->
+                it.openMedia(resolution.url, resolution.requestHeaders, resolution.pluginMediaAccess != null).use { input ->
                     destination.outputStream().use { output -> copyAudio(input, output) }
                 }
             }

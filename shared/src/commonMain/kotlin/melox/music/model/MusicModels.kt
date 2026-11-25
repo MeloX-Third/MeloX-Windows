@@ -251,6 +251,7 @@ sealed interface PlaybackResolution {
         val bitrate: Int? = null,
         val format: String? = null,
         val expiresAtEpochMs: Long? = null,
+        val pluginMediaAccess: melox.plugin.PluginMediaAccess? = null,
     ) : PlaybackResolution
 
     data class Preview(
