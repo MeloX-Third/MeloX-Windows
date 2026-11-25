@@ -22,6 +22,10 @@ import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -107,6 +111,7 @@ class MeloXDownloadStore private constructor() {
 
     val downloads = mutableStateListOf<MeloXDownloadedSong>()
     val activeDownloads = mutableStateMapOf<Long, MeloXActiveDownload>()
+    val pausedDownloads = mutableStateMapOf<Long, MeloXActiveDownload>()
     var errorMessage: String? = null
         private set
 
@@ -149,6 +154,7 @@ class MeloXDownloadStore private constructor() {
 
     fun contains(songId: Long): Boolean = downloadsBySongId.containsKey(songId)
     fun isDownloading(songId: Long): Boolean = activeDownloads.containsKey(songId)
+    fun isPaused(songId: Long): Boolean = pausedDownloads.containsKey(songId)
     fun recordFor(songId: Long): MeloXDownloadedSong? = downloadsBySongId[songId]
     fun downloadedQuality(songId: Long): MusicQuality? = recordFor(songId)?.quality
 
@@ -156,7 +162,7 @@ class MeloXDownloadStore private constructor() {
     fun recordPlayback(songId: Long, title: String = "", artist: String = "") {
         val prefs = getPreferences("melox_downloads")
         if (!prefs.getBoolean("downloads_auto_cache", false)) return
-        if (contains(songId) || isDownloading(songId)) return
+        if (contains(songId) || isDownloading(songId) || isPaused(songId)) return
         val counts = getPreferences("melox_auto_cache_counts")
         val key = songId.toString()
         val count = counts.getInt(key, 0) + 1
@@ -241,19 +247,56 @@ class MeloXDownloadStore private constructor() {
         if (isDownloading(song.id) || jobs.containsKey(song.id)) return
 
         errorMessage = null
+        pausedDownloads.remove(song.id)
         activeDownloads[song.id] = MeloXActiveDownload(song, quality)
-        jobs[song.id] = scope.launch {
-            transferSlots.withPermit {
-                download(song, quality)
+        lateinit var job: Job
+        val entered = java.util.concurrent.atomic.AtomicBoolean(false)
+        job = scope.launch(start = CoroutineStart.LAZY) {
+            entered.set(true)
+            try {
+                transferSlots.withPermit { download(song, quality, job) }
+            } finally {
+                withContext(NonCancellable) {
+                    withContext(Dispatchers.IO) { File(directory, "${song.id}.part").delete() }
+                    activeDownloads.remove(song.id)
+                    jobs.remove(song.id, job)
+                }
             }
+        }
+        jobs[song.id] = job
+        job.invokeOnCompletion {
+            if (!entered.get()) {
+                activeDownloads.remove(song.id)
+                jobs.remove(song.id, job)
+            }
+        }
+        job.start()
+    }
+
+    fun pause(songId: Long) {
+        val job = jobs[songId] ?: return
+        val active = activeDownloads[songId] ?: return
+        pausedDownloads[songId] = active.copy(bytesPerSecond = 0L)
+        activeDownloads.remove(songId)
+        job.cancel()
+    }
+
+    /** Resume waits for the previous owner to delete its temporary file. */
+    fun resume(songId: Long) {
+        val paused = pausedDownloads[songId] ?: return
+        val previous = jobs[songId]
+        scope.launch {
+            previous?.join()
+            if (pausedDownloads[songId] !== paused) return@launch
+            startNetease(paused.song, paused.quality, null)
         }
     }
 
     fun cancel(songId: Long) {
-        jobs.remove(songId)?.cancel()
+        jobs[songId]?.cancel()
         activeDownloads.remove(songId)
+        pausedDownloads.remove(songId)
         pendingPlaylistRefs.remove(songId)
-        storageCommands.trySend(StorageCommand.Delete(setOf("$songId.part")))
     }
 
     fun remove(songId: Long) = removeMany(setOf(songId))
@@ -271,6 +314,7 @@ class MeloXDownloadStore private constructor() {
     }
 
     fun removeAll() {
+        pausedDownloads.clear()
         jobs.keys.toList().forEach(::cancel)
         pendingPlaylistRefs.clear()
         downloads.clear()
@@ -352,12 +396,13 @@ class MeloXDownloadStore private constructor() {
         return target.absolutePath
     }
 
-    private suspend fun download(song: SearchSong, quality: MusicQuality) {
+    private suspend fun download(song: SearchSong, quality: MusicQuality, job: Job) {
         val temp = File(directory, "${song.id}.part")
         try {
             val resolvedSong = runCatching {
                 if (song.artworkUrl.isNullOrBlank()) searchClient.ensureArtwork(song) else song
             }.getOrDefault(song)
+            currentCoroutineContext().ensureActive()
             activeDownloads[song.id] = activeDownloads[song.id]?.copy(song = resolvedSong)
                 ?: MeloXActiveDownload(resolvedSong, quality)
 
@@ -388,6 +433,7 @@ class MeloXDownloadStore private constructor() {
                             var received = 0L
                             var lastPublished = 0L
                             while (true) {
+                                currentCoroutineContext().ensureActive()
                                 val count = input.read(buffer)
                                 if (count < 0) break
                                 received += count
@@ -438,7 +484,7 @@ class MeloXDownloadStore private constructor() {
             } else {
                 null
             }
-            val sourcePlaylists = pendingPlaylistRefs.remove(song.id)
+            val sourcePlaylists = pendingPlaylistRefs[song.id]
                 ?.distinctBy { it.id }
                 .orEmpty()
             sourcePlaylists.forEach { downloadPlaylistArtworkIfAvailable(it) }
@@ -455,21 +501,17 @@ class MeloXDownloadStore private constructor() {
                 lyricsFileName = lyricsFileName,
                 sourcePlaylists = sourcePlaylists,
             )
+            currentCoroutineContext().ensureActive()
+            if (jobs[song.id] !== job) return
             downloads.removeAll { it.song.id == song.id }
             downloads.add(0, record)
             downloadsBySongId[song.id] = record
+            pendingPlaylistRefs.remove(song.id)
             activeDownloads.remove(song.id)
-            jobs.remove(song.id)
             enqueuePersist()
         } catch (_: CancellationException) {
-            storageCommands.trySend(StorageCommand.Delete(setOf(temp.name)))
-            activeDownloads.remove(song.id)
-            jobs.remove(song.id)
-            pendingPlaylistRefs.remove(song.id)
+            // The job owner performs non-cancellable cleanup before releasing its slot.
         } catch (error: Throwable) {
-            storageCommands.trySend(StorageCommand.Delete(setOf(temp.name)))
-            activeDownloads.remove(song.id)
-            jobs.remove(song.id)
             pendingPlaylistRefs.remove(song.id)
             errorMessage = "《${song.name}》下载失败：${error.message ?: error::class.java.simpleName}"
         }

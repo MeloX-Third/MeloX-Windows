@@ -92,10 +92,20 @@ internal fun MeloXDesktopDownloads() {
                 Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(download.song.name, Modifier.weight(1f))
                     download.fractionCompleted?.let { Text("${(it * 100).toInt()}%") }
+                    DesktopSettingsButton(desktopPlatformString("download-pause"), Modifier.testTag("desktop-download-pause:${download.song.id}")) { store.pause(download.song.id) }
                     DesktopDialogButton("ui.common.cancel", tag = "desktop-download-cancel:${download.song.id}") { store.cancel(download.song.id) }
                 }
             } }
         }
+        store.pausedDownloads.values.toList().forEach { download -> item("paused:${download.song.id}") {
+            Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(download.song.name, Modifier.weight(1f))
+                Text(desktopPlatformString("download-paused"))
+                DesktopSettingsButton(desktopPlatformString("download-resume"), Modifier.testTag("desktop-download-resume:${download.song.id}")) { store.resume(download.song.id) }
+                DesktopDialogButton("ui.common.cancel", tag = "desktop-download-cancel:${download.song.id}") { store.cancel(download.song.id) }
+            }
+        } }
     }, rowActions = { song -> DesktopSettingsButton(desktopString("ui.downloads.delete"), Modifier.testTag("desktop-download-remove:${song.id}"), destructive = true) { deleting = song } })
     deleting?.let { song -> DesktopMessageDialog("ui.downloads.delete", song.name, { deleting = null }, confirmKey = "ui.downloads.delete", onConfirm = {
         song.providerTrack?.let { providers.remove(it.id) } ?: store.remove(song.id)
