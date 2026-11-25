@@ -1709,9 +1709,11 @@
     {
         "android":  "ui/discovery/MeloXDiscoveryScreens.kt",
         "windowsCandidates":  [
-
+                                  "desktop/src/desktopMain/kotlin/melox/ui/screens/HomeScreen.kt",
+                                  "desktop/src/desktopMain/kotlin/melox/ui/screens/ExploreScreen.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "PARTIAL",
+        "notes": "Reviewed home recommendation seed/card entry against fixed edc829e. Desktop uses its independent reference. Home dynamic source and ranking lifecycle wiring under validation; phone Sonify recommendation card and remaining discovery branches still open."
     },
     {
         "android":  "ui/discovery/SonifyExploreFeed.kt",
