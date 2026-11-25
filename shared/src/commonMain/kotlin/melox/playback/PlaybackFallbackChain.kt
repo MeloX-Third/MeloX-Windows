@@ -14,10 +14,11 @@ internal class PlaybackFallbackChain(
 ) {
     fun cacheIdentity() = "${crossProvider?.cacheIdentity().orEmpty()}:${thirdParty?.cacheIdentity().orEmpty()}"
     fun resolve(track: MusicTrack, quality: AudioQualityTier, membershipFailure: Boolean): PlaybackFallbackResolution? {
-        if (track.id.source == MusicSource.Local || track.id.source == MusicSource.Jellyfin) return null
+        val source = track.id.sourceId.builtIn ?: return null
+        if (source == MusicSource.Local || source == MusicSource.Jellyfin) return null
         val cross = runCatching {
             crossProvider?.resolve(CrossProviderFallbackRequest(track.id.value.toLongOrNull() ?: 0L,
-                track.title, track.artistText, track.durationMs, quality, track.id.source, track.id.value))
+                track.title, track.artistText, track.durationMs, quality, source, track.id.value))
         }.onFailure { if (it is CancellationException) throw it }.getOrNull()
         if (cross != null) return PlaybackFallbackResolution(cross.url, cross.requestHeaders, cross.expiresAtEpochMs,
             "${cross.source.storageValue}:${cross.resourceId}", cross)

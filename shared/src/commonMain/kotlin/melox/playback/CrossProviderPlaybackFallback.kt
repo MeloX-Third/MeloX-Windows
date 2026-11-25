@@ -134,7 +134,7 @@ class CrossProviderPlaybackFallbackResolver(
                     }
                     eventLogger("strict matches ${provider.source.storageValue} song=${request.songId}: ${ranked.size}")
                     for (match in ranked) {
-                        if (provider.source != match.candidate.id.source) continue
+                        if (provider.sourceId != match.candidate.id.sourceId) continue
                         val playback = provider as PlaybackCapability
                         val resolution = runCatching { playback.resolvePlayback(match.candidate, request.quality) }
                             .onFailure { if (it is CancellationException) throw it }.getOrNull()

@@ -34,6 +34,12 @@ class PlaybackFallbackOrderTest {
         val result = resolver(native, cross(listOf(Provider(MusicSource.QQMusic, calls, full("qq")))), third()).resolveProviderRequest(uri())
         assertEquals("https://audio.invalid/native", result.uri); assertEquals(listOf("qishui:play"), calls)
     }
+    @Test fun dynamicTracksCannotImplicitlyEnterBuiltInOrThirdPartyFallbacks() {
+        val pluginTrack = track.copy(id = MusicResourceId(requireNotNull(SourceId.parse("plugin:example.fallback")), "track"))
+        val chain = PlaybackFallbackChain(cross(listOf(Provider(MusicSource.QQMusic, calls, full("qq")))), third())
+        assertNull(chain.resolve(pluginTrack, AudioQualityTier.Standard, true))
+        assertTrue(calls.isEmpty())
+    }
     @Test fun failedNativeUsesStrictBuiltInBeforeThirdPartyAndKeepsHeaders() {
         val native = Provider(MusicSource.Qishui, calls, PlaybackResolution.SubscriptionRequired)
         val result = resolver(native, cross(listOf(native, Provider(MusicSource.QQMusic, calls, full("qq")))), third()).resolveProviderRequest(uri())
