@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`eab352f` 为独立 worker 增加长度前缀 UTF-8 帧；负数/零/超限长度在分配 payload 前拒绝，截断、非法 UTF-8、JSON 深度及输出上限有回归。`gradle :shared:desktopTest --tests "melox.plugin.PluginIpcFramesTest" :desktop:desktopJar` 成功（59 秒），3 项通过。仅证明通信基础边界，尚未接通 Windows 受限进程与生产工厂。
+
 `8476d2a` LAN/DLNA 代理识别插件私有输入并经受控流转发；不透明标识和上游请求头不发送给接收端。HEAD 关闭输入，来源撤销拒绝打开，代理关闭释放活动私有流；未实现范围读取，因此返回完整 200 并声明 Accept-Ranges: none / DLNA.ORG_OP=00。`gradle :shared:desktopTest --tests "melox.lan.*" --tests "melox.dlna.*" :desktop:desktopJar` 成功（2 分 2 秒），21 项全部通过、0 跳过。真实 DLNA 设备、随机跳转与公网服务仍待验收。
 
 `9c3593d` 插件播放解析改为进程内不透明输入，普通 FFmpeg 和独立 PCM 解码器通过 stdin 接受私有 broker 字节流，原生参数限制为 pipe 协议。覆盖重复打开/撤销/过期、命令不泄露凭据、真实 WAV PCM、跳转及本地 socket broker 贯穿。流媒体分析开关同样约束私有输入。播放专项 XML 140 项通过；最终解码器初始化收尾后再次运行私有输入/动态解析/普通与双解码专项和桌面 JAR 成功（1 分 30 秒）。真实公网、账号租约、401/403/410 重新解析及非顺序容器兼容仍待验收。
