@@ -185,13 +185,19 @@ class PluginManager(
         check(state.value[source]?.manifest == expected && source in loaded) { "plugin changed during login" }
         replaceAccountContext(source, action)
     }
+    /** The OAuth owner checks its claimed state inside action; do not cancel that same state first. */
+    internal fun commitOAuthAccount(source: SourceId, expected: PluginManifest, action: () -> Unit) = synchronized(lock) {
+        checkOpen()
+        check(state.value[source]?.manifest == expected && source in loaded) { "plugin changed during login" }
+        replaceAccountContext(source, action, cancelPendingAuthorization = false)
+    }
     internal fun changeAccount(source: SourceId, expected: PluginManifest, action: () -> Unit) = synchronized(lock) {
         checkOpen()
         check(state.value[source]?.manifest == expected) { "plugin changed during account operation" }
         replaceAccountContext(source, action)
     }
-    private fun replaceAccountContext(source: SourceId, action: () -> Unit) {
-        cancelAuthorization(source)
+    private fun replaceAccountContext(source: SourceId, action: () -> Unit, cancelPendingAuthorization: Boolean = true) {
+        if (cancelPendingAuthorization) cancelAuthorization(source)
         val previous = loaded.remove(source)
         if (previous != null) {
             registry.unregisterDynamic(source)

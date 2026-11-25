@@ -117,6 +117,34 @@ class PluginManagerTest {
         } finally { manager.close(); root.deleteRecursively() }
     }
 
+    @Test fun oauthCommitPreservesClaimedLoginWhileOrdinaryAccountChangesCancelIt() {
+        val root = Files.createTempDirectory("manager-oauth").toFile()
+        val registry = MusicProviderRegistry(listOf(melox.provider.local.LocalProvider()))
+        var cancelled = 0
+        val manager = PluginManager(PluginPackageStore(root), registry, PluginManager.ProviderFactory {
+            PluginManager.LoadedProvider(object : MusicProvider {
+                override val sourceId = this@PluginManagerTest.source
+                override val displayName = "Test"
+                override val capabilities = emptySet<MusicCapability>()
+            }, Closeable {})
+        }, cancelAuthorization = { cancelled++ })
+        try {
+            val manifest = manager.install(archive("1.0.0"))
+            manager.enable(source)
+            manager.commitOAuthAccount(source, manifest) {
+                assertEquals(0, cancelled)
+                assertNull(registry[source])
+            }
+            assertNotNull(registry[source])
+            manager.changeAccount(source, manifest) {
+                assertEquals(1, cancelled)
+                assertNull(registry[source])
+            }
+            manager.disable(source)
+            assertFails { manager.commitOAuthAccount(source, manifest) { error("must not save") } }
+        } finally { manager.close(); root.deleteRecursively() }
+    }
+
     @Test fun accountMutationWithdrawsOldProviderBeforeCredentialsChangeAndPreservesPrimaryFailure() {
         val root = Files.createTempDirectory("manager-account").toFile()
         val registry = MusicProviderRegistry(listOf(melox.provider.local.LocalProvider()))
