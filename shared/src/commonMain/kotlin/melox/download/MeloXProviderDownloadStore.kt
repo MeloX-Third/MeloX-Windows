@@ -17,8 +17,12 @@ import java.io.File
 import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -43,6 +47,8 @@ class MeloXProviderDownloadStore private constructor() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private val jobs = ConcurrentHashMap<String, Job>()
     private val recordsByKey = ConcurrentHashMap<String, MeloXProviderDownloadedSong>()
+    private val indexLock = Any()
+    private val removedIdentities = ConcurrentHashMap.newKeySet<String>()
 
     val downloads = mutableStateListOf<MeloXProviderDownloadedSong>()
     val activeDownloads = mutableStateMapOf<String, Boolean>()
@@ -51,7 +57,8 @@ class MeloXProviderDownloadStore private constructor() {
         scope.launch {
             val restored = withContext(Dispatchers.IO) { readIndex() }
             restored.forEach { record ->
-                if (recordsByKey.putIfAbsent(key(record.track.id), record) == null) downloads += record
+                val identity = key(record.track.id)
+                if (identity !in removedIdentities && recordsByKey.putIfAbsent(identity, record) == null) downloads += record
             }
         }
     }
@@ -66,12 +73,13 @@ class MeloXProviderDownloadStore private constructor() {
 
     fun remove(id: MusicResourceId) {
         val idKey = key(id)
-        jobs.remove(idKey)?.cancel()
+        removedIdentities.add(idKey)
+        jobs[idKey]?.cancel()
         recordsByKey.remove(idKey)?.let { record ->
             File(directory, record.fileName).delete()
             downloads.removeAll { key(it.track.id) == idKey }
-            scope.launch(Dispatchers.IO) { writeIndex(recordsByKey.values.toList()) }
         }
+        scope.launch(Dispatchers.IO) { writeIndex() }
     }
 
     fun localPlaybackUri(id: MusicResourceId): String? = recordsByKey[key(id)]
@@ -85,7 +93,8 @@ class MeloXProviderDownloadStore private constructor() {
         val provider = MeloXMusicProviders.create().require(track.id.source)
         val downloader = provider as? DownloadCapability ?: return
         activeDownloads[idKey] = true
-        jobs[idKey] = scope.launch(Dispatchers.IO) {
+        lateinit var job: Job
+        job = scope.launch(Dispatchers.IO, start = CoroutineStart.LAZY) {
             try {
                 val resolution = downloader.resolveDownload(track, quality)
                 val playable = resolution as? PlaybackResolution.Playable
@@ -94,6 +103,7 @@ class MeloXProviderDownloadStore private constructor() {
                 val fileName = "${digest(idKey)}.$extension"
                 val destination = File(directory, fileName)
                 download(playable, destination)
+                currentCoroutineContext().ensureActive()
                 val record = MeloXProviderDownloadedSong(
                     track = track,
                     quality = quality,
@@ -104,16 +114,21 @@ class MeloXProviderDownloadStore private constructor() {
                     downloadedAt = System.currentTimeMillis(),
                 )
                 withContext(Dispatchers.Main) {
+                    currentCoroutineContext().ensureActive()
+                    if (jobs[idKey] !== job) return@withContext
+                    removedIdentities.remove(idKey)
                     recordsByKey[idKey] = record
                     downloads.removeAll { key(it.track.id) == idKey }
                     downloads += record
                 }
-                withContext(Dispatchers.IO) { writeIndex(recordsByKey.values.toList()) }
+                withContext(Dispatchers.IO) { writeIndex() }
             } finally {
-                withContext(Dispatchers.Main) { activeDownloads.remove(idKey) }
-                jobs.remove(idKey)
+                withContext(NonCancellable + Dispatchers.Main) { activeDownloads.remove(idKey) }
             }
         }
+        jobs[idKey] = job
+        job.invokeOnCompletion { jobs.remove(idKey, job) }
+        job.start()
     }
 
     private fun download(resolution: PlaybackResolution.Playable, destination: File) {
@@ -143,8 +158,8 @@ class MeloXProviderDownloadStore private constructor() {
         val array = JSONArray(indexFile.readText())
         buildList {
             for (index in 0 until array.length()) {
-                val json = array.getJSONObject(index)
-                val source = MusicSource.fromStorageValue(json.optString("source"))
+                val json = array.optJSONObject(index) ?: continue
+                val source = MusicSource.entries.firstOrNull { it.storageValue == json.optString("source") } ?: continue
                 val id = json.optString("id").takeIf(String::isNotBlank) ?: continue
                 val fileName = json.optString("fileName").takeIf(String::isNotBlank) ?: continue
                 val track = MusicTrack(
@@ -177,7 +192,8 @@ class MeloXProviderDownloadStore private constructor() {
         }
     }.getOrDefault(emptyList())
 
-    private fun writeIndex(records: List<MeloXProviderDownloadedSong>) {
+    private fun writeIndex() = synchronized(indexLock) {
+        val records = recordsByKey.values.toList()
         val array = JSONArray()
         records.forEach { record ->
             val track = record.track
@@ -197,7 +213,16 @@ class MeloXProviderDownloadStore private constructor() {
                 put("downloadedAt", record.downloadedAt)
             })
         }
-        indexFile.writeText(array.toString())
+            // Reading failure must leave the previous index intact, rather than
+            // replacing unknown or corrupt data with a partial in-memory view.
+            val previous = if (indexFile.isFile) JSONArray(indexFile.readText()) else JSONArray()
+            val merged = ProviderDownloadIndexCodec.merge(previous, array, removedIdentities.toSet())
+            val temporary = java.nio.file.Files.createTempFile(directory.toPath(), "index-", ".tmp")
+            try {
+                java.nio.file.Files.writeString(temporary, merged.toString())
+                java.nio.file.Files.move(temporary, indexFile.toPath(),
+                    java.nio.file.StandardCopyOption.ATOMIC_MOVE, java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+            } finally { java.nio.file.Files.deleteIfExists(temporary) }
     }
 
     private fun extensionFor(format: String?): String = when (format?.lowercase()) {
