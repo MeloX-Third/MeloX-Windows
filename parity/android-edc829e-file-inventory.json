@@ -1,0 +1,2788 @@
+[
+    {
+        "android":  "MainActivity.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "MeloXApplication.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/account/NeteaseSessionStore.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/account/NeteaseSessionStore.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/account/SecureSessionPreferences.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/account/SecureSessionPreferences.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/account/SessionPreferenceMigration.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/audio/MeloXNetworkQualityPolicy.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/autosync/AutoSyncDictionaryRepository.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/autosync/AutoSyncModelRepository.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/autosync/AutoSyncModelRepository.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/autosync/AutoSyncTimelineStore.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/autosync/AutoSyncTimelineStore.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/autosync/AutoSyncTypes.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/autosync/OnnxCtcEngine.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/autosync/ZhAlignmentEngine.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/dailyhistory/DailyHistoryStore.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/dailyhistory/DailyHistoryStore.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/dailyhistory/MeloXDailyClock.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/dailyhistory/MeloXDailyClock.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/diagnostics/MeloXLogExporter.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/diagnostics/MeloXLogExporter.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/download/MeloXDownloadStore.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/download/MeloXDownloadStore.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/download/MeloXProviderDownloadStore.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/download/MeloXProviderDownloadStore.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/download/PluginDownloadTransfer.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/download/ProviderDownloadIndexCodec.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/download/ProviderDownloadTaskStore.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/library/NeteaseLibraryCache.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/library/NeteaseLibraryCache.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/library/NeteaseLibraryClient.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/library/NeteaseLibraryClient.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/library/NeteaseLibraryModels.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/library/NeteaseLibraryModels.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/lyrics/JapaneseRubyAlignment.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/lyrics/JapaneseRubyAlignment.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/lyrics/KugouKrcLyricsParser.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/lyrics/KugouKrcLyricsParser.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/lyrics/LrcLibLyricsClient.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/lyrics/LrcLibLyricsClient.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/lyrics/LrcLyricsParser.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/lyrics/LrcLyricsParser.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/lyrics/LyricAvailability.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/lyrics/LyricBindingStore.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/lyrics/LyricBindingStore.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/lyrics/LyricFileParser.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/lyrics/LyricFileParser.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/lyrics/LyricModels.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/lyrics/LyricModels.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/lyrics/LyricRecognitionStore.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/lyrics/LyricRomanizationAligner.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/lyrics/LyricRomanizationAligner.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/lyrics/LyricTimelineProcessor.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/lyrics/LyricTimelineProcessor.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/lyrics/LyricTranslationPolicy.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/lyrics/LyricifyLyricsParser.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/lyrics/LyricifyLyricsParser.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/lyrics/MeloXLyricScript.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/lyrics/MeloXLyricScript.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/lyrics/QQMusicMeiQrcDecoder.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/lyrics/QQMusicMeiQrcDecoder.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/lyrics/QQMusicQrcLyricsParser.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/lyrics/QQMusicQrcLyricsParser.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/lyrics/QqBracketBacking.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/lyrics/TtmlLyricsParser.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/lyrics/TtmlLyricsParser.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/model/SearchSong.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/model/SearchSong.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/music/experience/MusicExperience.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/music/experience/MusicExperience.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/music/model/AudioQualityRanking.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/music/model/AudioQualityRanking.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/music/model/MeloXTrackJson.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/music/model/MeloXTrackJson.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/music/model/MusicModels.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/music/model/MusicModels.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/music/model/SourceId.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/music/provider/MeloXLegacyUiBridge.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/music/provider/MeloXLegacyUiBridge.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/music/provider/MeloXMusicProviders.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/music/provider/MeloXMusicProviders.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/music/provider/MeloXUnifiedFavorites.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/music/provider/MeloXUnifiedFavorites.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/music/provider/MusicProvider.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/music/provider/MusicProvider.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/music/provider/MusicProviderSelectionStore.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/music/provider/MusicProviderSelectionStore.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/music/provider/ProviderAccountManager.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/music/provider/ProviderAccountManager.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/music/provider/ProviderCollectionPaging.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/music/provider/ProviderCollectionPaging.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/music/provider/TrackAggregation.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/music/provider/TrackAggregation.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/music/provider/UnifiedMusicService.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/music/provider/UnifiedMusicService.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/network/BoundedLineReader.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/network/BoundedStreams.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/network/MeloXHttpClient.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/network/MeloXHttpClient.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/network/NeteaseAuthenticatedEapi.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/network/NeteaseAuthenticatedEapi.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/network/NeteaseAuthenticatedWeapi.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/network/NeteaseAuthenticatedWeapi.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/network/NeteaseCollectionDetailsClient.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/network/NeteaseCollectionDetailsClient.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/network/NeteaseFavoriteSync.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/network/NeteaseMusicOperationsClient.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/network/NeteaseMusicOperationsClient.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/network/NeteaseSearchClient.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/network/NeteaseSearchClient.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/network/NeteaseUniversalSearchClient.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/network/NeteaseUniversalSearchClient.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/network/RestrictedHttpClient.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/network/RetryInterceptor.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/plugin/MeloXPlugins.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/plugin/PluginAccountVault.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/plugin/PluginArchiveReader.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/plugin/PluginArtwork.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/plugin/PluginArtworkFetcher.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/plugin/PluginCatalogCodec.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/plugin/PluginDiagnostics.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/plugin/PluginErrors.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/plugin/PluginHttpBroker.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/plugin/PluginIpcPolicy.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/plugin/PluginIsolatedService.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/plugin/PluginJson.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/plugin/PluginManager.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/plugin/PluginManifest.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/plugin/PluginMediaFormats.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/plugin/PluginMusicProvider.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/plugin/PluginOAuth.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/plugin/PluginOAuthCallback.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/plugin/PluginOAuthCallbackActivity.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/plugin/PluginPackageStore.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/plugin/PluginPackageTrust.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/plugin/PluginPermissions.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/plugin/PluginPublicDns.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/plugin/PluginResultValidator.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/plugin/PluginRuntime.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/plugin/PluginStorage.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/plugin/PluginTrackLink.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/plugin/PluginVersion.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/plugin/PluginWireContract.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/applemusic/AppleMusicApiClient.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/applemusic/AppleMusicApiClient.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/bilibili/BilibiliApiCache.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/bilibili/BilibiliApiCache.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/bilibili/BilibiliDirectedTrafficPolicy.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/bilibili/BilibiliLyricAlignment.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/bilibili/BilibiliLyricAlignment.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/bilibili/BilibiliProvider.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/bilibili/BilibiliProvider.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/jellyfin/JellyfinApiClient.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/jellyfin/JellyfinApiClient.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/jellyfin/JellyfinModels.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/jellyfin/JellyfinModels.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/jellyfin/JellyfinProvider.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/jellyfin/JellyfinProvider.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/jellyfin/JellyfinSessionStore.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/jellyfin/JellyfinSessionStore.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/kugou/KugouAnonymousPlayback.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/kugou/KugouApiClient.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/kugou/KugouApiClient.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/kugou/KugouCatalogClient.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/kugou/KugouCatalogClient.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/kugou/KugouDiscoveryClient.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/kugou/KugouDiscoveryClient.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/kugou/KugouLiteApiClient.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/kugou/KugouLiteApiClient.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/kugou/KugouLiteDailyReward.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/kugou/KugouLiteDailyReward.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/kugou/KugouLiteProvider.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/kugou/KugouLiteProvider.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/kugou/KugouLoginClient.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/kugou/KugouLoginClient.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/kugou/KugouLyricsClient.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/kugou/KugouLyricsClient.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/kugou/KugouPlatform.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/kugou/KugouPlatform.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/kugou/KugouPlaylistClient.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/kugou/KugouPlaylistClient.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/kugou/KugouPlaylistWriteClient.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/kugou/KugouPlaylistWriteClient.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/kugou/KugouRankingClient.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/kugou/KugouRankingClient.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/kugou/KugouRequestClient.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/kugou/KugouRequestClient.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/kugou/KugouSearchQuality.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/kugou/KugouSearchQuality.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/kugou/KugouSessionStore.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/kugou/KugouSessionStore.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/kuwo/KuwoApiClient.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/kuwo/KuwoApiClient.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/kuwo/KuwoPhoneAuthClient.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/kuwo/KuwoPhoneAuthClient.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/kuwo/KuwoSearchQuality.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/kuwo/KuwoSearchQuality.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/local/LocalMediaScanner.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/local/LocalMediaScanner.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/local/LocalMusicRepository.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/local/LocalMusicRepository.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/local/LocalProvider.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/local/LocalProvider.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/lxuser/ChkszApiClient.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/lxuser/ChkszApiClient.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/lxuser/LxRuntimeThread.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/lxuser/LxUserRuntime.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/lxuser/LxUserRuntime.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/lxuser/LxUserScriptContract.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/lxuser/LxUserScriptContract.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/lxuser/LxUserSourceStore.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/lxuser/LxUserSourceStore.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/netease/NeteaseProvider.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/netease/NeteaseProvider.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/qishui/QishuiApiClient.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/qishui/QishuiApiClient.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/qishui/QishuiParsing.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/qishui/QishuiParsing.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/qishui/QishuiProvider.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/qishui/QishuiProvider.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/qishui/QishuiSessionStore.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/qishui/QishuiSessionStore.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/qqmusic/QQMusicApiClient.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/qqmusic/QQMusicApiClient.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/qqmusic/QQMusicCatalogClient.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/qqmusic/QQMusicCatalogClient.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/qqmusic/QQMusicFavoriteClient.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/qqmusic/QQMusicFavoriteClient.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/qqmusic/QQMusicProvider.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/qqmusic/QQMusicProvider.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/qqmusic/QQMusicRichLyricsClient.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/qqmusic/QQMusicRichLyricsClient.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/qqmusic/QQMusicSearchQuality.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/qqmusic/QQMusicSearchQuality.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/spotify/SpotifyApiClient.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/spotify/SpotifyApiClient.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/spotify/SpotifyLibrespotPlayback.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/spotify/SpotifyLibrespotPlayback.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/spotify/SpotifyOAuth.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/spotify/SpotifyOAuth.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/spotify/SpotifyProvider.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/spotify/SpotifyProvider.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/spotify/SpotifySessionStore.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/spotify/SpotifySessionStore.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/spotify/SpotifyTrackMatcher.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/spotify/SpotifyTrackMatcher.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/thirdparty/ResolverApiClient.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/thirdparty/ResolverProtocol.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/thirdparty/ResolverSettings.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/youtubemusic/YouTubeCursorPager.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/youtubemusic/YouTubeCursorPager.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/youtubemusic/YouTubeMusicProvider.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/youtubemusic/YouTubeMusicProvider.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/provider/youtubemusic/YouTubeSessionStore.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/provider/youtubemusic/YouTubeSessionStore.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/recognition/MeloXRecognitionCaptureService.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/recognition/PlaybackAudioCapture.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/recognition/SongRecognitionClient.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/recognition/SongRecognitionClient.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/recommendation/LocalRecommendationEngine.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/recommendation/LocalRecommendationEngine.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/recommendation/LocalRecommendationStore.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/recommendation/LocalRecommendationStore.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/recommendation/MeloXHomeRecommendationPool.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/remoteconfig/MeloXRemoteConfigDefaults.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/remoteconfig/MeloXRemoteConfigDefaults.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/remoteconfig/MeloXRemoteConfigModels.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/remoteconfig/MeloXRemoteConfigModels.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/remoteconfig/MeloXRemoteConfigVerifier.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/remoteconfig/MeloXRemoteConfigVerifier.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/update/MeloXForcedUpdate.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "core/update/MeloXUpdateClient.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/update/MeloXUpdateClient.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "dlna/DlnaDiscovery.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/dlna/DlnaDiscovery.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "dlna/DlnaHttpServer.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "dlna/DlnaProtocol.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/dlna/DlnaProtocol.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "dlna/DlnaSession.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/dlna/DlnaSession.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "lan/MeloXLanAudioProxy.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "lan/MeloXLanCast.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/lan/MeloXLanCast.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "lan/MeloXLanClient.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "lan/MeloXLanDiscovery.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "lan/MeloXLanModels.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "lan/MeloXLanPermissions.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "lan/MeloXLanRelayDataSource.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "lan/MeloXLanRuntime.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/lan/MeloXLanRuntime.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "lan/MeloXLanServer.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "lan/MeloXLanSession.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/lan/MeloXLanSession.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "lan/MeloXLanTogetherCoordinator.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/lan/MeloXLanTogetherCoordinator.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "lan/MeloXLanTogetherSync.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "miplay/MiPlaySession.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "platform/cli/MeloXCliCommands.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "platform/cli/MeloXCliReceiver.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "platform/floating/MeloXFloatingLyricsService.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "platform/lyricon/MeloXLyriconBridge.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "platform/mcp/MeloXMcpServer.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "platform/vivo/VivoAtomicIslandBridge.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "platform/xiaomi/HyperOsFocusBridge.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "platform/xiaomi/ShizukuKeepAliveService.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "platform/xiaomi/ShizukuXmsfNetworkHelper.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "platform/xiaomi/XiaomiSuperIslandLyricService.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "playback/BuiltInPlaybackResult.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "playback/ColorOsLyricsPublisher.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "playback/ConfiguredResolverSource.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "playback/CrossProviderPlaybackFallback.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/playback/CrossProviderPlaybackFallback.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "playback/LxUserPlaybackResolver.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/playback/LxUserPlaybackResolver.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "playback/LyricsNotificationArtwork.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "playback/MeloXAutoMixAudioAnalyzer.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/playback/MeloXAutoMixAudioAnalyzer.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "playback/MeloXColorOsPayload.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "playback/MeloXListenTogetherCoordinator.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/playback/MeloXListenTogetherCoordinator.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "playback/MeloXMediaCache.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/playback/MeloXMediaCache.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "playback/MeloXMediaPrefetcher.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "playback/MeloXNetworkQualityMonitor.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "playback/MeloXNotificationAction.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "playback/MeloXPlaybackModePreferences.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/playback/MeloXPlaybackModePreferences.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "playback/MeloXPlaybackQueueStore.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/playback/MeloXPlaybackQueueStore.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "playback/MeloXPlaybackService.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/playback/MeloXPlaybackService.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "playback/MeloXSmartQueueBuilder.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/playback/MeloXSmartQueueBuilder.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "playback/NeteasePlaybackResolver.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/playback/NeteasePlaybackResolver.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "playback/PlaybackCommands.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/playback/PlaybackCommands.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "playback/PlaybackFallbackChain.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/playback/PlaybackFallbackChain.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "playback/PlaybackTrackIdentity.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/playback/PlaybackTrackIdentity.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "playback/PluginMediaDataSource.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "playback/PluginResolverSource.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "playback/ProviderPlaybackCommands.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/playback/ProviderPlaybackCommands.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "playback/ProviderPlaybackResolver.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/playback/ProviderPlaybackResolver.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "playback/ProviderPlaybackRuntime.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/playback/ProviderPlaybackRuntime.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "playback/QtiFlacDecoderWorkaround.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "playback/SuperLyricPublisher.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "playback/ThirdPartyPlaybackResolver.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/playback/ThirdPartyPlaybackResolver.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/MeloXApp.kt",
+        "windowsCandidates":  [
+                                  "desktop/src/desktopMain/kotlin/melox/ui/MeloXApp.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/MeloXOnboarding.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/MeloXPageTransitions.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/MeloXUiMotionRuntime.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/account/KugouLoginScreen.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/account/MeloXAccountActivity.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/account/MeloXPhoneCodeLoginScreen.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/account/NeteaseLoginScreen.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/account/QQMusicLoginScreen.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/account/QishuiLoginScreen.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/account/YouTubeLoginScreen.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/animation/MeloXMotion.kt",
+        "windowsCandidates":  [
+                                  "desktop/src/desktopMain/kotlin/melox/ui/foundation/MeloXMotion.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/cloud/MeloXCloudMusicScreen.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/collection/MeloXArtistDetailScreen.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/collection/MeloXCollectionDetailActivity.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/discovery/MeloXDiscoveryScreens.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/discovery/SonifyExploreFeed.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/glass/BottomBarToneSampler.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/glass/MeloXBackdropComponents.kt",
+        "windowsCandidates":  [
+                                  "desktop/src/desktopMain/kotlin/melox/ui/glass/MeloXBackdropComponents.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/glass/MeloXGlassPipelinePrewarm.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/glass/MeloXGlassSafety.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/glass/MeloXGlassSheet.kt",
+        "windowsCandidates":  [
+                                  "desktop/src/desktopMain/kotlin/melox/ui/glass/MeloXGlassSheet.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/glass/MeloXIosComponents.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/glass/MeloXNativeGlassComponents.kt",
+        "windowsCandidates":  [
+                                  "desktop/src/desktopMain/kotlin/melox/ui/glass/MeloXNativeGlassComponents.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/glass/MeloXPinnedListPage.kt",
+        "windowsCandidates":  [
+                                  "desktop/src/desktopMain/kotlin/melox/ui/glass/MeloXPinnedListPage.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/glass/MeloXSettingsDropdown.kt",
+        "windowsCandidates":  [
+                                  "desktop/src/desktopMain/kotlin/melox/ui/glass/MeloXSettingsDropdown.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/glass/MeloXSymbol.kt",
+        "windowsCandidates":  [
+                                  "desktop/src/desktopMain/kotlin/melox/ui/foundation/MeloXSymbol.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/glass/publicdemo/PublicInteractiveHighlight.kt",
+        "windowsCandidates":  [
+                                  "desktop/src/desktopMain/kotlin/melox/ui/glass/publicdemo/PublicInteractiveHighlight.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/layout/MeloXAdaptiveLayout.kt",
+        "windowsCandidates":  [
+                                  "desktop/src/desktopMain/kotlin/melox/ui/layout/MeloXAdaptiveLayout.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/layout/MeloXListDetailLayout.kt",
+        "windowsCandidates":  [
+                                  "desktop/src/desktopMain/kotlin/melox/ui/layout/MeloXListDetailLayout.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/legal/MeloXLegalDocuments.kt",
+        "windowsCandidates":  [
+                                  "desktop/src/desktopMain/kotlin/melox/ui/legal/MeloXLegalDocuments.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/library/LibraryScreen.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/library/MeloXBatchDownloadSheet.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/messages/MeloXMessagesActivity.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/messages/MessagesScreen.kt",
+        "windowsCandidates":  [
+                                  "desktop/src/desktopMain/kotlin/melox/ui/screens/MessagesScreen.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/ArtworkDynamicPalette.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/BilibiliLyricOffset.kt",
+        "windowsCandidates":  [
+                                  "desktop/src/desktopMain/kotlin/melox/ui/screens/BilibiliLyricOffset.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXAlternativeLyricsPanels.kt",
+        "windowsCandidates":  [
+                                  "desktop/src/desktopMain/kotlin/melox/ui/screens/MeloXAlternativeLyricsPanels.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXAudioOutputDialog.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXAudioOutputPlaybackPanel.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXChromeOcclusion.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXChromeRecede.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXClassicNowPlayingScene.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXCustomBackground.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXDisplayCorner.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXEvaLyrics.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXFloatingLyricsPip.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXFlowingLightBackdrop.kt",
+        "windowsCandidates":  [
+                                  "desktop/src/desktopMain/kotlin/melox/ui/player/MeloXFlowingLightBackdrop.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXFlowingLightBackdropPrewarm.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXFlowingLightGpu.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXFlowingLightShader.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXFlowingLightVisualStore.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXIOSLyricsPanel.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXIOSMiniPlayer.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXIOSNowPlayingScene.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXIOSNowPlayingSharedHost.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXIOSNowPlayingV2.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXImmersivePlaybackEffect.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXLanDialog.kt",
+        "windowsCandidates":  [
+                                  "desktop/src/desktopMain/kotlin/melox/ui/desktop/MeloXLanDialog.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXLanOutputPanel.kt",
+        "windowsCandidates":  [
+                                  "desktop/src/desktopMain/kotlin/melox/ui/screens/MeloXLanOutputPanel.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXLyricShareDialog.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXLyricShareImage.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXModernAudioOutputDialog.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXNowPlayingActionsSheet.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXNowPlayingCoreControls.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXPlaybackTitleMenu.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXPlayerInsets.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXPlayerTransitionSpec.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXPlayerUi.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXProviderLyricsLoader.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXProviderSongActionsOverlay.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXQualitySelectionOverlay.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXQueuePanel.kt",
+        "windowsCandidates":  [
+                                  "desktop/src/desktopMain/kotlin/melox/ui/screens/MeloXQueuePanel.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXRelativeSliderGesture.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXSkylineLyrics.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXSmoothCorner.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXSongActionsOverlay.kt",
+        "windowsCandidates":  [
+                                  "desktop/src/desktopMain/kotlin/melox/ui/screens/MeloXSongActionsOverlay.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXTextPVLyrics.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXTextPVTemplates.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXTransportMotion.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/MeloXUnsynchronizedLyrics.kt",
+        "windowsCandidates":  [
+                                  "desktop/src/desktopMain/kotlin/melox/ui/screens/MeloXUnsynchronizedLyrics.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/player/UsbAudioOutputRows.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/podcast/MeloXPodcastScreens.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/provider/MeloXProviderServicesActivity.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/provider/PluginServiceSection.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/provider/PluginSourcePage.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/provider/ProviderServicesScreen.kt",
+        "windowsCandidates":  [
+                                  "desktop/src/desktopMain/kotlin/melox/ui/screens/ProviderServicesScreen.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/provider/ProviderSettingsHub.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/provider/ResolverSettingsRows.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/search/PluginCatalogBrowser.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/search/PluginFavoriteDialog.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/search/SearchScreen.kt",
+        "windowsCandidates":  [
+                                  "desktop/src/desktopMain/kotlin/melox/ui/screens/SearchScreen.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/settings/AutoSyncModelPanel.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/settings/DailyHistorySettings.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/settings/KugouLiteVipSettings.kt",
+        "windowsCandidates":  [
+                                  "desktop/src/desktopMain/kotlin/melox/ui/screens/KugouLiteVipSettings.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/settings/MeloXCustomBackgroundStore.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/settings/MeloXCustomBackgroundStore.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/settings/MeloXReleaseNotes.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/settings/MeloXSettingsPreferences.kt",
+        "windowsCandidates":  [
+                                  "shared/src/commonMain/kotlin/melox/settings/MeloXSettingsPreferences.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/settings/PluginAccounts.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/settings/PluginSettings.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/settings/SettingsScreen.kt",
+        "windowsCandidates":  [
+                                  "desktop/src/desktopMain/kotlin/melox/ui/screens/SettingsScreen.kt"
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sharing/PluginTrackLinkActivity.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/song/MeloXSongDetailActivity.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/song/MeloXSongWikiActivity.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/ArtistArtworkColors.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/ArtistPageAppearance.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/DiscoveryTrackAdapter.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/SonifyAlbumArtworkPalette.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/SonifyArtistHeroReflection.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/SonifyArtistPresentationCache.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/SonifyBitmapResolver.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/SonifyBoundedLru.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/SonifyControls.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/SonifyHeroBakeCache.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/SonifyHomePage.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/SonifyHomeSections.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/SonifyLibraryPage.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/SonifyMochiIndexBar.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/SonifyOverScroll.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/SonifyPageGradient.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/SonifyTheme.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/SonifyTitle.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/SonifyTrackBackdrop.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/SonifyTrackBackdropGradient.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/SonifyWindowInsets.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/artist/ArtistActionButtons.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/artist/ArtistAlbumsDetail.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/artist/ArtistDetail.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/artist/ArtistDetailParts.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/artist/ArtistHotSongsDetail.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/artist/ArtistInfo.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/artist/ArtistListState.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/artist/ArtistSongsDetail.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/artist/CollectIconMorph.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/artist/LiquidTopBarButton.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/artist/ProgressiveBlur.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/artist/liquid/ClassyabaButtonBorder.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/artist/liquid/DampedDragAnimation.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/artist/liquid/DragGestureInspector.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/artist/liquid/GlassBlurStrength.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/artist/liquid/InteractiveHighlight.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/artist/liquid/WrapHighlightStyle.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/library/SonifyAlbumDetailPage.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/library/SonifyArtistDetailParts.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/library/SonifyArtistPage.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/library/SonifyCollectedAlbumsPage.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/library/SonifyDetailPageParts.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/library/SonifyDownloadProgressPage.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/library/SonifyFavoriteSongsPage.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/library/SonifyLibraryHost.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/library/SonifyLibraryModels.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/library/SonifyLibrarySortMenu.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/library/SonifyLibraryUi.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/library/SonifyLocalAlbumsPage.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/library/SonifyLocalArtistsPage.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/library/SonifyMusicList.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/library/SonifyNormalMusicPage.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/library/SonifyOnlineArtistsPage.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/library/SonifyOnlinePlaylistDetailPage.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/library/SonifyOnlinePlaylistsPage.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/library/SonifyPageSearchState.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/library/SonifyPlayActionMotion.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/library/SonifyPlaylistSearch.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/library/SonifyPlaylistTrackFilter.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/sonify/library/SonifyPlaylistsPage.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/state/RetainedPageState.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/theme/MeloXFontPolicy.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/theme/MeloXMiSansFont.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/theme/MeloXOnDemandFont.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "ui/theme/MeloXTheme.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "usb/MeloXUsbAudio.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "usb/UsbAudioDescriptors.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "usb/UsbAudioDiagnostics.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "usb/UsbAudioNative.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    },
+    {
+        "android":  "usb/UsbPcm.kt",
+        "windowsCandidates":  [
+
+                              ],
+        "review":  "UNREVIEWED"
+    }
+]

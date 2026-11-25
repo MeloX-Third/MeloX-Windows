@@ -70,6 +70,11 @@
 | 桌面音量条显示开关 | IMPLEMENTED | `084544e` 对应 Android `c82ac33` / `6b26dc3`；保存/即时状态/桌面完整播放器和底部播放器接线；偏好重载测试及 `:desktop:compileKotlinDesktop` 通过，实际 UI 输入验收待补 |
 | 桌面 UI 全量差分 | IN_PROGRESS | 逐页盘点和实现，完成后才进入手机 UI |
 | 首页推荐桌面详情 | IMPLEMENTED | `9bf5ce6` 将每日推荐/私人漫游/相似歌曲从手机列表分流至独立桌面 collection，接通播放/随机播放/歌曲菜单；桌面编译通过，实际输入验收待补 |
+| 每日推荐历史 | PARTIAL | `0e34d0a` 存储、`7aac795` 桌面入口、`186e593` 月历/账号订阅、`49c45d5` 设置页面入口、`04ab8ee` 背景修复；历史专项及 1280×800 首页入口/月份切换/设置入口真实指针回放断言通过，设置截图确认页面不再透出背景，JAR 通过。Android 日期预览流程/真实账号记录详情验收/手机阶段尚未完成 |
+| 本地推荐候选播放身份 | IMPLEMENTED | `d3bf0de` 保存完整 track 并校验内外身份，避免重载丢失 QQ mediaMid 等播放元数据；两项专项覆盖元数据/音质保留、旧记录兼容、身份不匹配/未知音源/损坏嵌套拒绝；动态 SourceId 仍待迁移 |
+| 歌词本地编码 | IMPLEMENTED | `abe2e8f` 有效 UTF-8 优先、非法 UTF-8 回退 GB18030；UTF-8/BOM/GBK/GB18030 中文与扩展字符专项通过 |
+| QRC 解压边界 | IMPLEMENTED | `ac179e7` 将 QRC 解压限制为 4 MiB 并关闭 inflater；正常文本/上限/超限 zlib 专项通过，KRC 已有同等大小限制 |
+| 最新源码文件清单 | INVENTORIED | `android-edc829e-file-inventory.json` 登记 398 个变更 Kotlin 文件，同名候选不代表语义一致；`ANDROID_EDC829E_AUDIT.md` 记录已核对行为与缺口，其他文件仍 UNREVIEWED |
 | 播放全量回归 | VALIDATED | 2026-11-25 最新完整运行共享层 474 项，0 失败/0 错误/0 跳过；包含 `02af178`。历史：首轮上一首测试受防抖影响，`6911501` 隔离场景；第二轮 PCM 缓冲静音等待超时，随后修复引擎启动暂停/恢复竞争。单轮通过不等于所有并发问题已关闭 |
 | 桌面测试和 JAR | VALIDATED | 同轮 `:desktop:desktopTest` 16 项，10 项通过、6 项按环境条件跳过，0 失败/0 错误；`:desktop:desktopJar` 成功。跳过项不能当作真实窗口输入验收，JAR 构建不等于 MSI/EXE 安装包验收 |
 | 双解码引擎启动暂停/恢复竞争 | IMPLEMENTED | `02af178` 将引擎发布和暂停状态读取、引擎暂停/恢复调用纳入同一 playbackLock；AutoMix 12 项专项通过，包含 20 次真实 FFmpeg 启动恢复/PCM 写入；随后共享层完整 474 项回归通过 |
