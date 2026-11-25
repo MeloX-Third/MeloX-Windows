@@ -144,6 +144,26 @@ class PluginHttpBroker internal constructor(
         return output.toByteArray()
     }
 
+    /** Host-only OAuth exchange. No token body or form fields are returned to plugin JavaScript. */
+    internal fun tokenRequest(url: String, fields: Map<String, String>): JSONObject {
+        val destination = url.toHttpUrl()
+        authorize(destination)
+        checkCurrent()
+        require(destination.toString() == manifest.authentication?.oauth?.tokenEndpoint) { "invalid token endpoint" }
+        val body = okhttp3.FormBody.Builder().apply { fields.forEach { (name, value) -> add(name, value) } }.build()
+        val call = client.newCall(Request.Builder().url(destination).post(body).build())
+        calls.add(call)
+        try {
+            checkCurrent()
+            return call.execute().use { response ->
+                check(response.code == 200) { "OAuth token exchange failed" }
+                val raw = bounded(requireNotNull(response.body), 16 * 1024).toString(Charsets.UTF_8)
+                PluginJson.check(raw, 16 * 1024)
+                JSONObject(raw).also { checkCurrent() }
+            }
+        } finally { calls.remove(call) }
+    }
+
     private fun checkCurrent() { check(!closed && accountCurrent() && (credential == null || credential.isCurrent())) { "CANCELLED" } }
     override fun close() {
         closed = true
