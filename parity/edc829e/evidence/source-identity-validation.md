@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`f94bae0` 按 Android `edc829e` 更新 SpotifyTrackMatcher：动态候选身份不访问旧枚举；无时长且完整歌手名单一致时补时长分；保留已知时长误差拒绝，汽水优先分与基线一致。Spotify Provider 的自动回退仍仅选择内置 Provider，并按完整身份查找候选来源。`gradle :shared:desktopTest --tests "melox.provider.spotify.*" --tests "melox.music.*" :desktop:compileKotlinDesktop` 成功（1 分 5 秒），XML 48 项通过、0 失败/错误/跳过；新增缺时长/歌手不完整/动态候选和时长误差回归。真实 Spotify 服务未验收。
+
 `f2e4721` 当选择动态来源且不存在已保存的内置聚合白名单时，不再用旧内置选择填充查询；开启聚合也不隐式写入内置来源，插件仍需明确加入白名单。原有内置白名单保留。`gradle :shared:desktopTest --tests "melox.music.*" :desktop:compileKotlinDesktop` 成功（1 分 16 秒），包含默认无请求、开启聚合不增加内置来源和显式插件白名单回归。
 
 `a03a130` 桌面目录搜索展示 Provider 歌单/专辑/歌手网格，卡片使用完整 MusicResourceId，点击进入对应 Provider 详情；保留桌面卡片布局和滚动适配。`gradle :desktop:desktopTest :desktop:desktopJar` 成功（49 秒）。未执行真实插件目录查询或同内容像素验收。
