@@ -86,6 +86,27 @@ internal fun MeloXDesktopDownloads() {
     DesktopLibrarySongs("ui.navigation.downloads", songs, tag = "desktop-downloads", headerActions = {
         DesktopDialogButton("ui.common.play_all", songs.isNotEmpty(), "desktop-downloads-play") { songs.firstOrNull()?.let { PlaybackCommands.playQueue(songs, it.id) } }
     }, preamble = {
+        providers.taskRecoveryError?.let { message -> item("provider-recovery-error") {
+            Text(message, color = MaterialTheme.colorScheme.error)
+        } }
+        providers.attempts.values.toList().forEach { attempt -> item("provider-attempt:${attempt.track.id}") {
+            val active = providers.isDownloading(attempt.track.id)
+            Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                Column(Modifier.weight(1f)) {
+                    Text(attempt.track.title)
+                    Text(providers.errorFor(attempt.track.id) ?: attempt.track.id.sourceId.displayName,
+                        fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = .6f))
+                }
+                if (active) {
+                    CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
+                    DesktopDialogButton("ui.common.cancel", tag = "desktop-provider-download-cancel:${attempt.track.id}") { providers.remove(attempt.track.id) }
+                } else {
+                    DesktopDialogButton("ui.common.retry", tag = "desktop-provider-download-retry:${attempt.track.id}") { providers.retry(attempt.track.id) }
+                    DesktopDialogButton("ui.downloads.delete", tag = "desktop-provider-download-dismiss:${attempt.track.id}") { providers.dismiss(attempt.track.id) }
+                }
+            }
+        } }
         if (store.activeDownloads.isNotEmpty()) {
             item("active-title") { Text(desktopString("ui.common.download"), fontSize = 20.sp, fontWeight = FontWeight.Bold) }
             store.activeDownloads.values.toList().forEach { download -> item("active:${download.song.id}") {
