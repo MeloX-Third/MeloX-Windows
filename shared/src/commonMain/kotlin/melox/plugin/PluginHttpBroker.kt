@@ -100,6 +100,73 @@ class PluginHttpBroker internal constructor(
 
     fun authorizeMediaUrl(url: String) = authorize(url.toHttpUrl())
 
+    /** Stream remains owned by this broker until closed; callers never receive a shared client. */
+    internal fun openMedia(url: String, headers: Map<String, String> = emptyMap()): java.io.InputStream {
+        PluginMediaFormats.check(url)
+        val destination = url.toHttpUrl()
+        authorize(destination)
+        require(headers.size <= 32)
+        val builder = Request.Builder().url(destination)
+        headers.forEach { (name, value) ->
+            require(name.lowercase(java.util.Locale.ROOT) !in forbiddenHeaders && value.length <= 4096)
+            builder.header(name, value)
+        }
+        checkCurrent()
+        val call = client.newCall(builder.build())
+        calls.add(call)
+        var response: okhttp3.Response? = null
+        try {
+            checkCurrent()
+            val opened = call.execute().also { response = it }
+            require(opened.code in setOf(200, 206)) { "plugin media request failed" }
+            require(!PluginMediaFormats.unsupportedMime(opened.header("Content-Type").orEmpty())) { "UNSUPPORTED_MEDIA_FORMAT" }
+            val body = requireNotNull(opened.body)
+            require(body.contentLength() <= MAX_MEDIA_BYTES) { "plugin media exceeds quota" }
+            checkCurrent()
+            return object : java.io.FilterInputStream(body.byteStream()) {
+                private var transferred = 0L
+                private var released = false
+                override fun read(): Int {
+                    val one = ByteArray(1)
+                    return if (read(one, 0, 1) < 0) -1 else one[0].toInt() and 255
+                }
+                override fun read(buffer: ByteArray, offset: Int, length: Int): Int {
+                    check(!released) { "stream closed" }
+                    checkCurrent()
+                    val count = `in`.read(buffer, offset, length)
+                    checkCurrent()
+                    if (count > 0) {
+                        transferred += count
+                        require(transferred <= MAX_MEDIA_BYTES) { "plugin media exceeds quota" }
+                    }
+                    return count
+                }
+                override fun skip(count: Long): Long {
+                    val buffer = ByteArray(8192)
+                    var remaining = count.coerceAtLeast(0)
+                    while (remaining > 0) {
+                        val read = read(buffer, 0, minOf(remaining, buffer.size.toLong()).toInt())
+                        if (read < 0) break
+                        remaining -= read
+                    }
+                    return count.coerceAtLeast(0) - remaining
+                }
+                override fun close() {
+                    if (!released) {
+                        released = true
+                        call.cancel()
+                        try { opened.close() } finally { calls.remove(call) }
+                    }
+                }
+            }
+        } catch (failure: Throwable) {
+            call.cancel()
+            response?.close()
+            calls.remove(call)
+            throw failure
+        }
+    }
+
     private fun credentialHeader(url: HttpUrl): Pair<String, String> {
         val auth = manifest.authentication ?: error("PERMISSION_DENIED")
         require(auth.type in setOf("apiToken", "oauth2Pkce") && url.host in auth.domains) { "PERMISSION_DENIED" }
@@ -173,6 +240,7 @@ class PluginHttpBroker internal constructor(
     }
 
     private companion object {
+        const val MAX_MEDIA_BYTES = 512L * 1024 * 1024
         val forbiddenHeaders = setOf("host", "connection", "content-length", "transfer-encoding", "proxy-authorization", "proxy-connection", "upgrade")
     }
 }

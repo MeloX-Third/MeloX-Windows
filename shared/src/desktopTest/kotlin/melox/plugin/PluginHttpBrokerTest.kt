@@ -10,6 +10,25 @@ import okhttp3.ResponseBody.Companion.toResponseBody
 import org.json.JSONObject
 
 class PluginHttpBrokerTest {
+    @Test fun mediaStreamsRejectRedirectsAdaptiveFormatsAndRevokedReads(): Unit {
+        for ((code, mime) in listOf(302 to "audio/mpeg", 200 to "application/dash+xml")) {
+            PluginHttpBroker(manifest, internalTransport = Interceptor {
+                response(it.request(), code, "bytes", "Content-Type" to mime,
+                    "Location" to "https://api.example.com/next")
+            }).use { broker -> assertFails { broker.openMedia("https://api.example.com/audio") } }
+        }
+        var current = true
+        PluginHttpBroker(manifest, accountCurrent = { current }, internalTransport = Interceptor {
+            response(it.request(), body = "audio-fixture", headers = arrayOf("Content-Type" to "audio/mpeg"))
+        }).use { broker ->
+            broker.openMedia("https://api.example.com/audio").use { stream ->
+                assertEquals('a'.code, stream.read())
+                current = false
+                assertFailsWith<IllegalStateException> { stream.read() }
+            }
+        }
+    }
+
     private val manifest = PluginManifest(SourceId.parse("plugin:example.http")!!, "HTTP", "1.0.0", 1,
         "index.js", emptySet(), setOf("api.example.com"))
 
