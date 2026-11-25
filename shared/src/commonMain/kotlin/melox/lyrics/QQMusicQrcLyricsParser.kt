@@ -63,7 +63,9 @@ object QQMusicQrcLyricsParser {
         if (compressed.isEmpty()) return ""
         return runCatching {
             InflaterInputStream(ByteArrayInputStream(compressed)).use { stream ->
-                stream.readBytes().toString(Charsets.UTF_8)
+                val bytes = stream.readNBytes(4 * 1024 * 1024 + 1)
+                require(bytes.size <= 4 * 1024 * 1024) { "Decompressed QRC exceeds 4 MiB" }
+                bytes.toString(Charsets.UTF_8)
             }.trimEnd('\u0000')
         }.getOrDefault("")
     }

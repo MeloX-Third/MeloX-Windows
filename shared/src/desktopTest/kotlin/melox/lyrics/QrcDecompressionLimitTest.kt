@@ -5,6 +5,18 @@ import java.util.zip.DeflaterOutputStream
 import kotlin.test.*
 
 class QrcDecompressionLimitTest {
+    @Test fun fallbackDecoderAlsoRejectsOversizedInflation() {
+        val method = QQMusicQrcLyricsParser::class.java.getDeclaredMethod("decodeCompressed", ByteArray::class.java)
+        method.isAccessible = true
+        fun decode(bytes: ByteArray): String {
+            val compressed = ByteArrayOutputStream().also { output ->
+                DeflaterOutputStream(output).use { it.write(bytes) }
+            }.toByteArray()
+            return method.invoke(QQMusicQrcLyricsParser, compressed) as String
+        }
+        assertEquals("lyrics", decode("lyrics".toByteArray()))
+        assertEquals("", decode(ByteArray(4 * 1024 * 1024 + 1) { 65 }))
+    }
     private fun inflate(payload: ByteArray): ByteArray {
         val compressed = ByteArrayOutputStream().also { output ->
             DeflaterOutputStream(output).use { it.write(payload) }
