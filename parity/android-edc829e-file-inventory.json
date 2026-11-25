@@ -624,9 +624,10 @@
     {
         "android":  "core/plugin/PluginPackageStore.kt",
         "windowsCandidates":  [
-
+                                  "shared/src/commonMain/kotlin/melox/plugin/PluginPackageStore.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "PARTIAL",
+        "notes": "39e1bd3 Windows atomic package/publisher journal, enabled intent, quarantine and uninstall pin retention. Install/update/reload and five exception fault checkpoints pass. Independent process death and signed rotation recovery still pending."
     },
     {
         "android":  "core/plugin/PluginPackageTrust.kt",
