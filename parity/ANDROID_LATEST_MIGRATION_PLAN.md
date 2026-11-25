@@ -69,6 +69,9 @@
 | AutoMix 状态读改写竞争 | IMPLEMENTED | `a812694` 使用 StateFlow 原子更新；10,000 轮 status/handoff 并发回归及完整快照测试通过；不代表所有 PCM 生命周期竞争已关闭 |
 | 桌面音量条显示开关 | IMPLEMENTED | `084544e` 对应 Android `c82ac33` / `6b26dc3`；保存/即时状态/桌面完整播放器和底部播放器接线；偏好重载测试及 `:desktop:compileKotlinDesktop` 通过，实际 UI 输入验收待补 |
 | 桌面 UI 全量差分 | IN_PROGRESS | 逐页盘点和实现，完成后才进入手机 UI |
+| 首页推荐桌面详情 | IMPLEMENTED | `9bf5ce6` 将每日推荐/私人漫游/相似歌曲从手机列表分流至独立桌面 collection，接通播放/随机播放/歌曲菜单；桌面编译通过，实际输入验收待补 |
+| 播放全量回归 | IN_PROGRESS | 首轮 473 项中上一首测试受防抖影响，`6911501` 隔离两种设置场景后专项通过；第二轮 473 项中 PCM 缓冲静音等待超时，正在审计启动暂停/恢复竞争；尚未取得全量通过结果 |
+| 桌面测试和 JAR | VALIDATED | 2026-11-25 AutoMix 原有 11 项专项复跑、`:desktop:desktopTest`、`:desktop:desktopJar` 通过；不代替共享层完整回归，也不包含随后新增的引擎启动锁修复 |
 | Android 0.7.5+ 255 提交全量差分 | IN_PROGRESS | 逐 subsystem 比对；不按提交数机械复制 |
 | 手机 UI 全量差分 | BLOCKED_BY_PHASE_A | 桌面阶段结束后执行 |
 | 真实设备/账号/像素验收 | EXTERNAL_ACCEPTANCE | 代码与自动化可先完成；无设备/账户/固定源帧的项保持 PARTIAL/BLOCKED |
