@@ -88,6 +88,7 @@ private enum class SettingsRoute(val resourceKey: String, val symbol: String) {
     General("general", "⚙"),
     Appearance("appearance", "✦"),
     Content("content", "▦"),
+    DailyHistory("daily_history", "▦"),
     TabLayout("tabs", "▥"),
     Playback("playback", "♫"),
     Lyrics("lyrics", "❞"),
@@ -107,9 +108,9 @@ private enum class SettingsRoute(val resourceKey: String, val symbol: String) {
     Developer("developer", "⌘"),
     Experimental("experimental", "✦"),
     ;
-    val title: String get() = if (this == KugouLiteVip) "签到领会员" else pinnedString("settings_route_$resourceKey")
-    val subtitle: String get() = if (this == KugouLiteVip) "酷狗概念版每日签到与会员领取" else pinnedString(if (this == Privacy) "settings_privacy_personalization" else "settings_sub_$resourceKey")
-    val keywords: String get() = if (this == KugouLiteVip) "酷狗 概念版 签到 领取 会员 VIP 畅听" else pinnedString(if (this == Privacy) "settings_privacy_algorithm" else "settings_kw_$resourceKey")
+    val title: String get() = if (this == DailyHistory) melox.ui.desktop.desktopPlatformString("daily-history") else if (this == KugouLiteVip) "签到领会员" else pinnedString("settings_route_$resourceKey")
+    val subtitle: String get() = if (this == DailyHistory) melox.ui.desktop.desktopPlatformString("daily-history-description") else if (this == KugouLiteVip) "酷狗概念版每日签到与会员领取" else pinnedString(if (this == Privacy) "settings_privacy_personalization" else "settings_sub_$resourceKey")
+    val keywords: String get() = if (this == DailyHistory) title else if (this == KugouLiteVip) "酷狗 概念版 签到 领取 会员 VIP 畅听" else pinnedString(if (this == Privacy) "settings_privacy_algorithm" else "settings_kw_$resourceKey")
 }
 
 private val SettingsSections = listOf(
@@ -154,6 +155,9 @@ fun SettingsScreen(
         // its requester attached before that effect, just as in the legacy branch.
         CompositionLocalProvider(melox.ui.desktop.LocalDesktopSettingsPresentation provides true) {
         Box(Modifier.fillMaxSize().focusRequester(detailFocus).focusable()) {
+        if (route == SettingsRoute.DailyHistory) {
+            melox.ui.desktop.MeloXDesktopDailyHistory { route = null }
+        } else {
         DesktopSettingsLayout(
             selected = route ?: SettingsRoute.General,
             onSelected = { route = it },
@@ -165,6 +169,7 @@ fun SettingsScreen(
             onOpenServices = onOpenServices,
             onDismiss = onDesktopDismiss,
         )
+        }
         }
         }
         return
@@ -247,8 +252,8 @@ private val DesktopSettingsRoutes = listOf(
 )
 
 private fun desktopSettingsGroup(route: SettingsRoute): List<SettingsRoute> = when (route) {
-    SettingsRoute.General, SettingsRoute.Appearance, SettingsRoute.Content ->
-        listOf(SettingsRoute.General, SettingsRoute.Appearance, SettingsRoute.Content)
+    SettingsRoute.General, SettingsRoute.Appearance, SettingsRoute.Content, SettingsRoute.DailyHistory ->
+        listOf(SettingsRoute.General, SettingsRoute.Appearance, SettingsRoute.Content, SettingsRoute.DailyHistory)
     SettingsRoute.Features, SettingsRoute.TabLayout, SettingsRoute.Recognition, SettingsRoute.Messages, SettingsRoute.ListenTogether, SettingsRoute.KugouLiteVip ->
         listOf(SettingsRoute.Features, SettingsRoute.TabLayout, SettingsRoute.Recognition, SettingsRoute.Messages, SettingsRoute.ListenTogether, SettingsRoute.KugouLiteVip)
     SettingsRoute.Playback, SettingsRoute.Lyrics, SettingsRoute.SystemPlayback, SettingsRoute.SkylineLyrics, SettingsRoute.FloatingLyrics ->
@@ -305,7 +310,7 @@ private fun DesktopSettingsLayout(
                 ) {
                     DesktopSettingsRoutes.forEach { destination ->
                         val active = when (destination) {
-                            SettingsRoute.General -> selected in setOf(SettingsRoute.General, SettingsRoute.Appearance, SettingsRoute.Content)
+                            SettingsRoute.General -> selected in setOf(SettingsRoute.General, SettingsRoute.Appearance, SettingsRoute.Content, SettingsRoute.DailyHistory)
                             SettingsRoute.Features -> selected in setOf(SettingsRoute.Features, SettingsRoute.TabLayout, SettingsRoute.Recognition, SettingsRoute.Messages, SettingsRoute.ListenTogether, SettingsRoute.KugouLiteVip)
                             SettingsRoute.Playback -> selected in setOf(SettingsRoute.Playback, SettingsRoute.Lyrics, SettingsRoute.SystemPlayback, SettingsRoute.SkylineLyrics, SettingsRoute.FloatingLyrics)
                             SettingsRoute.Storage -> selected == SettingsRoute.Storage
@@ -484,6 +489,11 @@ private fun SettingsDetail(
 private fun SettingsRouteContent(route: SettingsRoute, currentSource: MusicSource, onOpenMessages: () -> Unit, onOpenServices: () -> Unit,
     onNavigate: ((SettingsRoute) -> Unit)? = null) {
     when (route) {
+        SettingsRoute.DailyHistory -> {
+            SettingsGlassGroup {
+                Text(route.subtitle)
+            }
+        }
         SettingsRoute.General -> GeneralSettings()
         SettingsRoute.Appearance -> AppearanceSettings()
         SettingsRoute.Content -> ContentSettings()
