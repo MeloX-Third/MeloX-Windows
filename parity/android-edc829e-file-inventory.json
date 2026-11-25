@@ -600,9 +600,10 @@
     {
         "android":  "core/plugin/PluginMusicProvider.kt",
         "windowsCandidates":  [
-
+                                  "shared/src/commonMain/kotlin/melox/plugin/PluginMusicProvider.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "PARTIAL",
+        "notes": "35589f8 checked API v1 provider operations, ranking catalog and detail pagination; 28 plugin tests and desktop compilation pass. Isolated runtime, startup and host credential/media broker integration pending; active credential references currently rejected."
     },
     {
         "android":  "core/plugin/PluginOAuth.kt",
