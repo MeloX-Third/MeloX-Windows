@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`15540f9` 网络音质：Windows INetworkCostManager 查询首选互联网连接计费状态；默认关闭，未知状态回退显式默认音质，按网络应用时不写回默认值。接入内置/Provider 队列、桌面设置和随应用退出撤销的 5 秒后台检查。`gradle :shared:desktopTest --tests "melox.audio.*" --tests "melox.playback.*" :desktop:desktopTest :desktop:desktopJar` 成功（2 分 7 秒）；XML 核实共享 104 项通过、0 跳过，桌面 17 项中 11 通过/6 条件跳过。专项包含暂停队列身份/进度及默认值保留。此结果不是完整共享回归或物理计费网络切换验收。
+
 `740635c` 桌面歌词绑定搜索支持 hasMore 分页，沿用提交的关键词并按完整资源身份去重，失败保留已加载内容供重试；桌面测试与 JAR 成功（45 秒）。`b461cc7` 有效逐字强绑定停止后续自动 AMLL 升级，专项验证明确绑定不会被替换；歌词专项与桌面编译成功（9 秒，编译复用前一命令已完成的输出；前一命令因工具 60 秒上限中断，不计作成功证据）。
 
 `402e76e` 桌面歌词选择支持在网易/QQ/Spotify/Apple Music 搜索结果上切换 AMLL 预览，以对应 AMLL query bindingValue 持久化绑定；切换预览模式清除旧选择，插件来源保留自身歌词能力。`gradle :desktop:desktopTest :desktop:desktopJar` 成功（43 秒）。真实 AMLL 服务内容、窗口输入及同内容视觉验收仍未完成。

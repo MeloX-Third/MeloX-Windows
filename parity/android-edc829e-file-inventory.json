@@ -37,10 +37,11 @@
     {
         "android":  "core/audio/MeloXNetworkQualityPolicy.kt",
         "windowsCandidates":  [
-
+                                  "shared/src/commonMain/kotlin/melox/audio/MeloXNetworkQualityPolicy.kt",
+                                  "shared/src/desktopMain/kotlin/melox/platform/MeloXNetworkCost.kt"
                               ],
-        "review":  "MISSING",
-        "notes": "Android fixed blob reviewed; Windows policy, transport classification, playback and settings wiring remain missing."
+        "review":  "PARTIAL",
+        "notes": "15540f9: Windows active Internet cost maps metered/unmetered presets; policy, queue and settings wiring implemented. Audio/playback 104 tests passed; desktop 11 passed/6 skipped and JAR succeeded. Physical network transition acceptance remains open."
     },
     {
         "android":  "core/autosync/AutoSyncDictionaryRepository.kt",
@@ -1475,9 +1476,10 @@
     {
         "android":  "playback/MeloXNetworkQualityMonitor.kt",
         "windowsCandidates":  [
-
+                                  "shared/src/commonMain/kotlin/melox/playback/MeloXNetworkQualityMonitor.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "PARTIAL",
+        "notes": "15540f9: Windows polls active route cost every five seconds off Main; regression verifies saved default, queue identity, position and pause state are preserved. Physical network transition acceptance remains open."
     },
     {
         "android":  "playback/MeloXNotificationAction.kt",
