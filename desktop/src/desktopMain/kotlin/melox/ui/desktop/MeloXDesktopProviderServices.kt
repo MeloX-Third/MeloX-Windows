@@ -65,6 +65,7 @@ internal fun MeloXDesktopProviderServices(navState: MeloXNavState, currentSource
     val selectionRevision by MusicProviderSelectionStore.revision.collectAsState()
     val plugins = remember(providerGeneration) { registry.enabledDynamicProviders().sortedBy { it.sourceId.value } }
     val pluginScope = remember(selectionRevision) { MusicProviderSelectionStore.unifiedSourceIds() }
+    val selectedId = remember(selectionRevision, currentSource) { MusicProviderSelectionStore.selectedSourceId() }
     var revision by remember { mutableIntStateOf(0) }
     val youtubeRevision by melox.provider.youtubemusic.YouTubeSessionStore.revision.collectAsState()
     var unified by remember { mutableStateOf(MusicProviderSelectionStore.unifiedEnabled()) }
@@ -82,8 +83,11 @@ internal fun MeloXDesktopProviderServices(navState: MeloXNavState, currentSource
                 DesktopSettingsButton(desktopString("ui.common.done"), Modifier.testTag("desktop-services-done")) { navState.goBack() }
             }
             Spacer(Modifier.height(22.dp))
-            DesktopSettingsPicker(desktopPlatformString("services_current_source"), currentSource,
-                visible.map { it.source() to it.name }, "desktop-service-current-source", onChange = onSourceSelected)
+            DesktopSettingsPicker(desktopPlatformString("services_current_source"), selectedId,
+                visible.map { melox.music.model.SourceId.fromBuiltIn(it.source()) to it.name } +
+                    plugins.map { it.sourceId to it.displayName }, "desktop-service-current-source") { selected ->
+                selected.builtIn?.let(onSourceSelected) ?: MusicProviderSelectionStore.setSelectedSourceId(selected)
+            }
             Spacer(Modifier.height(18.dp))
             DesktopSettingsForm {
                 Text(desktopPlatformString("services_providers"), fontSize = 13.sp, fontWeight = FontWeight.SemiBold)

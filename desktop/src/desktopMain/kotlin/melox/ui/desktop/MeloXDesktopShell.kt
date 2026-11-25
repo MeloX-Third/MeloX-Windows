@@ -162,22 +162,36 @@ internal fun MeloXInterfaceLayout(
 private fun DesktopSidebar(selectedTab: AppTab, source: MusicSource, libraryPage: String?,
     onSelect: (AppTab, String?) -> Unit, session: melox.account.NeteaseSessionStore, onAccount: () -> Unit) {
     val colors = MaterialTheme.colorScheme
+    val selectionRevision by melox.music.provider.MusicProviderSelectionStore.revision.collectAsState()
+    val selectedId = remember(selectionRevision) { melox.music.provider.MusicProviderSelectionStore.selectedSourceId() }
+    val registry = remember { melox.music.provider.MeloXMusicProviders.create() }
+    val generation by registry.changes.collectAsState()
+    val dynamicProvider = remember(selectedId, generation) { registry[selectedId].takeIf { selectedId.builtIn == null } }
     Column(Modifier.zIndex(1f).padding(start = 8.dp, top = 8.dp + melox.ui.desktop.LocalMeloXCaptionInset.current, bottom = 8.dp).width(DesktopMetrics.Sidebar.dp).fillMaxHeight()
         .desktopLiquidPanel(RoundedCornerShape(18.dp), reflectPageAtRightEdge = true)
         .testTag("desktop-sidebar")) {
         Column(Modifier.weight(1f).desktopVerticalScroll().padding(horizontal = 9.dp, vertical = 38.dp)) {
             fun selected(tab: AppTab, page: String? = null) = tab == selectedTab && (page == null || libraryPage == page)
             DesktopNavigationRow("Search", "ui.navigation.search", MeloXSymbol.Search, selected(AppTab.Search)) { onSelect(AppTab.Search, null) }
-            val rootPages = MeloXContentLayout.visibleTabs(source)
+            val rootPages = if (selectedId.builtIn != null) MeloXContentLayout.visibleTabs(source) else buildList {
+                if (MeloXSettingsRuntime.homeTabEnabled) add("Home")
+                if (MeloXSettingsRuntime.exploreTabEnabled) add("Explore")
+            }
             if ("Home" in rootPages)
                 DesktopNavigationRow("Home", "ui.navigation.home", MeloXSymbol.Home, selected(AppTab.Home)) { onSelect(AppTab.Home, null) }
             if ("Explore" in rootPages)
                 DesktopNavigationRow("Explore", "ui.navigation.explore", MeloXSymbol.SquareGrid, selected(AppTab.Explore)) { onSelect(AppTab.Explore, null) }
-            if (MeloXSettingsRuntime.podcastsEnabled && source == MusicSource.Netease)
+            if (MeloXSettingsRuntime.podcastsEnabled && selectedId.builtIn == MusicSource.Netease)
                 DesktopNavigationRow("Radio", "ui.navigation.podcasts", MeloXSymbol.Podcast, selected(AppTab.Podcasts)) { onSelect(AppTab.Podcasts, null) }
             Text(desktopString("ui.navigation.library"), Modifier.padding(top = 22.dp, start = 4.dp, bottom = 6.dp),
                 color = colors.onSurface.copy(alpha = .4f), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
-            val pages = MeloXContentLayout.libraryPages(source)
+            val pages = if (selectedId.builtIn != null) MeloXContentLayout.libraryPages(source) else buildList {
+                if (dynamicProvider is melox.music.provider.UserLibraryCapability && dynamicProvider.supports(melox.music.provider.MusicCapability.Library)) add("Playlists")
+                if (dynamicProvider is melox.music.provider.LibraryCollectionCapability) {
+                    if (dynamicProvider.supports(melox.music.provider.MusicCapability.Albums)) add("Albums")
+                    if (dynamicProvider.supports(melox.music.provider.MusicCapability.Artists)) add("Artists")
+                }
+            }
             for ((page, label, symbol) in listOf(
                 Triple("Songs", "ui.navigation.library.liked_songs", MeloXSymbol.Heart),
                 Triple("Playlists", "ui.navigation.library.liked_playlists", MeloXSymbol.Library),
@@ -188,7 +202,7 @@ private fun DesktopSidebar(selectedTab: AppTab, source: MusicSource, libraryPage
                 Triple("Cloud", "ui.navigation.cloud", MeloXSymbol.ICloud),
                 Triple("History", "ui.navigation.library.history", MeloXSymbol.Clock),
             )) {
-                val enabled = page in pages || (source == MusicSource.Netease && page in setOf("Albums", "Artists"))
+                val enabled = page in pages || (selectedId.builtIn == MusicSource.Netease && page in setOf("Albums", "Artists"))
                 // NetEase collections have native Desktop consumers; other sources
                 // remain capability-gated until their collection routes are connected.
                 if (enabled || page in setOf("Albums", "Artists"))

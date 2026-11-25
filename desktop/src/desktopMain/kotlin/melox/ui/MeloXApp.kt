@@ -131,14 +131,19 @@ fun MeloXApp(onExit: () -> Unit = { kotlin.system.exitProcess(0) }) {
     var selectedTab by remember { mutableStateOf(AppTab.Home) }
     var tabRestored by remember { mutableStateOf(false) }
     var selectedSource by remember { mutableStateOf(MusicProviderSelectionStore.selectedSource()) }
+    val sourceSelectionRevision by MusicProviderSelectionStore.revision.collectAsState()
+    val selectedSourceId = remember(sourceSelectionRevision) { MusicProviderSelectionStore.selectedSourceId() }
+    LaunchedEffect(selectedSourceId) {
+        selectedSourceId.builtIn?.let { selectedSource = it }
+    }
     var messagesVisible by remember { mutableStateOf(false) }
     var heartModeLaunchAttempted by remember { mutableStateOf(false) }
     val backDispatchers = remember { AppTab.entries.associateWith { MeloXBackDispatcher() } }
     val playerBackDispatcher = remember { MeloXBackDispatcher() }
     var settingsRouteRequest by remember { mutableStateOf<String?>(null) }
     var desktopLibraryPage by remember { mutableStateOf<String?>(null) }
-    LaunchedEffect(selectedSource) {
-        desktopLibraryPage = melox.settings.MeloXContentLayout.initialLibraryPage(selectedSource)
+    LaunchedEffect(selectedSourceId) {
+        desktopLibraryPage = selectedSourceId.builtIn?.let(melox.settings.MeloXContentLayout::initialLibraryPage)
     }
     var onboardingLoginPending by remember { mutableStateOf(false) }
     LaunchedEffect(onboarding.stage, onboardingLoginPending) {
@@ -214,8 +219,8 @@ fun MeloXApp(onExit: () -> Unit = { kotlin.system.exitProcess(0) }) {
     val clipboardIntake = remember { melox.network.NeteaseClipboardIntake() }
     val clipboardSource by androidx.compose.runtime.rememberUpdatedState(selectedSource)
     val windowForeground = melox.ui.player.LocalMeloXWindowForeground.current
-    val clipboardTarget = remember(clipboardRequest, selectedSource) {
-        if (selectedSource == MusicSource.Netease) clipboardRequest?.let(melox.network.NeteaseClipboardLink::parse) else null
+    val clipboardTarget = remember(clipboardRequest, selectedSourceId) {
+        if (selectedSourceId.builtIn == MusicSource.Netease) clipboardRequest?.let(melox.network.NeteaseClipboardLink::parse) else null
     }
     LaunchedEffect(clipboardRequest, clipboardTarget, selectedSource) {
         if (clipboardRequest != null && clipboardTarget == null) clipboardRequest = null
@@ -245,7 +250,17 @@ fun MeloXApp(onExit: () -> Unit = { kotlin.system.exitProcess(0) }) {
         }
     }
 
-    val visibleTabs = visibleTabsFor(selectedSource)
+    val visibleTabs = if (selectedSourceId.builtIn != null) visibleTabsFor(selectedSource) else
+        melox.settings.MeloXSettingsRuntime.tabOrder.filter {
+            when (it) {
+                "Home" -> MeloXSettingsRuntime.homeTabEnabled
+                "Explore" -> MeloXSettingsRuntime.exploreTabEnabled
+                "Library" -> MeloXSettingsRuntime.libraryTabEnabled
+                "Downloads" -> MeloXSettingsRuntime.downloadsEnabled && MeloXSettingsRuntime.downloadsTabPlacement
+                "Settings" -> true
+                else -> false
+            }
+        }.let { (it + "Settings").distinct().map(AppTab::valueOf) }
 
     // ── Android state machine (MeloXApp.kt) ──
     var tabBarMinimized by remember { mutableStateOf(false) }
@@ -316,8 +331,8 @@ fun MeloXApp(onExit: () -> Unit = { kotlin.system.exitProcess(0) }) {
         // Give Escape a resident target after the selection and after reopening.
         if (playerOpen) rootFocus.requestFocus()
     }
-    LaunchedEffect(selectedSource, hasMedia, heartModeLaunchAttempted) {
-        if (heartModeLaunchAttempted || hasMedia || selectedSource != MusicSource.Netease) return@LaunchedEffect
+    LaunchedEffect(selectedSourceId, hasMedia, heartModeLaunchAttempted) {
+        if (heartModeLaunchAttempted || hasMedia || selectedSourceId.builtIn != MusicSource.Netease) return@LaunchedEffect
         if (!MeloXSettingsRuntime.startsHeartModeOnLaunch) return@LaunchedEffect
         heartModeLaunchAttempted = true
         val session = melox.account.NeteaseSessionStore()
@@ -362,11 +377,14 @@ fun MeloXApp(onExit: () -> Unit = { kotlin.system.exitProcess(0) }) {
         }
     }
 
-    val selectedPageAvailable = melox.settings.MeloXContentLayout.rootPageAvailable(selectedSource, selectedTab.name)
+    val selectedPageAvailable = if (selectedSourceId.builtIn != null)
+        melox.settings.MeloXContentLayout.rootPageAvailable(selectedSource, selectedTab.name)
+        else selectedTab in visibleTabs || selectedTab == AppTab.Search ||
+            selectedTab == AppTab.Downloads && MeloXSettingsRuntime.downloadsEnabled
     LaunchedEffect(visibleTabs, selectedTab, selectedPageAvailable, tabRestored) {
         // Validate the restored destination, not the temporary Home used during startup.
-        if (tabRestored && !melox.settings.MeloXContentLayout.rootPageAvailable(selectedSource, selectedTab.name)) {
-            selectedTab = AppTab.valueOf(melox.settings.MeloXContentLayout.visibleTabs(selectedSource).first())
+        if (tabRestored && !selectedPageAvailable) {
+            selectedTab = visibleTabs.first()
         }
     }
 
