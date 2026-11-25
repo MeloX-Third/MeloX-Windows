@@ -1,5 +1,9 @@
 # 动态音源身份迁移验证
 
+`38910c1` 迁移 ProviderDownloadTaskStore、PluginJson 和受控 PluginErrors：任务只保存完整 track/音质/版本/错误码/账号摘要；pending 恢复为 DOWNLOAD_INTERRUPTED；按资源身份及版本删除，旧取消不会删除新重试。最多 100 条/1 MiB，JSON 最深 32 层；保留未知行，损坏文件不覆盖，Windows 使用临时文件及 ATOMIC_MOVE。
+
+命令 `gradle :shared:desktopTest --tests "melox.download.ProviderDownloadTaskStoreTest" --tests "melox.plugin.PluginJsonTest"` 成功，54 秒。覆盖重建实例恢复、旧版本删除隔离、未知行保留、损坏文件保护、非法版本/错误码拒绝，以及 JSON 深度/UTF-8 字节边界。此提交只有存储基础，尚未接入生产下载生命周期。
+
 `94cfbf5` 将桌面搜索/来源集合列表项键、播放器收藏、歌曲菜单、下载来源文案及音质弹层改为 SourceId；收藏与菜单查询观察共享注册表变更。命令 `gradle :desktop:desktopTest :desktop:desktopJar` 成功，47 秒。此验证仅覆盖现有桌面测试与构建，未加入真实插件窗口输入回放，尚不代表动态插件 UI 全部可用。
 
 `1df68a6` 为动态来源新增独立播放解析路径：完整 track URI 往返、下载本地文件优先、缺失来源等待恢复入口、播放能力声明、12 秒解析超时、来源 generation/实例校验；动态 URL 不进入内置解析缓存或跨来源回退。桌面播放器及委托解析器接入本地下载查询，队列匹配/下载状态比较不再访问动态来源的旧枚举属性。
