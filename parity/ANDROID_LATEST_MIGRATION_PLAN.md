@@ -67,7 +67,7 @@
 | repeat 持久化 + 切歌防抖 | DONE | `MeloXPlaybackModePreferences.kt`、`PlaybackCommands.kt`；桌面编译成功 |
 | 最新提交 AutoMix race / system lyrics job | AUDIT | 先按 Windows PCM/歌词任务模型做生命周期审计，再落等价修复和测试 |
 | AutoMix 状态读改写竞争 | IMPLEMENTED | `a812694` 使用 StateFlow 原子更新；10,000 轮 status/handoff 并发回归及完整快照测试通过；不代表所有 PCM 生命周期竞争已关闭 |
-| 桌面音量条显示开关 | IN_PROGRESS | 对应 Android `c82ac33` / `6b26dc3`，保存/即时状态/桌面完整播放器和底部播放器接线；正在编译和回归 |
+| 桌面音量条显示开关 | IMPLEMENTED | `084544e` 对应 Android `c82ac33` / `6b26dc3`；保存/即时状态/桌面完整播放器和底部播放器接线；偏好重载测试及 `:desktop:compileKotlinDesktop` 通过，实际 UI 输入验收待补 |
 | 桌面 UI 全量差分 | IN_PROGRESS | 逐页盘点和实现，完成后才进入手机 UI |
 | Android 0.7.5+ 255 提交全量差分 | IN_PROGRESS | 逐 subsystem 比对；不按提交数机械复制 |
 | 手机 UI 全量差分 | BLOCKED_BY_PHASE_A | 桌面阶段结束后执行 |
