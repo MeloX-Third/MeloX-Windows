@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`e6fb2ef` 私有 broker 新增渐进媒体输入流，连接前校验 manifest 域名/HTTPS/头部，拒绝重定向和 HLS/DASH MIME，声明长度和读取累计限制 512 MiB；每次 read/skip 检查撤销，流关闭取消请求并移除所有权。`gradle :shared:desktopTest --tests "melox.plugin.*" :desktop:compileKotlinDesktop` 成功（1 分 11 秒）。媒体流测试为 interceptor fixture，未替代真实 TLS/socket、播放/下载生产链路与在途阻塞读取取消验收。
+
 `99b9246` 每次调用独立的 PluginHostCalls 接通 HTTP broker 和账号作用域私有存储；验证 invocation token、调用 ID 去重、32 次调用/48 KiB 输入限额、账号撤销和关闭，异常只返回受控代码。`gradle :shared:desktopTest --tests "melox.plugin.*" :desktop:compileKotlinDesktop` 成功（13 秒），XML 58 项通过、0 失败/错误/跳过。首轮新增测试缺少 manifest 参数而编译失败，补齐后重跑成功。进程 IPC 和生产工厂尚未接入，不能视为隔离运行时完成。
 
 `e54fd19` 桌面服务页为已启用插件增加单来源搜索入口，通过 SourceId 导航总线打开空查询，后续输入只查询该插件；不自动改变聚合白名单。`gradle :desktop:desktopTest :desktop:desktopJar` 成功（42 秒）。生产插件安装/启动仍待接入，未执行真实窗口点击验收。
