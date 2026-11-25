@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`9c3593d` 插件播放解析改为进程内不透明输入，普通 FFmpeg 和独立 PCM 解码器通过 stdin 接受私有 broker 字节流，原生参数限制为 pipe 协议。覆盖重复打开/撤销/过期、命令不泄露凭据、真实 WAV PCM、跳转及本地 socket broker 贯穿。流媒体分析开关同样约束私有输入。播放专项 XML 140 项通过；最终解码器初始化收尾后再次运行私有输入/动态解析/普通与双解码专项和桌面 JAR 成功（1 分 30 秒）。真实公网、账号租约、401/403/410 重新解析及非顺序容器兼容仍待验收。
+
 `ebca6f6` 桌面服务选择器列出已启用插件并保存 SourceId；根导航与侧栏消费动态选择，音乐库分类按插件能力显示，切换时清除上个来源的音乐库页面请求。插件选择不开放网易云盘/播客及心动启动逻辑。`gradle :desktop:desktopTest :desktop:desktopJar` 成功（48 秒）。真实窗口选择交互及插件生产加载仍待验收。
 
 `8075c58` 普通解码 PCM 能量发布改用完整 SourceId，新增真实 FFmpeg/受控音频输出回归验证插件身份不触发旧 `.source` 访问。普通解码专项与 JAR 构建成功；随后 `gradle :shared:desktopTest --tests "melox.player.DesktopStreamingAudioSessionTest" --tests "melox.playback.LxDynamicSourceBoundaryTest" :desktop:desktopJar` 成功（3 分 4 秒），XML 16 项全部通过、0 跳过，覆盖双解码继承回归。`c2cbddf` 拒绝动态来源进入 LX 播放/封面/歌词兼容入口，边界回归同轮通过。受控本地 WAV 验证不代表真实插件远程播放 broker 已完成。

@@ -1549,9 +1549,11 @@
     {
         "android":  "playback/PluginMediaDataSource.kt",
         "windowsCandidates":  [
-
+                                  "shared/src/commonMain/kotlin/melox/plugin/PluginPlaybackInputs.kt",
+                                  "shared/src/commonMain/kotlin/melox/player/FfmpegPcmDecoder.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "PARTIAL",
+        "notes": "9c3593d: Fixed edc829e reviewed. Private broker-to-native pipe routing, per-open generation checks and uncached streams implemented; playback 140 tests passed, final decoder/transport subset and JAR passed. Account media lease, one-time 401/403/410 re-resolution, real service/format and remote output acceptance remain open."
     },
     {
         "android":  "playback/PluginResolverSource.kt",
