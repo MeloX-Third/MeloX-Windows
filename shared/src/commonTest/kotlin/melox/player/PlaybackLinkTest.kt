@@ -140,17 +140,24 @@ class PlaybackLinkTest {
 
     @Test
     fun previousRestartsOnlyWhenSettingEnabled() {
-        val player = MeloXDesktopPlayer()
-        player.setMediaItems(listOf(song(1), song(2)), 1, 6_000L)
-        PlaybackCommands.adoptController(player)
-        MeloXSettingsRuntime.previousRestartsAfterFiveSeconds = false
-        player.previous()
-        assertEquals(0, player.currentMediaItemIndex)
-        player.setMediaItems(listOf(song(1), song(2)), 1, 6_000L)
-        MeloXSettingsRuntime.previousRestartsAfterFiveSeconds = true
-        player.previous()
-        assertEquals(1, player.currentMediaItemIndex)
-        assertEquals(0L, player.currentPosition)
+        val previousSetting = MeloXSettingsRuntime.previousRestartsAfterFiveSeconds
+        try {
+            for (restartEnabled in listOf(false, true)) {
+                val player = MeloXDesktopPlayer()
+                try {
+                    player.setMediaItems(listOf(song(1), song(2)), 1, 6_000L)
+                    PlaybackCommands.adoptController(player)
+                    MeloXSettingsRuntime.previousRestartsAfterFiveSeconds = restartEnabled
+                    player.previous()
+                    assertEquals(if (restartEnabled) 1 else 0, player.currentMediaItemIndex)
+                    assertEquals(0L, player.currentPosition)
+                } finally {
+                    player.release()
+                }
+            }
+        } finally {
+            MeloXSettingsRuntime.previousRestartsAfterFiveSeconds = previousSetting
+        }
     }
 
     @Test
