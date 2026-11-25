@@ -57,6 +57,7 @@ class MeloXProviderDownloadStore internal constructor(
     private val indexLock = Any()
     private val removedIdentities = ConcurrentHashMap.newKeySet<String>()
     private val removing = ConcurrentHashMap.newKeySet<String>()
+    private val transferSession = java.util.UUID.randomUUID().toString()
 
     val downloads = mutableStateListOf<MeloXProviderDownloadedSong>()
     val activeDownloads = mutableStateMapOf<String, Boolean>()
@@ -73,7 +74,13 @@ class MeloXProviderDownloadStore internal constructor(
                 val identity = key(record.track.id)
                 if (identity !in removedIdentities && recordsByKey.putIfAbsent(identity, record) == null) downloads += record
             }
-            val tasks = withContext(Dispatchers.IO) { taskStore.load() }
+            val tasks = withContext(Dispatchers.IO) {
+                // Resume scopes are session-local; no network or stale partial reuse on restore.
+                directory.listFiles().orEmpty().filter { it.name.endsWith(".part") }.forEach(PluginDownloadTransfer::clear)
+                directory.listFiles().orEmpty().filter { it.name.endsWith(".part.resume.json") || it.name.endsWith(".part.resume.json.tmp") }
+                    .forEach { it.delete() }
+                taskStore.load()
+            }
             for (task in tasks) {
                 if (isDownloaded(task.track.id)) {
                     withContext(Dispatchers.IO) { taskStore.remove(task.track.id, task.revision) }
@@ -116,6 +123,7 @@ class MeloXProviderDownloadStore internal constructor(
             try {
                 restoreReady.await()
                 taskStore.remove(id, attempt.revision)
+                PluginDownloadTransfer.clear(File(directory, "${digest(identity)}-${attempt.revision}.part"))
                 withContext(Dispatchers.Main) {
                     if (attempts[identity]?.revision == attempt.revision) attempts.remove(identity)
                     downloadErrors.remove(identity)
@@ -141,6 +149,7 @@ class MeloXProviderDownloadStore internal constructor(
                 restoreReady.await()
                 attempts[idKey]?.let { attempt ->
                     withContext(Dispatchers.IO) { taskStore.remove(id, attempt.revision) }
+                    PluginDownloadTransfer.clear(File(directory, "${digest(idKey)}-${attempt.revision}.part"))
                 }
                 recordsByKey.remove(idKey)?.let { record ->
                     withContext(Dispatchers.IO) { File(directory, record.fileName).delete() }
@@ -164,7 +173,9 @@ class MeloXProviderDownloadStore internal constructor(
     fun start(track: MusicTrack, quality: AudioQualityTier = AudioQualityTier.Standard) {
         val idKey = key(track.id)
         if (isDownloaded(track.id) || jobs.containsKey(idKey) || idKey in removing) return
-        val attempt = ProviderDownloadAttempt(track, quality)
+        val previous = attempts[idKey]
+        val attempt = ProviderDownloadAttempt(track, quality,
+            revision = previous?.takeIf { it.quality == quality }?.revision ?: java.util.UUID.randomUUID().toString())
         attempts[idKey] = attempt
         downloadErrors.remove(idKey)
         activeDownloads[idKey] = true
@@ -173,8 +184,12 @@ class MeloXProviderDownloadStore internal constructor(
             val staging = File(directory, "${digest(idKey)}-${attempt.revision}.part")
             var destination: File? = null
             var committed = false
+            var retainPartial = false
             try {
                 restoreReady.await()
+                previous?.takeIf { it.revision != attempt.revision }?.let {
+                    PluginDownloadTransfer.clear(File(directory, "${digest(idKey)}-${it.revision}.part"))
+                }
                 if (isDownloaded(track.id)) {
                     committed = true
                     withContext(Dispatchers.Main) { attempts.remove(idKey) }
@@ -198,9 +213,11 @@ class MeloXProviderDownloadStore internal constructor(
                     val plugin = provider as? melox.plugin.PluginMusicProvider ?: error("SOURCE_UNAVAILABLE")
                     val current = { registry.generation == generation && registry[track.id.sourceId] === provider }
                     try {
-                        downloadPlugin(plugin, playable, staging, registry.changes, current)
+                        downloadPlugin(plugin, playable, staging, registry.changes, current,
+                            "$transferSession|$idKey|$generation|$quality|${playable.format}")
                     } catch (failure: melox.plugin.PluginMediaHttpException) {
                         if (failure.status !in setOf(401, 403, 410)) throw failure
+                        PluginDownloadTransfer.clear(staging)
                         currentCoroutineContext().ensureActive()
                         check(current()) { "SOURCE_UNAVAILABLE" }
                         val refreshed = kotlinx.coroutines.withTimeout(12_000L) {
@@ -208,7 +225,8 @@ class MeloXProviderDownloadStore internal constructor(
                         } as? PlaybackResolution.Playable ?: error("DOWNLOAD_FAILED")
                         check(current()) { "SOURCE_UNAVAILABLE" }
                         require(refreshed.format == playable.format) { "UNSUPPORTED_MEDIA_FORMAT" }
-                        downloadPlugin(plugin, refreshed, staging, registry.changes, current)
+                        downloadPlugin(plugin, refreshed, staging, registry.changes, current,
+                            "$transferSession|$idKey|$generation|$quality|${refreshed.format}")
                     }
                 } else download(playable, staging)
                 currentCoroutineContext().ensureActive()
@@ -246,11 +264,12 @@ class MeloXProviderDownloadStore internal constructor(
                 }
                 throw cancelled
             } catch (failure: Exception) {
+                retainPartial = failure is java.io.IOException && File(staging.path + ".resume.json").isFile
                 val code = melox.plugin.PluginErrors.code(failure)
                 val saved = runCatching { taskStore.save(ProviderDownloadTaskStore.Task(track, quality, attempt.revision, code)) }.isSuccess
                 withContext(Dispatchers.Main) { downloadErrors[idKey] = melox.plugin.PluginErrors.message(if (saved) code else "PERSISTENCE_FAILED") }
             } finally {
-                staging.delete()
+                if (!retainPartial) PluginDownloadTransfer.clear(staging)
                 if (!committed) {
                     destination?.delete()
                     withContext(NonCancellable + Dispatchers.Main) {
@@ -274,7 +293,7 @@ class MeloXProviderDownloadStore internal constructor(
     @OptIn(kotlinx.coroutines.InternalCoroutinesApi::class)
     private suspend fun downloadPlugin(provider: melox.plugin.PluginMusicProvider,
         resolution: PlaybackResolution.Playable, destination: File,
-        changes: kotlinx.coroutines.flow.StateFlow<Long>, current: () -> Boolean) = kotlinx.coroutines.coroutineScope {
+        changes: kotlinx.coroutines.flow.StateFlow<Long>, current: () -> Boolean, scopeIdentity: String) = kotlinx.coroutines.coroutineScope {
         val broker = resolution.pluginMediaAccess?.broker(current)
             ?: melox.plugin.PluginHttpBroker(provider.manifest, accountCurrent = current)
         val observer = launch(Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
@@ -285,10 +304,12 @@ class MeloXProviderDownloadStore internal constructor(
         }
         try {
             broker.use { transport ->
-                PluginDownloadStagingBudget.reserve(destination).use {
-                    transport.openMedia(resolution.url, resolution.requestHeaders, resolution.pluginMediaAccess != null).use { input ->
-                        destination.outputStream().use { output -> copyAudio(input, output) }
-                    }
+                // Until account leases expose a durable scope, authenticated transfers restart safely.
+                val active = { current() && (resolution.pluginMediaAccess?.current?.invoke() ?: true) }
+                PluginDownloadTransfer.run(destination,
+                    if (resolution.pluginMediaAccess == null) digest(scopeIdentity) else null, active) { offset, etag ->
+                    transport.openMediaResponse(resolution.url, resolution.requestHeaders,
+                        resolution.pluginMediaAccess != null, offset, etag)
                 }
             }
         } finally { cancellation.dispose(); observer.cancel() }

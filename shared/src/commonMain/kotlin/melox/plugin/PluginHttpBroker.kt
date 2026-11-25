@@ -107,6 +107,16 @@ class PluginHttpBroker internal constructor(
 
     /** Stream remains owned by this broker until closed; callers never receive a shared client. */
     internal fun openMedia(url: String, headers: Map<String, String> = emptyMap(), activeCredential: Boolean = false): java.io.InputStream {
+        return openMediaResponse(url, headers, activeCredential, progressiveDownload = false).stream
+    }
+
+    internal data class MediaResponse(val status: Int, val headers: okhttp3.Headers, val length: Long,
+        val stream: java.io.InputStream) : Closeable {
+        override fun close() = stream.close()
+    }
+
+    internal fun openMediaResponse(url: String, headers: Map<String, String> = emptyMap(), activeCredential: Boolean = false,
+        rangeOffset: Long? = null, ifRange: String? = null, progressiveDownload: Boolean = true): MediaResponse {
         PluginMediaFormats.check(url)
         val destination = url.toHttpUrl()
         authorize(destination)
@@ -115,6 +125,11 @@ class PluginHttpBroker internal constructor(
         headers.forEach { (name, value) ->
             require(name.lowercase(java.util.Locale.ROOT) !in forbiddenHeaders && value.length <= 4096)
             builder.header(name, value)
+        }
+        if (progressiveDownload) builder.removeHeader("Range").removeHeader("If-Range").header("Accept-Encoding", "identity")
+        if (rangeOffset != null) {
+            require(rangeOffset > 0 && ifRange != null)
+            builder.header("Range", "bytes=$rangeOffset-").header("If-Range", ifRange)
         }
         if (activeCredential) {
             val (name, value) = credentialHeader(destination)
@@ -134,7 +149,7 @@ class PluginHttpBroker internal constructor(
             val body = requireNotNull(opened.body)
             require(body.contentLength() <= MAX_MEDIA_BYTES) { "plugin media exceeds quota" }
             checkCurrent()
-            return object : java.io.FilterInputStream(body.byteStream()) {
+            val stream = object : java.io.FilterInputStream(body.byteStream()) {
                 private var transferred = 0L
                 private var released = false
                 override fun read(): Int {
@@ -175,6 +190,7 @@ class PluginHttpBroker internal constructor(
                     }
                 }
             }
+            return MediaResponse(opened.code, opened.headers, body.contentLength(), stream)
         } catch (failure: Throwable) {
             call.cancel()
             response?.close()
