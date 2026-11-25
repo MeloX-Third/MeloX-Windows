@@ -9,6 +9,17 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class DownloadedLyricsPersistenceTest {
+    @Test fun synchronizedLyricsRetainExplicitPseudoTimingPolicy() {
+        val store = MeloXDownloadStore.instance()
+        val timed = LrcLyricsParser.parse("[00:01.00]Timed line")
+        for (allowed in listOf(true, false)) {
+            val original = timed.copy(pseudoTimingAllowed = allowed)
+            val restored = store.decodeLyrics(JSONObject(store.encodeLyrics(original).toString()))
+            assertEquals(allowed, restored.pseudoTimingAllowed)
+            assertFalse(restored.isUnsynchronized)
+            assertEquals(original.lines, restored.lines)
+        }
+    }
     @Test fun downloadedPlainLyricsRemainUntimedAfterJsonRoundTripAndOldFilesRemainReadable() {
         val store = MeloXDownloadStore.instance()
         val plain = LrcLyricsParser.parse("First line\nSecond line")

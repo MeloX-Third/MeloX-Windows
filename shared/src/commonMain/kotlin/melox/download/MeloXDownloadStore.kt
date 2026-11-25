@@ -537,13 +537,16 @@ class MeloXDownloadStore private constructor() {
         }.getOrNull()
     }
 
-    internal fun encodeLyrics(document: LyricsDocument): JSONObject = JSONObject().put("isUnsynchronized", document.isUnsynchronized).put(
+    internal fun encodeLyrics(document: LyricsDocument): JSONObject = JSONObject()
+        .put("isUnsynchronized", document.isUnsynchronized)
+        .put("pseudoTimingAllowed", document.pseudoTimingAllowed).put(
         "lines",
         JSONArray().apply {
             document.lines.forEach { line ->
                 put(
                     JSONObject()
                         .put("timeMs", line.timeMs)
+                        .put("timingKind", line.timingKind.name)
                         .put("durationMs", line.durationMs ?: JSONObject.NULL)
                         .put("text", line.text)
                         .put("translation", line.translation ?: "")
@@ -658,6 +661,9 @@ class MeloXDownloadStore private constructor() {
                 add(
                     LyricLine(
                         timeMs = line.optLong("timeMs"),
+                        timingKind = melox.lyrics.LyricTimingKind.entries.firstOrNull {
+                            it.name == line.optString("timingKind")
+                        } ?: melox.lyrics.LyricTimingKind.Precise,
                         durationMs = line.optLong("durationMs", -1L).takeIf { it >= 0L },
                         text = line.optString("text"),
                         syllables = syllables,
@@ -671,7 +677,8 @@ class MeloXDownloadStore private constructor() {
             }
         }
         val isUnsynchronized = value.optBoolean("isUnsynchronized", false)
-        return LyricsDocument(lines, isUnsynchronized = isUnsynchronized, pseudoTimingAllowed = !isUnsynchronized)
+        return LyricsDocument(lines, isUnsynchronized = isUnsynchronized,
+            pseudoTimingAllowed = value.optBoolean("pseudoTimingAllowed", !isUnsynchronized))
     }
 
     private fun readIndex(): List<MeloXDownloadedSong> {
