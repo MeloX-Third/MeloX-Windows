@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`f36ba8e` 修复 Compose 1.8.1 默认 jlink `--strip-native-commands` 导致安装运行时无 java.exe：保留同一精简 runtime 的 Java 启动命令。`createRuntimeImage` 成功（19 秒），实际 java.exe -version 成功；使用该精简 runtime 的 productionBundleRunsValidatedProvider 专项通过（26 秒），覆盖 RX bundle→AppContainer→JVM/V8→Provider 工厂→搜索。完整 createDistributable 首次被 GitHub WiX 下载无响应阻断；该结果不能作为安装应用贯穿完成证据。
+
 `a9046cc` 接通生产 worker 调用诊断写入（原先仅管理器读/清除可用）：记录宿主白名单方法名、结果码与单调时钟耗时，拒绝记录脚本文本/参数/URL/凭据；诊断写入故障不替代原调用结果。真实 worker 连续两次调用均产生可恢复 OK 记录，worker/私有存储专项及 desktopJar 成功（1 分 14 秒）。脚本日志正文仍不持久化。
 
 `19c00fa` 对齐固定 Android 酷我搜索降级语义：FORMAT 存在而码率缺失时保留 Standard 提示，空响应仍返回 null；TrackAggregationQualityTest 与 desktopJar 成功（1 分 17 秒）。
