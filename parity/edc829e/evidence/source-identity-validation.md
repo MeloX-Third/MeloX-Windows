@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+本轮完整回归成功（3 分 2 秒）：`gradle :shared:desktopTest :desktop:desktopTest :desktop:desktopJar`；共享 XML 592 项全部通过、0 跳过；桌面 XML 19 项中 13 通过/6 条件跳过，JAR 成功。编译阶段实际包含随后提交为 `5be06e0` 的桌面探索动态来源接线（保存 SourceId、generation 撤销、内容身份校验）；随后同命令的桌面部分检查 UP-TO-DATE。覆盖推荐池/首页种子、动态首页/排行榜、动态音乐库及专辑/歌手分页。真实插件生产、账号/硬件和视觉验收仍未完成，AutoMix 历史偶发未复现且未关闭。
+
 `6de9bad` 搜索和音乐库专辑/歌手详情读取显式 hasMore/total 指示的后续页，100 条分页，校验返回 summary 完整身份、歌曲来源及每页 Provider 实例/generation，完整身份去重且重复页无新增时停止。新增回归覆盖多页合并、重复页、跨来源数据及停用。`gradle :desktop:desktopTest :desktop:desktopJar` 成功（52 秒）。没有分页元数据时维持单页语义；真实服务分页与窗口输入验收仍待完成。
 
 `8400662` 音乐库按完整 SourceId 路由动态来源，按声明能力提供歌单/专辑/歌手分类，动态来源使用独立桌面分类 picker；账号摘要、分页和详情检查来源与 registry generation，来源生命周期变化清空页面状态。插件未授权状态不导航到内置账号。`gradle :desktop:desktopTest :desktop:desktopJar` 成功（46 秒）。插件账号生产授权 UI、真实窗口输入、详情完整分页仍需后续完成。
