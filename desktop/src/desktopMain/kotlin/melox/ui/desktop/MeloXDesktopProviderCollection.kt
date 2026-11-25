@@ -78,7 +78,7 @@ internal fun MeloXDesktopProviderCollection(title: String, subtitle: String, art
                         Text(desktopString("ui.desktop.library.empty"), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
-                else -> itemsIndexed(tracks, key = { _, track -> "${track.id.source.storageValue}:${track.id.value}" }) { index, track ->
+                else -> itemsIndexed(tracks, key = { _, track -> track.id }) { index, track ->
                     val song = melox.music.provider.MeloXLegacyUiBridge.track(track)
                     DesktopCollectionTrackRow(index + 1, song, queue.songs.getOrNull(queue.index)?.id == song.id,
                         playback.isPlaying, false, { ProviderPlaybackCommands.playQueue(tracks, track.id) }, onMore = null, showsArtwork = true)

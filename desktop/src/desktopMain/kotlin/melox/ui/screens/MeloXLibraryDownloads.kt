@@ -315,7 +315,7 @@ internal fun MeloXLibraryDownloadsPage() {
                         Column(Modifier.weight(1f).padding(start = 12.dp)) {
                             Text(item.track.title, maxLines = 1, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.SemiBold)
                             Text(
-                                "${item.track.artistText} · ${item.track.id.source.displayName}",
+                                "${item.track.artistText} · ${item.track.id.sourceId.displayName}",
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                                 color = MeloXColors.OnBackground.copy(alpha = .48f),

@@ -24,10 +24,12 @@ import melox.ui.foundation.MeloXSymbol
 @Composable
 internal fun DesktopPlayerFavorite(track: MusicTrack, scale: Float, refreshKey: Boolean) = key(track.id) {
     val scope = rememberCoroutineScope()
-    val provider = remember { MeloXMusicProviders.create()[track.id.source] }
+    val registry = remember { MeloXMusicProviders.create() }
+    val generation by registry.changes.collectAsState()
+    val provider = remember(generation) { registry[track.id.sourceId] }
     val reader = provider as? FavoriteStateCapability
     val writer = provider as? FavoriteCapability
-    val neteaseId = track.id.value.toLongOrNull()?.takeIf { track.id.source == MusicSource.Netease }
+    val neteaseId = track.id.value.toLongOrNull()?.takeIf { track.id.sourceId.builtIn == MusicSource.Netease }
     val unifiedRevision by MeloXUnifiedFavorites.revision.collectAsState()
     val unified = MeloXUnifiedFavorites.enabled()
     val supported = unified || neteaseId != null || (reader != null && writer != null)
@@ -45,7 +47,7 @@ internal fun DesktopPlayerFavorite(track: MusicTrack, scale: Float, refreshKey: 
             withContext(Dispatchers.IO) { neteaseId in NeteaseLibraryClient(cookie).likedSongIdsBlocking(profile.userId) }
         } else requireNotNull(reader).isFavorite(track)
     }
-    LaunchedEffect(session, refreshKey, unifiedRevision) {
+    LaunchedEffect(session, refreshKey, unifiedRevision, generation) {
         if (!supported || refreshKey || busy) return@LaunchedEffect
         liked = null
         busy = true

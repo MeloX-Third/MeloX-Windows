@@ -51,15 +51,15 @@ private data class ActiveQuality(
 )
 
 private fun activeQuality(track: MusicTrack): ActiveQuality {
-    val neteaseId = track.id.takeIf { it.source == MusicSource.Netease }?.value?.toLongOrNull()
+    val neteaseId = track.id.takeIf { it.sourceId.builtIn == MusicSource.Netease }?.value?.toLongOrNull()
     val downloaded = neteaseId?.let(MeloXDownloadStore.instance()::downloadedQuality)
     val providerActual = ProviderPlaybackQualityRuntime.actualFor(track.id)
-    val actual = downloaded ?: if (track.id.source == MusicSource.Netease) {
+    val actual = downloaded ?: if (track.id.sourceId.builtIn == MusicSource.Netease) {
         MusicQualityRuntime.actualFor(neteaseId) ?: MusicQualityRuntime.selected
-    } else if (track.id.source == MusicSource.Jellyfin) providerActual?.toMusicQuality()
+    } else if (track.id.sourceId.builtIn == MusicSource.Jellyfin) providerActual?.toMusicQuality()
         else providerActual?.toMusicQuality() ?: MusicQualityRuntime.selected
     val title = if (actual == null) "服务器音质"
-        else if (downloaded != null || track.id.source == MusicSource.Netease) actual.title
+        else if (downloaded != null || track.id.sourceId.builtIn == MusicSource.Netease) actual.title
         else providerActual?.sceneTitle() ?: actual.title
     return ActiveQuality(actual, title, downloaded != null, CrossProviderPlaybackRuntime.sourceFor(neteaseId))
 }
@@ -106,7 +106,7 @@ internal fun MeloXPlayerQualityOverlay(
     val quality = rememberActiveQuality(track, if (visible) 180 else 750)
     var availability by remember(track.id, visible) { mutableStateOf(SongAudioAvailability.Unknown) }
     LaunchedEffect(track.id, visible, quality.downloaded) {
-        if (!visible || quality.downloaded || track.id.source != MusicSource.Netease) return@LaunchedEffect
+        if (!visible || quality.downloaded || track.id.sourceId.builtIn != MusicSource.Netease) return@LaunchedEffect
         val id = track.id.value.toLongOrNull() ?: return@LaunchedEffect
         availability = try {
             NeteaseQualityClient(cookieProvider = PlaybackAccountStore::neteaseCookie).audioAvailability(id)
@@ -118,7 +118,7 @@ internal fun MeloXPlayerQualityOverlay(
     val sourceLabel = when {
         quality.downloaded -> "已下载音频"
         quality.fallbackSource != null -> "实际音源：${quality.fallbackSource.displayName}"
-        track.id.source != MusicSource.Netease -> "${track.id.source.displayName} 音源"
+        track.id.sourceId.builtIn != MusicSource.Netease -> "${track.id.sourceId.displayName} 音源"
         else -> "当前播放"
     }
     val resource = quality.actual?.let(availability::resourceFor)
@@ -127,8 +127,8 @@ internal fun MeloXPlayerQualityOverlay(
         resource?.bitrate?.let { add("${it / 1000} kbps") }
         resource?.sampleRate?.let { add("${it / 1_000.0} kHz") }
         if (quality.actual in listOf(MusicQuality.HighDefinitionSurround, MusicQuality.ImmersiveSurround)) add("5.1 声道")
-        else if (track.id.source == MusicSource.Netease) add("2 声道")
-    }.joinToString(" · ").ifBlank { "${track.id.source.displayName} 未提供音频参数" }
+        else if (track.id.sourceId.builtIn == MusicSource.Netease) add("2 声道")
+    }.joinToString(" · ").ifBlank { "${track.id.sourceId.displayName} 未提供音频参数" }
     MeloXInlinePlayerDialog(visible, onDismiss, "quality-dialog") {
         Text("音质", style = MaterialTheme.typography.titleLarge)
         Text("当前音质：${quality.actual?.title ?: "由服务器选择"}", Modifier.padding(top = 9.dp), color = foreground.copy(alpha = .68f), fontSize = 14.sp)

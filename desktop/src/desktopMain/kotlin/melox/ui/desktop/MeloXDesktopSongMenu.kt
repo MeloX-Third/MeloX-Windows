@@ -73,7 +73,9 @@ internal fun MeloXDesktopSongMenu(
     val operations = remember { NeteaseMusicOperationsClient(cookie) }
     val track = song.providerTrack
     val id = song.neteaseSongId
-    val provider = remember(track?.id?.source) { track?.let { MeloXMusicProviders.create()[it.id.source] } }
+    val registry = remember { MeloXMusicProviders.create() }
+    val providerGeneration by registry.changes.collectAsState()
+    val provider = remember(track?.id?.sourceId, providerGeneration) { track?.let { registry[it.id.sourceId] } }
     val writer = provider as? PlaylistWriteCapability
     val sync = provider as? PlaylistSyncCapability
     val favoriteReader = provider as? FavoriteStateCapability

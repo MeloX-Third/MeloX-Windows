@@ -191,7 +191,7 @@ private fun DesktopSearchProviderSongs(tracks: List<MusicTrack>, onPlay: (MusicT
     val scroll = rememberLazyListState()
     LazyColumn(Modifier.fillMaxSize().desktopPromotedDragScroll(scroll), state = scroll,
         contentPadding = PaddingValues(horizontal = 34.dp, vertical = 24.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        itemsIndexed(tracks, key = { _, it -> "${it.id.source.storageValue}:${it.id.value}" }) { index, track ->
+        itemsIndexed(tracks, key = { _, it -> it.id }) { index, track ->
             DesktopCollectionTrackRow(index + 1, MeloXLegacyUiBridge.track(track), false, false, false,
                 { onPlay(track) }, onMore = null, showsArtwork = true)
         }
