@@ -1084,7 +1084,8 @@
         "windowsCandidates":  [
                                   "shared/src/commonMain/kotlin/melox/provider/spotify/SpotifyTrackMatcher.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "IMPLEMENTED",
+        "notes": "f94bae0 aligns edc829e complete SourceId access, missing-duration complete-artist score and Qishui priority. Two matching regressions plus Spotify/music suite pass (48 tests); no real-service acceptance implied."
     },
     {
         "android":  "core/provider/thirdparty/ResolverApiClient.kt",
