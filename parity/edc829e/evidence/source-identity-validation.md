@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`634c025` 接通下载 Provider 的 SourceId 查询与索引完整 track 保存/恢复，拒绝嵌套歌曲与索引外层来源或 ID 冲突。旧索引仍按旧字段恢复，未知记录合并保留。命令 `gradle :shared:desktopTest --tests "melox.download.*"` 成功，1 分钟；XML 9 项、0 失败/错误。实际动态传输、任务持久化及暂停恢复尚待迁移。
+
 Android 功能基线 `edc829eaffa716b69d08681817414f9633abefc7`。
 
 `70ac17a` 迁移 `SourceId` 与 `SourceResourceUri`：有效命名空间不代表来源已安装；未知来源不会获得网易身份；新格式 URI 使用严格 UTF-8、规范百分号编码、4096 字节资源上限，拒绝替代编码和无配对代理字符。
