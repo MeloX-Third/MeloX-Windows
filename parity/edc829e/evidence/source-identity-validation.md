@@ -1,5 +1,9 @@
 # 动态音源身份迁移验证
 
+`fc90f7e` 将实际 AppContainer JVM/V8 测试接入 PluginWorkerChannel/PluginHostCalls，异步脚本通过 token 绑定 IPC 在容器外宿主存储写入/读取中文及 emoji，返回值与宿主磁盘存储一致；测试 bundle 仍仅 RX，无宿主存储目录授权。三项启动器专项及 desktopJar 成功（14 秒）。该证明覆盖宿主存储 broker 往返，HTTP 公网及账号路径仍待验证。
+
+`6a9b8a6` 真实 JVM/V8 AppContainer 贯穿验证通过：独立测试 bundle 仅授予固定 AppContainer SID 的 RX，包含 JVM、必要 jar/class 和预部署 V8 DLL；以 custom 加载模式避免 worker 解包 native 文件。私有管道发送脚本，受限 JVM 执行并返回 invocation token/JSON 结果。启动器三项专项及 desktopJar 成功（19 秒）。测试 bundle 部署不是生产安装/更新实现；网络能力拒绝、实际 broker 往返及生产工厂仍需独立验证。
+
 `9cc247c` 增加 Windows x64 AppContainer 启动器：零 capability、显式管道句柄继承列表、禁止创建子进程、最小系统环境。真实 cmd 子进程验证管道往返、私有临时文件内容不可读、创建子进程被系统阻止；与 PluginWorkerProcessTest/PluginWorkerChannelTest 联合专项及 desktopJar 成功（44 秒）。创建需要 LOCALAPPDATA；使用 DETACHED_PROCESS 避免控制台 DLL 初始化失败。该证据仅覆盖受限启动器与既有 worker 各自专项，实际 JVM/V8 在 AppContainer 中运行、网络拒绝、运行文件部署及生产工厂仍需贯穿验证。
 
 `bca000f` 宿主通信通道将每条 worker 消息绑定 invocation token、严格整型序号及总消息上限，结束/失败/撤销统一关闭 HostCalls；`ef4f038` 独立 JVM 执行一次 V8 脚本调用，Promise、宿主 storage 往返及不可访问 Java/Node/原始桥对象通过真实进程测试。`77819d8` 增加宿主八秒超时/取消、每次新进程、V8 heap/stack 配置与独立看门狗；真实阻塞 stdin 的进程退出码 74，重复调用脚本全局计数始终 1，取消释放阻塞通道且拒绝迟到结果。最终进程/通道专项与桌面 JAR 成功（39 秒）。这些进程测试使用测试专用 ProcessBuilder，不能证明 OS 权限隔离；Windows AppContainer 启动器和生产工厂仍在实现。
