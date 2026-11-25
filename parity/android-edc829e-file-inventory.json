@@ -1168,9 +1168,10 @@
     {
         "android":  "core/recommendation/MeloXHomeRecommendationPool.kt",
         "windowsCandidates":  [
-
+                                  "shared/src/commonMain/kotlin/melox/recommendation/MeloXHomeRecommendationPool.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "PARTIAL",
+        "notes": "e17ec01: Fixed Android baseline reviewed. Process pool and full-identity queue contributions implemented; recommendation/playback 109 tests passed and desktop compilation succeeded. Home seed wiring under validation; card consumption remains for the appropriate UI phase."
     },
     {
         "android":  "core/remoteconfig/MeloXRemoteConfigDefaults.kt",
