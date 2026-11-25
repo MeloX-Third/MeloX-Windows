@@ -571,7 +571,7 @@
                                   "shared/src/commonMain/kotlin/melox/plugin/PluginWorkerChannel.kt"
                               ],
         "review":  "PARTIAL",
-        "notes": "ef4f038/bca000f/77819d8: fresh JVM/V8 worker, invocation-bound host calls, memory/stack settings, independent watchdog and host cancellation verified with real child process. Windows OS restricted launcher, production factory and install/account UI remain open. Unrestricted ProcessBuilder is test-only."
+        "notes": "ef4f038/bca000f/77819d8: fresh JVM/V8 worker, invocation-bound host calls, memory/stack settings, independent watchdog and host cancellation verified. 9cc247c/6a9b8a6/fc90f7e: zero-capability Windows AppContainer, real JVM/V8 execution and host storage IPC round trip pass; private-file and child-process restrictions verified. Production bundle deployment, factory initialization and install/account UI remain open. Unrestricted ProcessBuilder is test-only."
     },
     {
         "android":  "core/plugin/PluginJson.kt",

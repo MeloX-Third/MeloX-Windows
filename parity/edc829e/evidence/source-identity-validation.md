@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`c5cc0bd` 使用可信 JVM 探针直接访问 OS：宿主私有文件读取、bundle 写入、本机 TCP 连接和创建子进程均被拒绝；宿主监听端 accept 超时，证明未收到连接。真实 V8/HostCalls 往返与探针联合启动器专项及 desktopJar 成功（15 秒）。`81c307c` Provider 工厂经独立运行时 __validate 校验声明方法，缺失方法拒绝并关闭运行时，合格 Provider 可执行标准分页搜索；进程专项 6 项与 desktopJar 成功（43 秒）。工厂默认生产初始化、安装/账号 UI 与网络 broker 公网验收仍未接通。
+
 `fc90f7e` 将实际 AppContainer JVM/V8 测试接入 PluginWorkerChannel/PluginHostCalls，异步脚本通过 token 绑定 IPC 在容器外宿主存储写入/读取中文及 emoji，返回值与宿主磁盘存储一致；测试 bundle 仍仅 RX，无宿主存储目录授权。三项启动器专项及 desktopJar 成功（14 秒）。该证明覆盖宿主存储 broker 往返，HTTP 公网及账号路径仍待验证。
 
 `6a9b8a6` 真实 JVM/V8 AppContainer 贯穿验证通过：独立测试 bundle 仅授予固定 AppContainer SID 的 RX，包含 JVM、必要 jar/class 和预部署 V8 DLL；以 custom 加载模式避免 worker 解包 native 文件。私有管道发送脚本，受限 JVM 执行并返回 invocation token/JSON 结果。启动器三项专项及 desktopJar 成功（19 秒）。测试 bundle 部署不是生产安装/更新实现；网络能力拒绝、实际 broker 往返及生产工厂仍需独立验证。
