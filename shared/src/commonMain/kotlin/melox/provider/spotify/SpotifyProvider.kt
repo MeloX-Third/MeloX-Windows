@@ -93,7 +93,7 @@ class SpotifyProvider(
     private suspend fun resolveFallback(track: MusicTrack, quality: AudioQualityTier): PlaybackResolution {
         if (track.title.isBlank() || track.artists.isEmpty()) return PlaybackResolution.Unavailable("Spotify fallback 缺少曲目标题或艺人信息")
         val query = "${track.title} ${track.artists.first().name}"
-        val providers = playbackProviders().filter { it.source != source && it is SearchCapability && it is PlaybackCapability }
+        val providers = playbackProviders().filter { it.sourceId.builtIn != null && it.sourceId.builtIn != source && it is SearchCapability && it is PlaybackCapability }
         val candidates = coroutineScope {
             providers.map { provider -> async {
                 try { (provider as SearchCapability).searchSongs(query, 1, 10).items }
@@ -102,7 +102,7 @@ class SpotifyProvider(
             } }.awaitAll().flatten()
         }
         for (match in SpotifyTrackMatcher.rank(track, candidates)) {
-            val provider = providers.firstOrNull { it.source == match.candidate.id.source } as? PlaybackCapability ?: continue
+            val provider = providers.firstOrNull { it.sourceId == match.candidate.id.sourceId } as? PlaybackCapability ?: continue
             val resolution = try { provider.resolvePlayback(match.candidate, quality) }
             catch (cancelled: CancellationException) { throw cancelled }
             catch (_: Exception) { null }
