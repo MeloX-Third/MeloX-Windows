@@ -17,22 +17,22 @@ class DynamicProviderPlaybackTest {
         val registry = MusicProviderRegistry(listOf(melox.provider.local.LocalProvider()))
         var calls = 0
         var disable = false
-        val provider = object : MusicProvider, PlaybackCapability {
-            override val sourceId = this@DynamicProviderPlaybackTest.source
-            override val displayName = "Example"
-            override val capabilities = setOf(MusicCapability.Playback)
-            override suspend fun resolvePlayback(track: MusicTrack, quality: AudioQualityTier): PlaybackResolution {
-                assertEquals(this@DynamicProviderPlaybackTest.track, track)
+        val manifest = melox.plugin.PluginManifest(source, "Example", "1.0.0", 1, "index.js",
+            setOf(melox.plugin.PluginCapability.Playback), setOf("example.test"))
+        val provider = melox.plugin.PluginMusicProvider(manifest) { method, args ->
+                assertEquals("resolvePlayback", method)
+                assertEquals(track.id.value, args.getJSONObject(0).getString("id"))
                 calls++
-                if (disable) registry.setDynamicEnabled(sourceId, false)
-                return PlaybackResolution.Playable("https://example.test/audio/$calls", requestedQuality = quality, requestHeaders = mapOf("X-Media" to "value"))
-            }
+                if (disable) registry.setDynamicEnabled(source, false)
+                """{"type":"playable","url":"https://example.test/audio/$calls","headers":{"X-Media":"value"}}"""
         }
         registry.registerDynamic(provider)
         val resolver = resolver(registry)
         val uri = ProviderPlaybackResolver.uriForTrack(track, AudioQualityTier.Standard)
-        assertEquals("value", resolver.resolveProviderRequest(uri).headers["X-Media"])
-        assertTrue(resolver.resolveProviderRequest(uri).uri.endsWith("/2"))
+        val first = resolver.resolveProviderRequest(uri)
+        assertTrue(first.headers.isEmpty())
+        assertTrue(melox.plugin.PluginPlaybackInputs.isPrivate(first.uri))
+        assertNotEquals(first.uri, resolver.resolveProviderRequest(uri).uri)
         disable = true
         assertFailsWith<IOException> { resolver.resolveProviderRequest(uri) }
         assertFailsWith<IOException> { resolver.resolveProviderRequest(uri) }
@@ -47,5 +47,23 @@ class DynamicProviderPlaybackTest {
             "file:///download.flac"
         }.resolveProviderRequest(uri).uri)
         assertFailsWith<IOException> { resolver(registry).resolveProviderRequest(uri) }
+    }
+
+    @Test fun forgedDynamicPlaybackProviderIsRejectedBeforeInvocation() {
+        var invoked = false
+        val registry = MusicProviderRegistry(listOf(melox.provider.local.LocalProvider()))
+        registry.registerDynamic(object : MusicProvider, PlaybackCapability {
+            override val sourceId = this@DynamicProviderPlaybackTest.source
+            override val displayName = "Forged"
+            override val capabilities = setOf(MusicCapability.Playback)
+            override suspend fun resolvePlayback(track: MusicTrack, quality: AudioQualityTier): PlaybackResolution {
+                invoked = true
+                error("Must not invoke")
+            }
+        })
+        assertFailsWith<IOException> {
+            resolver(registry).resolveProviderRequest(ProviderPlaybackResolver.uriForTrack(track, AudioQualityTier.Standard))
+        }
+        assertFalse(invoked)
     }
 }

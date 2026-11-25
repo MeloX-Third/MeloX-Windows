@@ -640,7 +640,8 @@ class MeloXDesktopPlayer internal constructor(
             try {
                 val incomingRequest = resolveRequest(target)
                 val analyses = if (settings.mode == MeloXAutoMixMode.Smart && (settings.analyzeStreaming ||
-                    !resolvedSource.uri.startsWith("http") && !incomingRequest.uri.startsWith("http"))) {
+                    !resolvedSource.uri.startsWith("http") && !melox.plugin.PluginPlaybackInputs.isPrivate(resolvedSource.uri) &&
+                        !incomingRequest.uri.startsWith("http") && !melox.plugin.PluginPlaybackInputs.isPrivate(incomingRequest.uri))) {
                     try {
                         withTimeout(20_000) { coroutineScope {
                             val a = async { autoMixAnalyzer.analyze(source.entryId, resolvedSource.uri, resolvedSource.headers) }
@@ -687,7 +688,8 @@ class MeloXDesktopPlayer internal constructor(
         smartJob = scope.launch {
             suspend fun analyze(entry: QueueEntry, request: DesktopPlaybackRequest) {
                 try {
-                    if (!MeloXAutoMixSettings.read().analyzeStreaming && request.uri.startsWith("http")) throw IOException("未启用流媒体分析")
+                    if (!MeloXAutoMixSettings.read().analyzeStreaming &&
+                        (request.uri.startsWith("http") || melox.plugin.PluginPlaybackInputs.isPrivate(request.uri))) throw IOException("未启用流媒体分析")
                     val analysis = withTimeout(20_000) { autoMixAnalyzer.analyze(entry.entryId, request.uri, request.headers) }
                     smartQueue.record(snapshot.generation, entry, analysis)
                 } catch (cancelled: kotlinx.coroutines.TimeoutCancellationException) { smartQueue.failure(snapshot.generation, entry) }

@@ -419,8 +419,11 @@ object AudioPlayer {
     internal fun decoderArgs(request: PlayRequest, startAtMs: Long): List<String> = buildList {
         addAll(decoderCommand)
         addAll(listOf("-hide_banner", "-loglevel", "error", "-nostdin", "-xerror"))
-        add("-ss")
-        add("%.3f".format(java.util.Locale.ROOT, startAtMs / 1000.0))
+        val privateInput = melox.plugin.PluginPlaybackInputs.isPrivate(request.url)
+        if (!privateInput) {
+            add("-ss")
+            add("%.3f".format(java.util.Locale.ROOT, startAtMs / 1000.0))
+        }
         if (request.url.startsWith("http")) {
             val headerBlob = buildString {
                 append("User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36\r\n")
@@ -429,6 +432,9 @@ object AudioPlayer {
                 }
             }
             addAll(listOf("-headers", headerBlob, "-i", request.url))
+        } else if (privateInput) {
+            addAll(listOf("-protocol_whitelist", "pipe", "-i", "pipe:0", "-ss",
+                "%.3f".format(java.util.Locale.ROOT, startAtMs / 1000.0)))
         } else {
             addAll(listOf("-i", request.url))
         }
@@ -441,7 +447,11 @@ object AudioPlayer {
         val command = decoderArgs(request, startAtMs)
         logDebug("AudioPlayer", "FFmpeg binary=${decoderCommand.first()} os=${System.getProperty("os.name")} sourceHost=${if (request.url.startsWith("http")) runCatching { java.net.URI(request.url).host }.getOrNull() else "local"}")
         logDebug("AudioPlayer", "decode ${if (request.url.startsWith("http")) "HTTP source" else "local source"} at ${startAtMs}ms")
-        return ProcessBuilder(command).redirectErrorStream(false).start()
+        val input = if (melox.plugin.PluginPlaybackInputs.isPrivate(request.url)) melox.plugin.PluginPlaybackInputs.open(request.url) else null
+        val process = try { ProcessBuilder(command).redirectErrorStream(false).start() }
+            catch (failure: Throwable) { input?.close(); throw failure }
+        input?.let { melox.plugin.PluginPlaybackInputs.attach(process, it) }
+        return process
     }
 
     private fun closeDecoder(process: Process, line: SourceDataLine) {

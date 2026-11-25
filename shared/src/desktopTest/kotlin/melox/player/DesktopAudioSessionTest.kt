@@ -87,7 +87,9 @@ open class DesktopAudioSessionTest {
         val dynamic = track.copy(id = MusicResourceId(melox.music.model.SourceId.parse("plugin:test.pcm")!!, "opaque%/tone"))
         val ended = CompletableDeferred<Unit>()
         val failures = CopyOnWriteArrayList<AudioPlaybackFailure>()
-        AudioPlayer.play(wav().absolutePath, dynamic, onEnded = { ended.complete(Unit) }, onFailure = failures::add)
+        val file = wav()
+        val input = melox.plugin.PluginPlaybackInputs.register(null, { true }) { file.inputStream() }
+        AudioPlayer.play(input, dynamic, onEnded = { ended.complete(Unit) }, onFailure = failures::add)
         awaitCondition { outputs.firstOrNull()?.acceptedBytes?.get() == 88_200L || failures.isNotEmpty() }
         assertTrue(failures.isEmpty(), failures.toString())
         assertEquals(dynamic.id, AudioPlayer.currentTrack.value?.id)
@@ -95,6 +97,28 @@ open class DesktopAudioSessionTest {
         withTimeout(15_000) { ended.await() }
         assertTrue(AudioPlayer.state.value.isFinished)
         assertTrue(failures.isEmpty())
+    }
+
+    @Test fun privateDecoderInputSupportsSeekAndReleasesStream() {
+        val bytes = wav().readBytes()
+        var released = false
+        val uri = melox.plugin.PluginPlaybackInputs.register(null, { true }) {
+            object : java.io.ByteArrayInputStream(bytes) {
+                override fun close() { released = true; super.close() }
+            }
+        }
+        FfmpegPcmDecoder(uri, startMs = 250).use { decoder ->
+            val buffer = ByteArray(8192)
+            var total = 0
+            while (true) {
+                val count = decoder.read(buffer)
+                if (count <= 0) break
+                total += count
+            }
+            decoder.verifyExit()
+            assertEquals(44_100, total)
+        }
+        assertTrue(released)
     }
 
     @Test fun seekingToTheDecoderOriginalZeroPositionActuallyRestartsIt() = runBlocking<Unit> {

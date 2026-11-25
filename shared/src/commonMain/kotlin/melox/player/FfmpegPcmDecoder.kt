@@ -21,20 +21,26 @@ internal class FfmpegPcmDecoder(
     }
     private val closed = AtomicBoolean(false)
     private val stderr = StringBuilder()
-    private val process = ProcessBuilder(buildList {
+    private val isPrivateInput = melox.plugin.PluginPlaybackInputs.isPrivate(uri)
+    private val command = buildList {
         addAll(FfmpegLocator.command().ifEmpty { throw IOException("bundled ffmpeg missing") })
         addAll(listOf("-hide_banner", "-loglevel", "error", "-nostdin", "-xerror", "-threads", "1"))
-        if (startMs > 0) addAll(listOf("-ss", "%.3f".format(Locale.ROOT, startMs / 1000.0)))
+        if (startMs > 0 && !isPrivateInput) addAll(listOf("-ss", "%.3f".format(Locale.ROOT, startMs / 1000.0)))
         if (uri.startsWith("http")) {
             val combined = linkedMapOf("User-Agent" to "Mozilla/5.0 (Windows NT 10.0; Win64; x64)") + headers
             require(combined.all { '\r' !in it.key && '\n' !in it.key && '\r' !in it.value && '\n' !in it.value })
             addAll(listOf("-rw_timeout", "15000000", "-headers", combined.entries.joinToString("") { "${it.key}: ${it.value}\r\n" }))
         }
-        addAll(listOf("-i", uri))
+        if (isPrivateInput) addAll(listOf("-protocol_whitelist", "pipe", "-i", "pipe:0"))
+        else addAll(listOf("-i", uri))
+        if (startMs > 0 && isPrivateInput) addAll(listOf("-ss", "%.3f".format(Locale.ROOT, startMs / 1000.0)))
         if (durationMs != Long.MAX_VALUE) addAll(listOf("-t", "%.3f".format(Locale.ROOT, durationMs / 1000.0)))
         if (filters != null) addAll(listOf("-af", filters))
         addAll(listOf("-f", "s16le", "-acodec", "pcm_s16le", "-ar", outputRate.toString(), "-ac", outputChannels.toString(), "pipe:1"))
-    }).start()
+    }
+    private val privateInput = if (isPrivateInput) melox.plugin.PluginPlaybackInputs.open(uri) else null
+    private val process = try { ProcessBuilder(command).start() } catch (failure: Throwable) { privateInput?.close(); throw failure }
+    private val inputOwner = privateInput?.let { melox.plugin.PluginPlaybackInputs.attach(process, it) }
     init { processes.add(process) }
     private val errorReader = thread(name = "melox-pcm-stderr", isDaemon = true) {
         runCatching { process.errorStream.bufferedReader().use { reader ->
@@ -60,6 +66,7 @@ internal class FfmpegPcmDecoder(
     override fun close() {
         if (!closed.compareAndSet(false, true)) return
         process.destroyForcibly()
+        inputOwner?.close()
         runCatching { process.inputStream.close() }
         runCatching { process.errorStream.close() }
         runCatching { process.outputStream.close() }

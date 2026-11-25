@@ -190,6 +190,7 @@ class ResolvedRequest(
         if (providers[source] == null) providers.awaitPluginRestore()
         val generation = providers.generation
         val provider = providers[source] ?: throw IOException("Music source ${source.value} is missing or disabled")
+        val plugin = provider as? melox.plugin.PluginMusicProvider ?: throw IOException("Untrusted dynamic playback provider")
         val playback = (provider as? PlaybackCapability)?.takeIf { provider.supports(MusicCapability.Playback) }
             ?: throw IOException("Music source ${source.value} does not support playback")
         val track = queryParam(uri, "standardTrack")?.let { raw ->
@@ -208,8 +209,11 @@ class ResolvedRequest(
         if (providers.generation != generation || providers[source] !== provider)
             throw IOException("Music source changed during resolution")
         return when (resolution) {
-            is PlaybackResolution.Playable -> ResolvedRequest(resolution.url, resolution.requestHeaders, resolution.expiresAtEpochMs)
-            is PlaybackResolution.Preview -> ResolvedRequest(resolution.url)
+            is PlaybackResolution.Playable -> ResolvedRequest(melox.plugin.PluginPlaybackInputs.register(
+                plugin, providers, generation, resolution.url, resolution.requestHeaders, resolution.expiresAtEpochMs),
+                expiresAtEpochMs = resolution.expiresAtEpochMs)
+            is PlaybackResolution.Preview -> ResolvedRequest(melox.plugin.PluginPlaybackInputs.register(
+                plugin, providers, generation, resolution.url, emptyMap(), null))
             else -> throw IOException("Music source audio unavailable: ${resolution.javaClass.simpleName}")
         }
     }
