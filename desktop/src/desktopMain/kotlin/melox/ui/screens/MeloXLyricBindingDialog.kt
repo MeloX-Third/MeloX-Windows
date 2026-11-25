@@ -37,6 +37,9 @@ internal fun MeloXLyricBindingDialog(track: MusicTrack, onDismiss: () -> Unit) {
     var error by remember(source, generation) { mutableStateOf<String?>(null) }
     var busy by remember(source, generation) { mutableStateOf(false) }
     var searched by remember(source, generation) { mutableStateOf(false) }
+    var page by remember(source, generation) { mutableIntStateOf(0) }
+    var hasMore by remember(source, generation) { mutableStateOf(false) }
+    var searchedQuery by remember(source, generation) { mutableStateOf("") }
     val scope = key(source, generation) { rememberCoroutineScope() }
     fun amllQuery(candidate: MusicTrack): AmlldbLyricQuery? = when (candidate.id.sourceId.builtIn) {
         MusicSource.Netease -> candidate.id.value.toLongOrNull()?.let { AmlldbLyricQuery.Netease(it) }
@@ -67,10 +70,13 @@ internal fun MeloXLyricBindingDialog(track: MusicTrack, onDismiss: () -> Unit) {
                 val stamp = registry.generation
                 val text = query
                 scope.launch {
-                    busy = true; searched = false; error = null; selected = null; preview = null; results = emptyList()
+                    busy = true; searched = false; error = null; selected = null; preview = null; results = emptyList(); hasMore = false
                     try {
-                        val page = kotlinx.coroutines.withTimeout(30_000) { withContext(Dispatchers.IO) { (provider as SearchCapability).searchSongs(text, 1, 30) } }
-                        if (current(provider, stamp)) { results = page.items.filter { it.id.sourceId == source }; searched = true }
+                        val response = kotlinx.coroutines.withTimeout(30_000) { withContext(Dispatchers.IO) { (provider as SearchCapability).searchSongs(text, 1, 30) } }
+                        if (current(provider, stamp)) {
+                            results = response.items.filter { it.id.sourceId == source }; searched = true
+                            page = 1; hasMore = response.hasMore; searchedQuery = text
+                        }
                     } catch (cancelled: CancellationException) { throw cancelled }
                     catch (failure: Exception) { if (current(provider, stamp)) error = failure.message ?: "搜索失败" }
                     finally { busy = false }
@@ -98,6 +104,25 @@ internal fun MeloXLyricBindingDialog(track: MusicTrack, onDismiss: () -> Unit) {
                     finally { busy = false }
                 }
             }) { Text("${candidate.title} · ${candidate.artistText}") } }
+            if (hasMore) DesktopSettingsButton("加载更多", enabled = !busy) {
+                val provider = registry[source] ?: return@DesktopSettingsButton
+                val stamp = registry.generation
+                val nextPage = page + 1
+                scope.launch {
+                    busy = true; error = null
+                    try {
+                        val response = kotlinx.coroutines.withTimeout(30_000) { withContext(Dispatchers.IO) {
+                            (provider as SearchCapability).searchSongs(searchedQuery, nextPage, 30)
+                        } }
+                        if (current(provider, stamp)) {
+                            results = (results + response.items.filter { it.id.sourceId == source }).distinctBy { it.id }
+                            page = nextPage; hasMore = response.hasMore
+                        }
+                    } catch (cancelled: CancellationException) { throw cancelled }
+                    catch (failure: Exception) { if (current(provider, stamp)) error = failure.message ?: "加载失败，请重试" }
+                    finally { busy = false }
+                }
+            }
             preview?.lines?.take(8)?.forEach { Text(it.text) }
             error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         }
