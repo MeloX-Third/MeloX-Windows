@@ -3,7 +3,7 @@ package melox.cli
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import melox.dlna.DlnaSession
-import melox.music.model.MusicSource
+import melox.music.model.SourceId
 import melox.music.model.MusicTrack
 import melox.music.provider.MeloXMusicProviders
 import melox.music.provider.SearchCapability
@@ -24,7 +24,7 @@ internal object DesktopCliCommands {
             check(active()) { "CLI 已关闭" }
             if (command == "search") return@withContext JSONObject().put("tracks", JSONArray().apply {
                 tracks.forEachIndexed { index, track ->
-                    put(JSONObject().put("index", index).put("source", track.id.source.storageValue)
+                    put(JSONObject().put("index", index).put("source", track.id.sourceId.value)
                         .put("id", track.id.value).put("title", track.title).put("artist", track.artistText))
                 }
             })
@@ -78,11 +78,18 @@ internal object DesktopCliCommands {
 
     private suspend fun search(request: JSONObject): List<MusicTrack> = withContext(Dispatchers.IO) {
         val sourceName = request.optString("source", "netease")
-        val source = MusicSource.entries.firstOrNull { it.storageValue == sourceName } ?: error("未知音源：$sourceName")
+        val source = SourceId.parse(sourceName) ?: error("未知音源：$sourceName")
         val query = request.optString("query", "").trim()
         require(query.isNotEmpty()) { "query 不能为空" }
-        val provider = MeloXMusicProviders.create()[source] as? SearchCapability ?: error("该音源不支持搜索")
-        provider.searchSongs(query, pageSize = 10).items
+        val registry = MeloXMusicProviders.create()
+        registry.awaitPluginRestore()
+        val generation = registry.generation
+        val registered = registry[source] ?: error("音源未安装或未启用：$sourceName")
+        val provider = registered as? SearchCapability ?: error("该音源不支持搜索")
+        val items = provider.searchSongs(query, pageSize = 10).items
+        check(registry.generation == generation && registry[source] === registered) { "搜索期间音源已变化" }
+        require(items.all { it.id.sourceId == source }) { "搜索结果来源不匹配" }
+        items
     }
 
     private fun status(command: String): JSONObject {

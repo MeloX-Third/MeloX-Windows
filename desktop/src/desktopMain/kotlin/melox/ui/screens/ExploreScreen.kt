@@ -68,25 +68,25 @@ private sealed interface ExploreCollection {
     }
 
     data class ProviderPlaylist(val playlist: MusicPlaylistSummary) : ExploreCollection {
-        override val key: String get() = "playlist-${playlist.id.source.storageValue}-${playlist.id.value}"
+        override val key: String get() = "playlist-${playlist.id.sourceId.value}-${playlist.id.value}"
         override val title: String get() = playlist.title
         override val artworkUrl: String? get() = playlist.artworkUrl
         override val description: String? get() = playlist.description
         override val creatorName: String get() = playlist.creatorName.orEmpty()
         override val playCount: Long get() = playlist.playCount ?: 0L
         override val fallbackColor: Color
-            get() = MeloXColors.sourceColors[playlist.id.source.storageValue] ?: ExploreAccent
+            get() = MeloXColors.sourceColors[playlist.id.sourceId.value] ?: ExploreAccent
     }
 
     data class ProviderRanking(val ranking: MusicRankingSummary) : ExploreCollection {
-        override val key: String get() = "ranking-${ranking.id.source.storageValue}-${ranking.id.value}"
+        override val key: String get() = "ranking-${ranking.id.sourceId.value}-${ranking.id.value}"
         override val title: String get() = ranking.title
         override val artworkUrl: String? get() = ranking.artworkUrl
         override val description: String? get() = ranking.subtitle
         override val creatorName: String get() = ""
         override val playCount: Long get() = 0L
         override val fallbackColor: Color
-            get() = MeloXColors.sourceColors[ranking.id.source.storageValue] ?: ExploreAccent
+            get() = MeloXColors.sourceColors[ranking.id.sourceId.value] ?: ExploreAccent
     }
 }
 
