@@ -193,8 +193,10 @@ class ResolvedRequest(
         val playback = (provider as? PlaybackCapability)?.takeIf { provider.supports(MusicCapability.Playback) }
             ?: throw IOException("Music source ${source.value} does not support playback")
         val track = queryParam(uri, "standardTrack")?.let { raw ->
-            if (raw.toByteArray(Charsets.UTF_8).size > 1024 * 1024) throw IOException("Track metadata too large")
-            runCatching { MeloXTrackJson.decode(org.json.JSONObject(raw)) }.getOrNull()
+            runCatching {
+                melox.plugin.PluginJson.check(raw)
+                MeloXTrackJson.decode(org.json.JSONObject(raw))
+            }.getOrNull()
                 ?.takeIf { it.id == id } ?: throw IOException("Invalid dynamic track identity")
         } ?: MusicTrack(id, queryParam(uri, TrackTitleQuery).orEmpty(),
             queryParam(uri, TrackArtistsQuery).orEmpty().split('\u001f').filter(String::isNotBlank)
