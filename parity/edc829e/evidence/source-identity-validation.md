@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+最新固定工作区完整回归（代码 `8031044`）成功：`gradle :shared:desktopTest :desktop:desktopTest :desktop:desktopJar`，7 分 28 秒。JUnit XML 汇总：shared tests=631/failures=0/errors=0/skipped=0；desktop tests=19/failures=0/errors=0/skipped=6，即桌面 13 通过、6 条件跳过。覆盖下载预算幂等释放、强 ETag 续传、推荐行为/训练键、酷我音质和 worker 等当前代码；条件跳过和自动化测试不代表真实窗口、公网 OAuth、MSI 或设备验收完成。
+
 `8031044` 加入公开插件媒体强 ETag 续传：Range/If-Range 精确校验，200 先截断并同步旧字节再写新 validator，错误范围/作用域变化丢弃片段；仅持久化 scope 摘要、ETag、长度。`cdf571e` 的预算幂等释放、续传两项与 Provider 生命周期两项专项均通过，桌面 JAR 成功（5 分 8 秒）。该专项构建期间仍有后续修改，因此完整回归另行执行；初次全量构建因工作区编译时序交叉而失败，不计为通过。当前续传仅支持同一 Store 会话/generation 的公开媒体；认证媒体和跨重启续传保持未完成，启动清理旧片段且不自动联网。
 
 应用目录构建通过（23 秒）：`gradle :desktop:createDistributable -x downloadWix -x unzipWix -I parity/edc829e/app-image-without-wix.gradle`；验证脚本只为 app-image 设置有效工具搜索目录，不提供 WiX，也不验证 EXE/MSI。产物 `desktop/build/compose/binaries/main/app/MeloX-Desktop` 内的 runtime 和全部应用 JAR 用于 `WindowsPluginWorkerLauncherTest.productionBundleRunsValidatedProvider`，参数 `-PpluginWorkerJavaHome=D:/MeloX-Windows/desktop/build/compose/binaries/main/app/MeloX-Desktop/runtime -PpluginWorkerAppDirectory=D:/MeloX-Windows/desktop/build/compose/binaries/main/app/MeloX-Desktop/app`，专项成功（24 秒）。RX bundle 与 AppContainer 内工厂/搜索使用实际分发字节；尚未验证应用窗口内插件管理操作或 MSI 安装。
