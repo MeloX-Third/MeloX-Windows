@@ -10,11 +10,12 @@ class PlaybackFallbackOrderTest {
     private val calls = mutableListOf<String>()
     private val track = MusicTrack(MusicResourceId(MusicSource.Qishui, "7079108541549643812"), "Song", listOf(MusicArtistRef(name = "Artist")), durationMs = 200000)
     private class Provider(override val source: MusicSource, val calls: MutableList<String>, var result: PlaybackResolution) : MusicProvider, SearchCapability, PlaybackCapability {
+        var candidateSource = SourceId.fromBuiltIn(source)
         override val displayName = source.displayName
         override val capabilities = setOf(MusicCapability.Search, MusicCapability.Playback)
         override suspend fun searchSongs(query: String, page: Int, pageSize: Int): MusicPage<MusicTrack> {
             calls += "${source.storageValue}:search"
-            return MusicPage(listOf(MusicTrack(MusicResourceId(source, "native"), "Song", listOf(MusicArtistRef(name = "Artist")), durationMs = 200000)), page, pageSize)
+            return MusicPage(listOf(MusicTrack(MusicResourceId(candidateSource, "native"), "Song", listOf(MusicArtistRef(name = "Artist")), durationMs = 200000)), page, pageSize)
         }
         override suspend fun resolvePlayback(track: MusicTrack, quality: AudioQualityTier): PlaybackResolution {
             calls += "${source.storageValue}:play"; return result
@@ -39,6 +40,14 @@ class PlaybackFallbackOrderTest {
         val chain = PlaybackFallbackChain(cross(listOf(Provider(MusicSource.QQMusic, calls, full("qq")))), third())
         assertNull(chain.resolve(pluginTrack, AudioQualityTier.Standard, true))
         assertTrue(calls.isEmpty())
+    }
+    @Test fun builtInSearchCannotRoutePluginCandidateIntoItsPlaybackCapability() {
+        val qq = Provider(MusicSource.QQMusic, calls, full("qq"))
+        qq.candidateSource = requireNotNull(SourceId.parse("plugin:example.foreign"))
+        val native = Provider(MusicSource.Qishui, calls, PlaybackResolution.Unavailable())
+        val result = resolver(native, cross(listOf(qq)), third()).resolveProviderRequest(uri())
+        assertEquals("https://audio.invalid/third", result.uri)
+        assertEquals(listOf("qishui:play", "qq_music:search", "third"), calls)
     }
     @Test fun failedNativeUsesStrictBuiltInBeforeThirdPartyAndKeepsHeaders() {
         val native = Provider(MusicSource.Qishui, calls, PlaybackResolution.SubscriptionRequired)
