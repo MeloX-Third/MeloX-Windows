@@ -3,6 +3,19 @@ package melox.music.model
 import kotlin.test.*
 
 class SourceIdTest {
+    @Test fun resourceIdentityIncludesDynamicSourceAndPreservesBuiltInConstruction() {
+        val builtIn = MusicResourceId(MusicSource.QQMusic, "same")
+        assertEquals(MusicSource.QQMusic, builtIn.source)
+        assertEquals(SourceId.fromBuiltIn(MusicSource.QQMusic), builtIn.sourceId)
+        assertEquals(builtIn, MusicResourceId(builtIn.sourceId, "same"))
+        val plugin = MusicResourceId(SourceId.parse("plugin:example.catalog")!!, "same")
+        assertNotEquals(builtIn, plugin)
+        assertNotEquals(plugin, MusicResourceId(SourceId.parse("plugin:other.catalog")!!, "same"))
+        assertEquals(plugin, plugin.copy(value = "same"))
+        assertFailsWith<IllegalStateException> { plugin.source }
+        assertFailsWith<IllegalArgumentException> { MusicResourceId(plugin.sourceId, " ") }
+    }
+
     @Test fun unknownSourcesNeverAcquireBuiltInIdentity() {
         MusicSource.entries.forEach {
             assertEquals(it.storageValue, SourceId.fromBuiltIn(it).value)

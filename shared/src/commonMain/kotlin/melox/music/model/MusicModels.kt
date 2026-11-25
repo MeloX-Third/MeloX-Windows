@@ -25,9 +25,15 @@ enum class MusicSource(
 }
 
 data class MusicResourceId(
-    val source: MusicSource,
+    val sourceId: SourceId,
     val value: String,
 ) {
+    constructor(source: MusicSource, value: String) : this(SourceId.fromBuiltIn(source), value)
+
+    /** Built-in-only compatibility API; unknown identities must never become NetEase. */
+    val source: MusicSource get() = sourceId.builtIn
+        ?: error("Source ${sourceId.value} is not a built-in music source")
+
     init {
         require(value.isNotBlank()) { "music resource id must not be blank" }
     }
