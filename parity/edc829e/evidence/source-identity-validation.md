@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`e54fd19` 桌面服务页为已启用插件增加单来源搜索入口，通过 SourceId 导航总线打开空查询，后续输入只查询该插件；不自动改变聚合白名单。`gradle :desktop:desktopTest :desktop:desktopJar` 成功（42 秒）。生产插件安装/启动仍待接入，未执行真实窗口点击验收。
+
 `d964980` 来源撤销及返回身份错误校验置于请求异常处理范围内，失败显示页面可重试错误；协程取消继续传播。修正此前 onSuccess 内校验异常可能逃逸页面协程的问题。`gradle :desktop:desktopTest :desktop:desktopJar` 成功（48 秒）。
 
 `29922b9` 搜索打开的 Provider 专辑/歌手详情以完整资源 ID 区分状态，并订阅注册表 generation；来源被停用时清除旧内容、显示不可用，迟到结果必须通过来源/generation 校验。`gradle :desktop:desktopTest :desktop:desktopJar` 成功（53 秒）。真实插件启停窗口验收仍待生产运行时接通。
