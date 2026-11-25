@@ -196,8 +196,19 @@ class MeloXProviderDownloadStore internal constructor(
                 check(registry.generation == generation && registry[track.id.sourceId] === provider) { "SOURCE_UNAVAILABLE" }
                 if (track.id.sourceId.builtIn == null) {
                     val plugin = provider as? melox.plugin.PluginMusicProvider ?: error("SOURCE_UNAVAILABLE")
-                    downloadPlugin(plugin, playable, staging, registry.changes) {
-                        registry.generation == generation && registry[track.id.sourceId] === provider
+                    val current = { registry.generation == generation && registry[track.id.sourceId] === provider }
+                    try {
+                        downloadPlugin(plugin, playable, staging, registry.changes, current)
+                    } catch (failure: melox.plugin.PluginMediaHttpException) {
+                        if (failure.status !in setOf(401, 403, 410)) throw failure
+                        currentCoroutineContext().ensureActive()
+                        check(current()) { "SOURCE_UNAVAILABLE" }
+                        val refreshed = kotlinx.coroutines.withTimeout(12_000L) {
+                            downloader.resolveDownload(track, quality)
+                        } as? PlaybackResolution.Playable ?: error("DOWNLOAD_FAILED")
+                        check(current()) { "SOURCE_UNAVAILABLE" }
+                        require(refreshed.format == playable.format) { "UNSUPPORTED_MEDIA_FORMAT" }
+                        downloadPlugin(plugin, refreshed, staging, registry.changes, current)
                     }
                 } else download(playable, staging)
                 currentCoroutineContext().ensureActive()
