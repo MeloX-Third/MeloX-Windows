@@ -590,9 +590,10 @@
     {
         "android":  "core/plugin/PluginMediaFormats.kt",
         "windowsCandidates":  [
-
+                                  "shared/src/commonMain/kotlin/melox/plugin/PluginMediaFormats.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "IMPLEMENTED",
+        "notes": "8412162 progressive media policy tests pass; production broker pending."
     },
     {
         "android":  "core/plugin/PluginMusicProvider.kt",
@@ -692,9 +693,10 @@
     {
         "android":  "core/plugin/PluginWireContract.kt",
         "windowsCandidates":  [
-
+                                  "shared/src/commonMain/kotlin/melox/plugin/PluginWireContract.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "IMPLEMENTED",
+        "notes": "f2241a4 all 22 API v1 methods and over 1000 field type mutations pass; production Provider integration pending."
     },
     {
         "android":  "core/provider/applemusic/AppleMusicApiClient.kt",
