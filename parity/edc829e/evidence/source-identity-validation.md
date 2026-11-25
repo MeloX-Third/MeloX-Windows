@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`ebca6f6` 桌面服务选择器列出已启用插件并保存 SourceId；根导航与侧栏消费动态选择，音乐库分类按插件能力显示，切换时清除上个来源的音乐库页面请求。插件选择不开放网易云盘/播客及心动启动逻辑。`gradle :desktop:desktopTest :desktop:desktopJar` 成功（48 秒）。真实窗口选择交互及插件生产加载仍待验收。
+
 `8075c58` 普通解码 PCM 能量发布改用完整 SourceId，新增真实 FFmpeg/受控音频输出回归验证插件身份不触发旧 `.source` 访问。普通解码专项与 JAR 构建成功；随后 `gradle :shared:desktopTest --tests "melox.player.DesktopStreamingAudioSessionTest" --tests "melox.playback.LxDynamicSourceBoundaryTest" :desktop:desktopJar` 成功（3 分 4 秒），XML 16 项全部通过、0 跳过，覆盖双解码继承回归。`c2cbddf` 拒绝动态来源进入 LX 播放/封面/歌词兼容入口，边界回归同轮通过。受控本地 WAV 验证不代表真实插件远程播放 broker 已完成。
 
 本轮完整回归成功（3 分 2 秒）：`gradle :shared:desktopTest :desktop:desktopTest :desktop:desktopJar`；共享 XML 592 项全部通过、0 跳过；桌面 XML 19 项中 13 通过/6 条件跳过，JAR 成功。编译阶段实际包含随后提交为 `5be06e0` 的桌面探索动态来源接线（保存 SourceId、generation 撤销、内容身份校验）；随后同命令的桌面部分检查 UP-TO-DATE。覆盖推荐池/首页种子、动态首页/排行榜、动态音乐库及专辑/歌手分页。真实插件生产、账号/硬件和视觉验收仍未完成，AutoMix 历史偶发未复现且未关闭。
