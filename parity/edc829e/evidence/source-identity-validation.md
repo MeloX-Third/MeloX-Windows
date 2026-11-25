@@ -31,3 +31,7 @@ Android 功能基线 `edc829eaffa716b69d08681817414f9633abefc7`。
 `64ab50f` 迁移动态 Provider 注册表：动态来源使用 SourceId；内置 providers 列表保持内置语义；共享动态集合支持注册、启停、卸载、保留启用状态的原子替换及 generation/StateFlow 变更通知。仅插件命名空间可注册，声明搜索/播放/歌词/最终解析能力必须实现相应接口。
 
 命令 `gradle :shared:desktopTest --tests "melox.music.DynamicProviderRegistryTest" :desktop:compileKotlinDesktop` 成功，1 分 28 秒。两项注册表测试覆盖跨注册表查询及启停/替换/移除可见性、无效能力和重复注册不改变状态、未知来源不回退内置。此提交未包含实际插件恢复、搜索分发或播放解析接线。
+
+`33c0a90` 让应用 UI/播放注册表共享动态集合，聚合搜索提供 SourceId 入口及动态失败身份。查询结束时检查注册表 generation 和 provider 实例，来源变化时丢弃结果；保留 Windows 既有超时、父任务取消、去重和异源结果过滤行为。搜索失败文案使用动态来源显示名。
+
+命令 `gradle :shared:desktopTest --tests "melox.music.DynamicProviderRegistryTest" --tests "melox.music.UnifiedSearchLifecycleTest" :desktop:compileKotlinDesktop` 成功，57 秒。新增动态查询场景覆盖同来源去重、冒用网易身份过滤、查询期间禁用后结果丢弃及禁用来源不再可查。实际插件加载及搜索 UI 的动态选择仍待接通。
