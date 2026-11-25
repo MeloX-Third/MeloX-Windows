@@ -29,6 +29,7 @@ class DesktopAutoMixIntegrationTest {
     private val resolvedIds = CopyOnWriteArrayList<Long>()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var player: MeloXDesktopPlayer? = null
+    private var skipClockMs = 0L
     @BeforeTest fun setup() {
         AudioPlayer.stop(); MeloXPlaybackModePreferences.reset()
         MeloXPlaybackModePreferences.setAutoMix(true)
@@ -70,7 +71,8 @@ class DesktopAutoMixIntegrationTest {
             AudioPlayer.play(start.request.uri, start.track, start.request.headers, start.positionMs, start.durationMs,
                 start.playWhenReady, start.onEnded, start.onFailure)
         }, if (immediateResolution) CoroutineScope(scope.coroutineContext + Dispatchers.Unconfined) else scope,
-            if (immediateResolution) Dispatchers.Unconfined else Dispatchers.IO, {}, { _, _ -> })
+             if (immediateResolution) Dispatchers.Unconfined else Dispatchers.IO, {}, { _, _ -> },
+             skipClockMs = { skipClockMs })
         player = controller; PlaybackCommands.adoptController(controller)
         controller.setMediaItems(songs, startIndex, 0); controller.prepare(); controller.play(); PlaybackCommands.publishQueue(controller)
     }
@@ -254,6 +256,9 @@ class DesktopAutoMixIntegrationTest {
         assertTrue(AudioPlayer.getCurrentPositionMs() in 1100..1300, "Incoming heard position: ${AudioPlayer.getCurrentPositionMs()}, starts=${starts.map { it.positionMs }}")
         assertFalse(MeloXAutoMixTransitionRuntime.state.value.active)
         player!!.previous()
+        assertEquals(1, player!!.currentMediaItemIndex, "Opposite skip within 300ms is debounced")
+        skipClockMs += 300
+        player!!.previous()
         until { AudioPlayer.isReady() && AudioPlayer.currentTrack.value?.title == "generated-1000" }
         assertEquals(0, PlaybackCommands.queue.value.index)
         assertEquals(0L, AudioPlayer.getCurrentPositionMs())
@@ -272,6 +277,7 @@ class DesktopAutoMixIntegrationTest {
         assertEquals(heard, starts.last().positionMs, "Resolution completing inline must never start the incoming deck at zero")
         assertEquals(heard, AudioPlayer.getCurrentPositionMs())
         assertEquals(1, PlaybackCommands.queue.value.index)
+        skipClockMs += 300
         player!!.previous()
         until { starts.size == 3 && AudioPlayer.isReady() && AudioPlayer.currentTrack.value?.title == "generated-1000" }
         assertEquals(0L, starts.last().positionMs)

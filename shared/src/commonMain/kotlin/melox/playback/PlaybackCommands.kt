@@ -302,6 +302,7 @@ class MeloXDesktopPlayer internal constructor(
     recommendationSource: DesktopAutoplaySource = DesktopAutoplaySource(),
     private val isOnline: () -> Boolean = MeloXNetworkAvailability::isOnline,
     private val isDownloaded: (SearchSong) -> Boolean = ::isDesktopSongDownloaded,
+    private val skipClockMs: () -> Long = { System.nanoTime() / 1_000_000L },
 ) {
     constructor() : this(null, { start ->
         AudioPlayer.play(start.request.uri, start.track, start.request.headers, start.positionMs,
@@ -957,7 +958,7 @@ class MeloXDesktopPlayer internal constructor(
     }
 
     private fun acceptSkip(): Boolean {
-        val now = System.nanoTime() / 1_000_000L
+        val now = skipClockMs()
         if (lastSkipAtMs != Long.MIN_VALUE && now - lastSkipAtMs < 300L) return false
         lastSkipAtMs = now
         return true
