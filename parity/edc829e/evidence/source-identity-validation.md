@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`4a078c9` 为所有共用歌词状态的主播放器/桌面侧栏/浮动歌词订阅共享注册表变更，取消旧界面加载、清空旧歌词并按新 generation 重新请求。`gradle :desktop:compileKotlinDesktop` 成功，4 分 11 秒；实际窗口启停插件后的歌词切换仍待插件生产加载接通后验收。
+
 插件包协议前置迁移：`2c0d6e9` SemVer（大整数及预发布优先级）；`fcd9ea6` manifest v1、4 MiB 压缩/8 MiB 展开/64 文件限制、严格 UTF-8、完整性清单与 RSA-SHA256 发布者验证；`379ffa3` 权限扩张比较和 IPC token/方法/调用配额/错误白名单。命令 `gradle :shared:desktopTest --tests "melox.plugin.*" "-Pkotlin.incremental=false"` 成功，3 分 28 秒，XML 9 项通过、0 失败/错误/跳过。测试包括包篡改、额外文件、非法路径、无效 UTF-8、解压超限、发布者变更绑定具体包摘要。此前一次构建期间加入文件导致 main/test 输入集合不一致，编译失败；冻结输入后上述重新完整编译通过。尚未接生产安装、运行时或受控传输，不能据此宣称插件可用。
 
 `02c71b3` 将音频引擎曲目键和歌词显示中的内置来源判断改用 SourceId。完整命令 `gradle :shared:desktopTest :desktop:desktopTest :desktop:desktopJar` 成功，5 分 53 秒：共享 XML 520 项通过、0 失败/错误/跳过；桌面 16 项、10 通过/6 条件跳过、0 失败/错误；JAR 成功。此轮包含动态歌词和下载生命周期改动。先前 AutoMix 连续交接失败此轮未复现，原因仍未定位，不将本次通过表述为已修复偶发问题。PluginVersion 尚未纳入本轮编译与验证。
