@@ -228,11 +228,10 @@ fun SearchScreen(
         } else {
             runCatching { withContext(Dispatchers.IO) {
                 (currentProvider as? HomeFeedCapability)?.homeFeed(playlistLimit = 10, newSongLimit = 0, rankingLimit = 0)
-            } }.onSuccess {
+            }.also {
                 kotlinx.coroutines.currentCoroutineContext().ensureActive()
                 check(providerRegistry.generation == providerGeneration && providerRegistry[effectiveSource] === currentProvider) { "音源已变化" }
-                providerRecommendations = it?.recommendedPlaylists.orEmpty()
-            }
+            } }.onSuccess { providerRecommendations = it?.recommendedPlaylists.orEmpty() }
                 .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
         }
     }
@@ -261,6 +260,12 @@ fun SearchScreen(
         providerPlaylists = emptyList(); providerAlbums = emptyList(); providerArtists = emptyList()
         fun checkProviderResult() {
             check(providerRegistry.generation == providerGeneration && providerRegistry[effectiveSource] === currentProvider) { "音源已变化" }
+        }
+        suspend fun <T> providerResult(block: suspend () -> T): T {
+            val value = block()
+            kotlinx.coroutines.currentCoroutineContext().ensureActive()
+            checkProviderResult()
+            return value
         }
         val keyword = query.trim()
         if (keyword.isBlank()) {
@@ -357,8 +362,10 @@ fun SearchScreen(
                         providerSongs = emptyList()
                         error = "${effectiveSource.displayName} 当前没有歌曲搜索能力"
                     } else {
-                        runCatching { capability.searchSongs(keyword, page = 1, pageSize = 50).items }
-                            .onSuccess { kotlinx.coroutines.currentCoroutineContext().ensureActive(); checkProviderResult(); providerSongs = it }
+                        runCatching { providerResult { capability.searchSongs(keyword, page = 1, pageSize = 50).items }.also {
+                            require(it.all { item -> item.id.sourceId == effectiveSource })
+                        } }
+                            .onSuccess { providerSongs = it }
                             .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it; error = it.message ?: "搜索失败" }
                     }
                 }
@@ -375,12 +382,12 @@ fun SearchScreen(
                     val capability = providerCatalog
                     if (capability == null) error = "${effectiveSource.displayName} 当前没有${kind.title}搜索"
                     else when (kind) {
-                        MeloXSearchKind.Playlists -> runCatching { capability.searchPlaylists(keyword, page = 1, pageSize = 40).items }
-                            .onSuccess { kotlinx.coroutines.currentCoroutineContext().ensureActive(); checkProviderResult(); require(it.all { item -> item.id.sourceId == effectiveSource }); providerPlaylists = it }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it; error = it.message ?: "搜索失败" }
-                        MeloXSearchKind.Albums -> runCatching { capability.searchAlbums(keyword, page = 1, pageSize = 40).items }
-                            .onSuccess { kotlinx.coroutines.currentCoroutineContext().ensureActive(); checkProviderResult(); require(it.all { item -> item.id.sourceId == effectiveSource }); providerAlbums = it }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it; error = it.message ?: "搜索失败" }
-                        MeloXSearchKind.Artists -> runCatching { capability.searchArtists(keyword, page = 1, pageSize = 40).items }
-                            .onSuccess { kotlinx.coroutines.currentCoroutineContext().ensureActive(); checkProviderResult(); require(it.all { item -> item.id.sourceId == effectiveSource }); providerArtists = it }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it; error = it.message ?: "搜索失败" }
+                        MeloXSearchKind.Playlists -> runCatching { providerResult { capability.searchPlaylists(keyword, page = 1, pageSize = 40).items }.also { require(it.all { item -> item.id.sourceId == effectiveSource }) } }
+                            .onSuccess { providerPlaylists = it }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it; error = it.message ?: "搜索失败" }
+                        MeloXSearchKind.Albums -> runCatching { providerResult { capability.searchAlbums(keyword, page = 1, pageSize = 40).items }.also { require(it.all { item -> item.id.sourceId == effectiveSource }) } }
+                            .onSuccess { providerAlbums = it }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it; error = it.message ?: "搜索失败" }
+                        MeloXSearchKind.Artists -> runCatching { providerResult { capability.searchArtists(keyword, page = 1, pageSize = 40).items }.also { require(it.all { item -> item.id.sourceId == effectiveSource }) } }
+                            .onSuccess { providerArtists = it }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it; error = it.message ?: "搜索失败" }
                         else -> Unit
                     }
                 }
@@ -995,13 +1002,12 @@ internal fun ProviderCollectionDetail(
     LaunchedEffect(title, artwork, resourceId, generation, reload) {
         loading = true
         error = null
-        runCatching { load() }
-            .onSuccess {
+        runCatching { load().also {
                 kotlinx.coroutines.currentCoroutineContext().ensureActive()
                 check(registry.generation == generation) { "音源已变化" }
                 resourceId?.let { id -> require(it.all { track -> track.id.sourceId == id.sourceId }) }
-                tracks = it
-            }
+            } }
+            .onSuccess { tracks = it }
             .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it; error = it.message ?: pinnedString("search_content_failed") }
         loading = false
     }
