@@ -19,9 +19,9 @@
 
 MeloX Windows 基于 [lladlam/MeloX-Android](https://github.com/lladlam/MeloX-Android) 的设计、交互与业务逻辑进行跨平台移植。
 
-当前活跃迁移目标为正式 **Android 0.6.5（`v0.6.5` / `53244b9` / versionCode 24）**，整体仍为部分完成。进度与未完成项见 [0.6.5 迁移矩阵](parity/53244b9/MATRIX.md)；此前 0.6.2 的测试与发行证据保留原始版本归属。
+当前活跃迁移目标为 **Android 最新提交 `edc829eaffa716b69d08681817414f9633abefc7`（2026-11-25，0.7.5+）**，整体仍为部分完成。按“先电脑 UI，后手机 UI”推进，每个独立功能验证后分别提交。范围、验收标准和进度见 [最新 Android 迁移计划](parity/ANDROID_LATEST_MIGRATION_PLAN.md)；[0.6.5 迁移矩阵](parity/53244b9/MATRIX.md) 与更早证据保留原始版本归属，不代表最新基线已经完成。
 
-电脑端 UI 另以 [lladlam/melox](https://github.com/lladlam/melox) 的 **Desktop `a41ea0e`** 为固定真源，目标是整套界面与交互一比一迁移，目前为 **PARTIAL**。**设置 → 通用 → 电脑端布局** 可即时切换并保存选择，默认保留当前布局。首批已接入桌面侧栏、底部播放器、歌词／队列侧栏、首页卡片和并列播放器；完整页面、图标、材质及动效差异见 [Desktop 迁移矩阵](parity/desktop-a41ea0e/MATRIX.md) 和 [迁移记录](parity/desktop-a41ea0e/COMPLETION_LOG.md)。
+电脑端 UI 另以 [lladlam/melox](https://github.com/lladlam/melox) 的 **Desktop `a41ea0e`** 为固定真源，目标是整套界面与交互一比一迁移，目前为 **PARTIAL**。**设置 → 通用 → 电脑端布局** 可即时切换并保存选择，新安装或没有保存该选项时默认启用电脑布局，已有显式选择保留。首批已接入桌面侧栏、底部播放器、歌词／队列侧栏、首页卡片和并列播放器；完整页面、图标、材质及动效差异见 [Desktop 迁移矩阵](parity/desktop-a41ea0e/MATRIX.md) 和 [迁移记录](parity/desktop-a41ea0e/COMPLETION_LOG.md)。
 
 项目目标是将 MeloX 的完整功能带到 Windows 桌面：
 
