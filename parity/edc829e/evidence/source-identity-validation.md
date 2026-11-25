@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`e6afe5b` 桌面播放器更多菜单接入歌词来源选择：内置与已启用动态来源按搜索/歌词 capability 筛选，完整 SourceId 搜索和结果过滤，逐字预览后持久化强绑定，支持解除当前歌曲绑定；绑定 revision 触发播放器重新加载。查询 scope 随来源/generation 变化撤销。歌词专项及桌面测试/JAR 成功（1 分 42 秒）；最终动态列表与空结果提示后桌面测试/JAR 再次成功（45 秒）。真实账号/插件服务、窗口输入、同内容视觉与 AMLL 独立选择仍待验收或补齐。
+
 `6e75097` 歌词强绑定加载补齐 capability、来源 generation 与 Provider 实例校验，拒绝请求中停用的来源返回内容；专项覆盖停用拒绝与重新启用后成功。`gradle :shared:desktopTest --tests "melox.lyrics.*" :desktop:compileKotlinDesktop` 成功（1 分 23 秒）。
 
 截至 `c8cb341`，`gradle :shared:desktopTest :desktop:desktopTest :desktop:desktopJar` 成功（2 分 13 秒）：共享 XML 586 项全部通过，0 失败/错误/跳过；桌面测试与 JAR 为 UP-TO-DATE。包含 `fa1f56d` 本地真实 TLS API 响应读取、已信任证书仍拒绝主机名不匹配，以及 `c8cb341` 内置搜索返回插件候选时跳过其播放能力并继续已配置第三方阶段。同期尚未提交的歌词绑定撤销检查未包含在该轮已编译输入内，需独立验证。完整自动回归不代表 UI/功能迁移完成。
