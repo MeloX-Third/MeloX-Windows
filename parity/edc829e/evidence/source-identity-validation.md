@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`39bcfaf` 生产入口在窗口/播放初始化前恢复保存的启用插件，UI 与播放共享动态注册表；退出 finally 关闭 OAuth 与 PluginManager。首次启用准备独立 RX bundle，账号选择/移除/token 导入通过 Manager 的账号上下文替换，浏览器授权共用登录所有者。管理器/账号专项及 desktopJar 成功（20 秒），此前启动接线与 desktopTest 成功（58 秒）。打包安装版 classpath、真实窗口管理交互与公网 OAuth 尚需实际验收；每会话新 bundle 的版本复用/清理仍待完善。
+
 `1b02dee` 非验证调用前刷新即将过期的 OAuth，宿主 token broker 交换并以 vault CAS 更新，保留未返回的新 refresh token；验证调用不刷新，刷新失败保留账号且过期 credential 仍显式拒绝。账号/worker 联合专项成功（56 秒），账号元数据收尾后账号专项与 desktopJar 再次成功（17 秒）。token 服务为 fixture，不构成真实公网授权验收。
 
 `d406f84` 每次 worker 调用捕获账号会话、账号元数据和 HostCalls，存储按本地账号 ID 隔离，凭据仅留宿主 HTTP broker。真实 Windows DPAPI 与独立 JVM 回归验证两账号依次调用元数据/存储一致、无互读、切换撤销旧上下文、JSON 不含 token；两项账号专项及 desktopJar 成功（15 秒），前一轮账号/worker 联合专项成功（49 秒）。该增量晚于上方 618 项完整回归，媒体租约与生产初始化仍待补。
