@@ -3,6 +3,7 @@ package melox.plugin
 import com.caoccao.javet.annotations.V8Function
 import com.caoccao.javet.interop.V8Host
 import com.caoccao.javet.interop.V8Runtime
+import com.caoccao.javet.interop.options.V8RuntimeOptions
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import org.json.JSONArray
@@ -25,6 +26,7 @@ internal object PluginWorkerMain {
             val arguments = request.getJSONArray("args")
             val account = request.optJSONObject("account")?.also { PluginJson.check(it.toString(), 4096) }
             val bridge = PluginWorkerBridge(token)
+            V8RuntimeOptions.V8_FLAGS.setMaxHeapSize(16).setCustomFlags("--stack-size=256")
             V8Host.getV8Instance().createV8Runtime<V8Runtime>().use { runtime ->
                 runtime.createV8ValueObject().use { native ->
                     native.bind(bridge)

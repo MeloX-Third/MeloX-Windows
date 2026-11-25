@@ -8,6 +8,7 @@ import melox.music.model.SourceId
 import org.json.JSONArray
 import org.json.JSONObject
 import kotlin.test.*
+import kotlinx.coroutines.async
 
 class PluginWorkerProcessTest {
     private fun start(): Process {
@@ -15,6 +16,30 @@ class PluginWorkerProcessTest {
         val classpath = requireNotNull(System.getProperty("melox.test.workerClasspath"))
         return ProcessBuilder(java.absolutePath, "-Xmx96m", "-cp", classpath, "melox.plugin.PluginWorkerMain")
             .redirectError(ProcessBuilder.Redirect.DISCARD).start()
+    }
+
+    @Test fun runtimeCreatesFreshProcessAndRejectsCallsAfterClose() = kotlinx.coroutines.runBlocking {
+        val root = Files.createTempDirectory("plugin-runtime-process").toFile()
+        val source = requireNotNull(SourceId.parse("plugin:test.runtime"))
+        val manifest = PluginManifest(source, "Runtime", "1.0.0", 1, "index.js", setOf(PluginCapability.Search), emptySet())
+        var launches = 0
+        val runtime = PluginProcessRuntime(PluginArchiveReader.Package(manifest,
+            "let calls=0; globalThis.meloxPlugin={search:()=>++calls};"), PluginWorkerLauncher {
+            launches++
+            val process = start()
+            object : PluginWorkerProcess {
+                override val input = process.inputStream
+                override val output = process.outputStream
+                override fun close() { process.destroyForcibly(); process.waitFor(5, TimeUnit.SECONDS) }
+            }
+        }, { token, current -> PluginHostCalls(token, PluginHttpBroker(manifest), PluginStorage(source, base = root), current) })
+        try {
+            repeat(2) { assertEquals("1", runtime.invoke("search", JSONArray())) }
+            assertEquals(2, launches)
+            runtime.close()
+            assertFailsWith<IllegalStateException> { runtime.invoke("search", JSONArray()) }
+            assertEquals(2, launches)
+        } finally { runtime.close(); root.deleteRecursively() }
     }
 
     @Test fun realWorkerExecutesPromiseAndHostStorageWithoutJavaBridge() {
@@ -59,5 +84,41 @@ class PluginWorkerProcessTest {
                 .put("args", JSONArray()).put("script", "while(true) {}").toString())
             assertTrue(process.waitFor(15, TimeUnit.SECONDS), "Worker must terminate independently of native execution")
         } finally { process.destroyForcibly() }
+    }
+
+    @Test fun independentWatchdogKillsWorkerBlockedOnInvocationInput() {
+        val process = start()
+        try {
+            // Keep stdin open without a frame: neither the JS guard nor EOF can end this worker.
+            assertTrue(process.waitFor(15, TimeUnit.SECONDS))
+            assertEquals(74, process.exitValue())
+        } finally { process.destroyForcibly() }
+    }
+
+    @Test fun closingRuntimeReleasesBlockedProcessAndRejectsLateResult() = kotlinx.coroutines.runBlocking {
+        val root = Files.createTempDirectory("plugin-runtime-cancel").toFile()
+        val source = requireNotNull(SourceId.parse("plugin:test.cancel.runtime"))
+        val manifest = PluginManifest(source, "Cancel", "1.0.0", 1, "index.js", setOf(PluginCapability.Search), emptySet())
+        val started = java.util.concurrent.CountDownLatch(1)
+        val released = java.util.concurrent.CountDownLatch(1)
+        val runtime = PluginProcessRuntime(PluginArchiveReader.Package(manifest, "globalThis.meloxPlugin={};"),
+            PluginWorkerLauncher {
+                object : PluginWorkerProcess {
+                    override val output = java.io.ByteArrayOutputStream()
+                    override val input = object : java.io.InputStream() {
+                        override fun read(): Int { started.countDown(); released.await(); return -1 }
+                    }
+                    override fun close() { released.countDown() }
+                }
+            }, { token, current -> PluginHostCalls(token, PluginHttpBroker(manifest), PluginStorage(source, base = root), current) })
+        try {
+            val task = async(kotlinx.coroutines.Dispatchers.IO) {
+                runCatching { runtime.invoke("search", JSONArray()) }
+            }
+            assertTrue(started.await(5, TimeUnit.SECONDS))
+            runtime.close()
+            assertTrue(released.await(1, TimeUnit.SECONDS))
+            assertTrue(kotlinx.coroutines.withTimeout(2000) { task.await() }.isFailure)
+        } finally { runtime.close(); root.deleteRecursively() }
     }
 }
