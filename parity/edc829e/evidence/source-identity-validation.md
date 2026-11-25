@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`e035e8a` 管理器增加持久诊断读取/清除回调和卸载清理，禁用来源可读取记录，损坏记录显示宿主固定提示并保留原文件，不转发解析异常中的内容。`gradle :shared:desktopTest --tests "melox.plugin.*"` 成功，1 分 26 秒；新增管理器测试验证禁用状态读取、损坏提示、清除、卸载清理，不加载运行时。运行时日志与生产 UI 仍待接通。
+
 `99fbebf` Windows 插件私有存储与宿主诊断记录：按 SourceId/账号目录摘要隔离，键数 64、单值 16 KiB、总量 64 KiB；诊断最多 100 条、32 KiB，仅宿主白名单方法/错误码及耗时；写入同步后原子替换。专项 `gradle :shared:desktopTest --tests "melox.plugin.*"` 成功，1 分 27 秒，XML 31 项通过、0 失败/错误/跳过。验证重建读取、账号/来源定向清除、配额拒绝后字节不变、损坏数据保留、诊断截断与敏感输入不落盘。首次编译默认路径 String/File 不匹配已修正。无 Windows v1 数据，因此不引入 Android 旧目录迁移。运行时 host call、生命周期诊断与 UI 仍待接线。
 
 `35589f8` 接通 PluginMusicProvider 的 API v1 搜索、目录、首页、账号、认证、收藏、歌词、播放/下载/外部解析方法，全部返回先经 PluginWireContract 检查；补 RankingCatalogCapability 和专辑/歌手详情 hasMore。`gradle :shared:desktopTest --tests "melox.plugin.*" :desktop:compileKotlinDesktop` 成功，2 分 4 秒，XML 28 项通过、0 失败/错误/跳过。首次运行测试类两个表达式测试方法推导非 Unit 返回值，JUnit 初始化失败，显式指定 Unit 后通过。测试覆盖目录分页/身份、越来源输入、缺能力不调用、收藏类型、歌词校验及原生媒体域名/解析外部 CDN。当前运行器仍为契约 fixture；隔离运行时、生产启动、账号/媒体 broker 与 UI 未接通，credential=active 暂拒绝消费，不宣称生产插件完整可用。
