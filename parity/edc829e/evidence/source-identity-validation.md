@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`2b41147` 接通桌面真实播放信号：周期采样要求队列与 AudioPlayer 完整身份一致且实际 isPlaying；一次播放开始、85% 完成、30 秒内已播放未完成的手动下一首分别记录。后台有界队列串行写入，存储锁内检查算法开关与个性化同意，清除共用锁。新增信号状态测试覆盖未播放/暂停不计数、不同来源相同资源 ID、完成去重及跳过阈值；推荐包与真实 DesktopAutoMixIntegrationTest 联合专项及 desktopJar 成功（2 分 59 秒）。此提交之后的训练键修复尚在验证，不属于先前 626 项完整回归。
+
 覆盖代码至 `5026908` 的完整命令 `gradle :shared:desktopTest :desktop:desktopTest :desktop:desktopJar` 成功（3 分 22 秒）：共享层 626 项，0 失败/错误/跳过；桌面 19 项中 13 通过、6 条件跳过，0 失败/错误；JAR 成功。包含账号捕获/刷新、生产初始化、管理 UI 编译、启动帧、播放/下载重解析与媒体租约。条件跳过及 fixture 不能作为真实窗口、公网 OAuth、安装包或整项迁移完成证据；AutoMix 本轮通过，历史偶发仍未定位。
 
 `5026908` 下载首响应 401/403/410 后重新解析一次，重试前后检查取消和 Provider generation/实例，格式变化拒绝，第二次失败不循环。ProviderDownloadLifecycleTest 通过生产下载存储及宿主 transport fixture 验证首次 403 后准确落盘、连续拒绝最多两次解析/请求且无 part 文件残留；冻结代码后专项及 desktopJar 成功（4 秒）。真实公网传输及强制 OAuth 刷新仍未验收。
