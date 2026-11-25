@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`94cfbf5` 将桌面搜索/来源集合列表项键、播放器收藏、歌曲菜单、下载来源文案及音质弹层改为 SourceId；收藏与菜单查询观察共享注册表变更。命令 `gradle :desktop:desktopTest :desktop:desktopJar` 成功，47 秒。此验证仅覆盖现有桌面测试与构建，未加入真实插件窗口输入回放，尚不代表动态插件 UI 全部可用。
+
 `1df68a6` 为动态来源新增独立播放解析路径：完整 track URI 往返、下载本地文件优先、缺失来源等待恢复入口、播放能力声明、12 秒解析超时、来源 generation/实例校验；动态 URL 不进入内置解析缓存或跨来源回退。桌面播放器及委托解析器接入本地下载查询，队列匹配/下载状态比较不再访问动态来源的旧枚举属性。
 
 命令 `gradle :shared:desktopTest --tests "melox.playback.DynamicProviderPlaybackTest" --tests "melox.playback.PlaybackFallbackOrderTest" --tests "melox.playback.NeteasePlaybackRequestTest" :desktop:compileKotlinDesktop` 成功，2 分 18 秒。XML 动态播放 2 项、网易请求 7 项、回退顺序 9 项，共 18 项，0 失败/错误。覆盖中文/斜线/字面百分号资源和完整歌曲元数据往返、请求头传递、重复解析不缓存、解析期间禁用拒绝、来源缺失错误、本地下载优先。首轮新增测试编译错误已修正；实际插件运行时、账号凭据和受控媒体传输未实现，不能据此宣称插件播放全链路完成。
