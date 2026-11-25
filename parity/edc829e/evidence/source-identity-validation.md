@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`f2241a4` 移植全部 22 个 API v1 方法的返回结构校验，覆盖分页、嵌套目录模型、账号认证、收藏确认、媒体和歌词。专项 `gradle :shared:desktopTest --tests "melox.plugin.*"` 成功，1 分 52 秒，XML 19 项通过、0 失败/错误/跳过；遍历所有已填充字段，以不同 JSON 类型进行超过 1000 次变异并断言拒绝，另验证歌词乱序、分页范围、请求头换行和 DRM 声明。校验器尚待实际 PluginMusicProvider 调用，不能视为生产插件协议链路已完成。
+
 `8412162` 增加 Android Authentication/Download 能力声明、认证状态模型和动态注册表接口校验，同时移植渐进音频格式限制。`gradle :shared:desktopTest --tests "melox.plugin.*"` 成功，2 分 13 秒；新增测试覆盖声明能力却缺实现时拒绝注册，HLS/DASH/DRM 及 MIME 声明拒绝。实际 Provider 与受控媒体请求仍待接通。随后的 PluginWireContract 独立构建验证中，未计入本轮结论。
 
 `87615d8` 插件生命周期管理器接入共享注册表，安装默认禁用、关闭保留启用意图、升级先验证候选和权限/发布者变化，账号变更先撤销旧 Provider 并关闭资源；账号操作与重新加载同时失败时保留主异常。`gradle :shared:desktopTest --tests "melox.plugin.*"` 成功，10 秒，XML 15 项通过、0 失败/错误/跳过。新增三项管理器测试使用真实临时包仓库，验证 UI/播放注册表共享、恢复/卸载、拒绝升级保留旧包和实例、账号撤销及异常归属。首次测试编译因匿名 Provider 的 source 名称遮蔽失败，显式限定测试 SourceId 后通过。生产应用启动、隔离工厂、诊断和账号接线仍待完成。
