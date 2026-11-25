@@ -25,6 +25,10 @@ class NeteaseLibrarySectionsTest {
     private val cancelled = AtomicBoolean()
     private var blocked = false
     private var empty = false
+    private var paginate = false
+    private var malformed = false
+    private var cycle = false
+    private val checkpoints = CopyOnWriteArrayList<String>()
     private val workers = Executors.newCachedThreadPool { Thread(it).apply { isDaemon = true } }
     private val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0).apply {
         executor = workers
@@ -41,11 +45,18 @@ class NeteaseLibrarySectionsTest {
                     cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec("e82ckenh8dichen8".toByteArray(), "AES"))
                     val payload = JSONObject(cipher.doFinal(bytes).toString(Charsets.UTF_8).split("-36cd479b6b5-")[1])
                     check(payload.getLong("uid") == 42L)
+                    if (path == "/eapi/song/like/get") checkpoints += payload.optString("checkPoint")
                 }
                 if (blocked) { started.countDown(); release.await(10, TimeUnit.SECONDS) }
                 val body = when (path) {
                     "/eapi/user/playlist" -> """{"code":200,"playlist":[{"id":73,"name":"Owned","creator":{"userId":42}},{"id":74,"name":"Subscribed","subscribed":true,"creator":{"userId":9}}]}"""
-                    "/eapi/song/like/get" -> if (empty) """{"code":200,"ids":[]}""" else """{"code":200,"ids":[1002,1001,1002]}"""
+                    "/eapi/song/like/get" -> when {
+                        malformed -> """{"code":200}"""
+                        paginate && checkpoints.last().isEmpty() -> """{"code":200,"ids":[1002,1001],"hasMore":1,"checkPoint":"next"}"""
+                        paginate -> """{"code":200,"ids":[1001,1003],"hasMore":$cycle,"checkPoint":"next"}"""
+                        empty -> """{"code":200,"ids":[]}"""
+                        else -> """{"code":200,"ids":[1002,1001,1002]}"""
+                    }
                     "/weapi/v3/song/detail" -> """{"code":200,"songs":[{"id":1001,"name":"First"},{"id":1002,"name":"Second"}]}"""
                     else -> """{"code":503,"message":"Unrelated endpoint must not be needed"}"""
                 }.toByteArray()
@@ -69,6 +80,23 @@ class NeteaseLibrarySectionsTest {
     @Test fun playlistsDoNotDependOnLikedSongsOrHistory() = runBlocking {
         assertEquals(listOf(73L, 74L), client.userPlaylists(42).map { it.id })
         assertEquals(listOf("/eapi/user/playlist"), requests.toList())
+    }
+
+    @Test fun favoritesFollowCursorAndDeduplicateInServerOrder() {
+        paginate = true
+        assertEquals(listOf(1002L, 1001L, 1003L), client.likedSongIdsBlocking(42))
+        assertEquals(listOf("", "next"), checkpoints.toList())
+    }
+
+    @Test fun repeatedCursorStopsWithoutRequestLoop() {
+        paginate = true; cycle = true
+        assertEquals(listOf(1002L, 1001L, 1003L), client.likedSongIdsBlocking(42))
+        assertEquals(2, checkpoints.size)
+    }
+
+    @Test fun missingIdsIsFailureInsteadOfEmptyFavorites() {
+        malformed = true
+        assertFailsWith<java.io.IOException> { client.likedSongIdsBlocking(42) }
     }
 
     @Test fun likedSongsDoNotDependOnPlaylistsOrHistoryAndRetainIdOrder() = runBlocking {

@@ -286,18 +286,24 @@ class NeteaseLibraryClient(
 
     fun likedSongIdsBlocking(userId: Long, owner: Job? = null): List<Long> {
         ensureLoggedIn()
-        val response = eapi(
-            uri = "/api/song/like/get",
-            data = JSONObject().put("uid", userId),
-            authenticated = true,
-            owner = owner,
-        )
-        val ids = response.optJSONArray("ids") ?: JSONArray()
-        return buildList(ids.length()) {
-            for (index in 0 until ids.length()) {
-                ids.optLong(index).takeIf { it > 0L }?.let(::add)
+        val ids = linkedSetOf<Long>()
+        val cursors = hashSetOf<String>()
+        var checkpoint: String? = null
+        repeat(200) {
+            owner?.ensureActive()
+            val data = JSONObject().put("uid", userId)
+            checkpoint?.let { data.put("checkPoint", it) }
+            val response = eapi("/api/song/like/get", data, authenticated = true, owner = owner)
+            val values = response.optJSONArray("ids") ?: throw IOException("网易云收藏列表响应缺少歌曲 ID")
+            for (index in 0 until values.length()) {
+                values.optLong(index).takeIf { it > 0L }?.let(ids::add)
             }
+            val more = response.optInt("hasMore", -1) == 1 || response.optBoolean("hasMore", false)
+            val next = response.optString("checkPoint").takeIf(String::isNotBlank)
+            if (!more || next == null || !cursors.add(next)) return ids.toList()
+            checkpoint = next
         }
+        return ids.toList()
     }
 
     fun recentSongsBlocking(limit: Int = 100, owner: Job? = null): List<SearchSong> {
