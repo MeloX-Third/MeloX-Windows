@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`4fcfe0a` 桌面搜索的网易账号音乐库范围仅在网易来源可见，并在查询分支再次校验来源；动态或其他内置来源不再通过该范围查询网易账号。`gradle :desktop:desktopTest :desktop:desktopJar` 成功（47 秒）。此项没有真实窗口输入或真实账号请求验收。
+
 `4a749e3` 桌面搜索导航保存完整 SourceId，重新进入搜索恢复动态来源；结果、目录详情、推荐与歌曲菜单按有效来源及 registry generation 重建，拒绝继续展示旧来源内容。`gradle :desktop:desktopTest :desktop:desktopJar` 成功（48 秒）。真实插件服务和窗口导航输入验收仍待完成。
 
 `15540f9` 网络音质：Windows INetworkCostManager 查询首选互联网连接计费状态；默认关闭，未知状态回退显式默认音质，按网络应用时不写回默认值。接入内置/Provider 队列、桌面设置和随应用退出撤销的 5 秒后台检查。`gradle :shared:desktopTest --tests "melox.audio.*" --tests "melox.playback.*" :desktop:desktopTest :desktop:desktopJar` 成功（2 分 7 秒）；XML 核实共享 104 项通过、0 跳过，桌面 17 项中 11 通过/6 条件跳过。专项包含暂停队列身份/进度及默认值保留。此结果不是完整共享回归或物理计费网络切换验收。
