@@ -17,14 +17,14 @@ Windows 输入框的触摸键盘路由与原生 InputPane 接线见 `TOUCH_KEYBO
 - 仓库：<https://github.com/lladlam/melox>。
 - 电脑端固定提交：`a41ea0e1e1fa69fb543d827b853fe3aff5420951`。
 - 重新克隆的位置：`/mnt/ntfs_files_sda4/项目/MeloX-Desktop-Reference`。
-- 这是独立的 **macOS Desktop → Windows** 迁移目标。Android 正式 `v0.6.5 / 53244b9 / versionCode 24` 的资源、矩阵和验收记录继续独立维护。
+- 这是独立的 **macOS Desktop → Windows** 迁移目标。Android 活跃功能基线为 `edc829eaffa716b69d08681817414f9633abefc7`，见[最新迁移计划](../ANDROID_LATEST_MIGRATION_PLAN.md)；`v0.6.5 / 53244b9 / versionCode 24` 的资源、矩阵和验收记录作为历史证据独立维护。
 - 用户要求覆盖整套 UI；总状态为 **PARTIAL**。本轮构建／回放／发行核验见 `ROUND_EVIDENCE.md`（CI `39632536833`，head `a1f6f10`）。
 接入真实生产页面、源尺寸计算通过或 Windows 自身回放成功，均不等于该页面的一比一视觉／动态验收完成。
 - `build/desktop-reference-a41ea0e/` 中官网下载的截图只用于布局考察；不是从该固定提交、相同账号／内容／尺寸取得的像素基准。
 
 ## 首批实现
 
-设置 → 通用 → **电脑端布局 / Desktop layout**。偏好键 `general_desktop_layout` 默认 `false`，即时更新运行态并持久化；冷启动关键偏好读取包含该键。
+设置 → 通用 → **电脑端布局 / Desktop layout**。偏好键 `general_desktop_layout` 默认 `true`，新安装或未保存该项时启用电脑布局；已有显式偏好保留。即时更新运行态并持久化；冷启动关键偏好读取包含该键。
 
 切换时保留同一个主页面 composition 和可移动详情 composition；播放器／队列仍使用现有 `AudioPlayer`、`PlaybackCommands` 和生产 FFmpeg。桌面布局阻止 Android 左右等分和旧底栏重复出现。Windows 设置入口为平台接线文案，不冒充真源菜单文案。
 
