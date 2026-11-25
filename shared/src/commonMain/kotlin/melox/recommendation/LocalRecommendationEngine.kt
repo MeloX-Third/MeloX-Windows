@@ -65,24 +65,7 @@ object LocalRecommendationEngine {
             val trainingGroups = TrackAggregation.aggregate(trainingTracks)
             val candidateGroups = TrackAggregation.aggregate(candidateTracks)
             LocalRecommendationStore.progress.value = LocalAnalysisProgress(LocalAnalysisStage.IdentityMerging, trainingGroups.size + candidateGroups.size, trainingTracks.size + candidateTracks.size, message = "已合并训练集与候选集歌曲身份", isFullAnalysis = true)
-            val imported = trainingGroups.mapNotNull { group ->
-                val candidate = group.recommendation ?: return@mapNotNull null
-                val key = "${group.key.title}|${group.key.artist}|${group.key.version}"
-                val old = existing.firstOrNull { it.trackKey == key }
-                LocalTrackFeatures(
-                    trackKey = key,
-                    title = candidate.track.title,
-                    artist = candidate.track.artistText,
-                    playCount = old?.playCount ?: 0,
-                    completedCount = old?.completedCount ?: 0,
-                    skipCount = old?.skipCount ?: 0,
-                    liked = old?.liked ?: true,
-                    lastPlayedAtMs = old?.lastPlayedAtMs ?: 0L,
-                    sourceCount = group.candidates.size,
-                    versionKind = group.key.version.name,
-                    qualityPreference = candidate.totalScore / 100f,
-                )
-            }
+            val imported = recommendationTrainingFeatures(trainingGroups, existing)
             withContext(Dispatchers.IO) {
                 LocalRecommendationStore.writeFeatures(imported)
                 LocalRecommendationStore.writeCandidateTracks(candidateGroups.mapNotNull { it.recommendation?.track })
