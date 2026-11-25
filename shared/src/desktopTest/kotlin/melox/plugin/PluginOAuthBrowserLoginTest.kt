@@ -34,10 +34,13 @@ class PluginOAuthBrowserLoginTest {
         try {
             val manifest = manager.install(archive)
             manager.enable(source)
+            var token = "fixture-token"
+            var revokeDuringExchange = false
             val loginOAuth = PluginDesktopOAuth(manager, { vault }, { m, active ->
                 PluginHttpBroker(m, active, okhttp3.Interceptor { chain ->
+                    if (revokeDuringExchange) vault.activate(null)
                     okhttp3.Response.Builder().request(chain.request()).protocol(okhttp3.Protocol.HTTP_1_1).code(200).message("fixture")
-                        .body("""{"access_token":"fixture-token","token_type":"Bearer"}""".toResponseBody()).build()
+                        .body("""{"access_token":"$token","refresh_token":"refresh-token","token_type":"Bearer"}""".toResponseBody()).build()
                 })
             })
             oauth = loginOAuth
@@ -57,6 +60,16 @@ class PluginOAuthBrowserLoginTest {
             assertEquals("Loopback", vault.accounts().single().displayName)
             assertNotNull(registry[source])
             assertFails { java.net.Socket().use { it.connect(java.net.InetSocketAddress("127.0.0.1", java.net.URI(callback).port), 1000) } }
+            val account = vault.accounts().single()
+            token = "refreshed-token"
+            loginOAuth.refresh(manifest)
+            assertEquals("refreshed-token", vault.lease()?.token)
+            assertEquals(account, vault.accounts().single())
+            revokeDuringExchange = true
+            token = "must-not-save"
+            assertFails { loginOAuth.refresh(manifest) }
+            vault.activate(account.id)
+            assertEquals("refreshed-token", vault.lease()?.token)
         } finally { oauth?.close(); manager.close(); root.deleteRecursively() }
     }
 

@@ -18,6 +18,7 @@ internal class PluginOAuthBrowserLogin(private val oauth: PluginDesktopOAuth) {
     private val active = java.util.concurrent.ConcurrentHashMap.newKeySet<SourceId>()
 
     suspend fun login(manifest: PluginManifest, label: String,
+        replaceSelected: Boolean = false,
         openBrowser: (URI) -> Unit = { Desktop.getDesktop().browse(it) },
     ) = withContext(Dispatchers.IO) {
         check(active.add(manifest.sourceId)) { "plugin login already in progress" }
@@ -26,7 +27,8 @@ internal class PluginOAuthBrowserLogin(private val oauth: PluginDesktopOAuth) {
             val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 4)
             listener = server
             val redirect = "http://127.0.0.1:${server.address.port}/oauth2redirect"
-            val authorization = oauth.begin(manifest, label, redirect).toHttpUrl()
+            val authorization = (if (replaceSelected) oauth.beginReplacement(manifest, redirect)
+                else oauth.begin(manifest, label, redirect)).toHttpUrl()
             val expectedState = checkNotNull(authorization.queryParameter("state"))
             val callback = CompletableDeferred<String>()
             server.createContext("/oauth2redirect") { exchange ->
