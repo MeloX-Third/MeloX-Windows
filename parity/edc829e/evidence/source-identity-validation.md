@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`402e76e` 桌面歌词选择支持在网易/QQ/Spotify/Apple Music 搜索结果上切换 AMLL 预览，以对应 AMLL query bindingValue 持久化绑定；切换预览模式清除旧选择，插件来源保留自身歌词能力。`gradle :desktop:desktopTest :desktop:desktopJar` 成功（43 秒）。真实 AMLL 服务内容、窗口输入及同内容视觉验收仍未完成。
+
 `e6afe5b` 桌面播放器更多菜单接入歌词来源选择：内置与已启用动态来源按搜索/歌词 capability 筛选，完整 SourceId 搜索和结果过滤，逐字预览后持久化强绑定，支持解除当前歌曲绑定；绑定 revision 触发播放器重新加载。查询 scope 随来源/generation 变化撤销。歌词专项及桌面测试/JAR 成功（1 分 42 秒）；最终动态列表与空结果提示后桌面测试/JAR 再次成功（45 秒）。真实账号/插件服务、窗口输入、同内容视觉与 AMLL 独立选择仍待验收或补齐。
 
 `6e75097` 歌词强绑定加载补齐 capability、来源 generation 与 Provider 实例校验，拒绝请求中停用的来源返回内容；专项覆盖停用拒绝与重新启用后成功。`gradle :shared:desktopTest --tests "melox.lyrics.*" :desktop:compileKotlinDesktop` 成功（1 分 23 秒）。
