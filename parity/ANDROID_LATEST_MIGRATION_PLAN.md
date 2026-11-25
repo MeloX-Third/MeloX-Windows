@@ -12,6 +12,8 @@
 
 ## 已知起点
 
+最新增量：Windows AppContainer 受限启动器（`9cc247c`）、真实 JVM/V8 与宿主存储 IPC（`6a9b8a6`、`fc90f7e`）、OS 权限探针（`c5cc0bd`）、Provider 工厂（`81c307c`）和原子 RX bundle 部署（`643f3c7`）已完成专项验证。覆盖至 `643f3c7` 的完整回归共享 618 项通过，桌面 13 项通过／6 条件跳过，JAR 成功（证据 `f85dfc1`）。当前继续账号调用上下文、生产初始化及安装/账号 UI；全量迁移仍未完成。
+
 - Windows 仓库：`D:\MeloX-Windows`，工作分支浅克隆；Windows 基线当前为 `8e4b47f`，与 Android 历史不共享 Git ancestry。
 - 默认电脑布局已改为新安装/无设置时启用；显式存量偏好保持原值。
 - 已迁移并通过 `:shared:compileKotlinDesktop`：循环模式持久化/恢复、上一首/下一首 300ms 防抖。
