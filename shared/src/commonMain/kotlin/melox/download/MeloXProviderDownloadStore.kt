@@ -3,6 +3,8 @@ package melox.download
 import melox.platform.meloXDataDir
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import melox.music.model.AudioQualityTier
 import melox.music.model.MusicAlbumRef
 import melox.music.model.MusicArtistRef
@@ -41,25 +43,48 @@ data class MeloXProviderDownloadedSong(
 )
 
 /** Persistent download store for provider-native IDs. Legacy NetEase downloads stay untouched. */
-class MeloXProviderDownloadStore private constructor() {
-    private val directory = File(meloXDataDir(), "melox_provider_downloads").apply { mkdirs() }
+class MeloXProviderDownloadStore internal constructor(
+    private val directory: File = File(meloXDataDir(), "melox_provider_downloads"),
+    private val registryFactory: () -> melox.music.provider.MusicProviderRegistry = MeloXMusicProviders::create,
+) {
+    init { directory.mkdirs() }
     private val indexFile = File(directory, "index.json")
+    private val taskStore = ProviderDownloadTaskStore(directory)
+    private val restoreReady = kotlinx.coroutines.CompletableDeferred<Unit>()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private val jobs = ConcurrentHashMap<String, Job>()
     private val recordsByKey = ConcurrentHashMap<String, MeloXProviderDownloadedSong>()
     private val indexLock = Any()
     private val removedIdentities = ConcurrentHashMap.newKeySet<String>()
+    private val removing = ConcurrentHashMap.newKeySet<String>()
 
     val downloads = mutableStateListOf<MeloXProviderDownloadedSong>()
     val activeDownloads = mutableStateMapOf<String, Boolean>()
+    val attempts = mutableStateMapOf<String, ProviderDownloadAttempt>()
+    val downloadErrors = mutableStateMapOf<String, String>()
+    var taskRecoveryError by androidx.compose.runtime.mutableStateOf<String?>(null)
+        private set
 
     init {
         scope.launch {
+            try {
             val restored = withContext(Dispatchers.IO) { readIndex() }
             restored.forEach { record ->
                 val identity = key(record.track.id)
                 if (identity !in removedIdentities && recordsByKey.putIfAbsent(identity, record) == null) downloads += record
             }
+            val tasks = withContext(Dispatchers.IO) { taskStore.load() }
+            for (task in tasks) {
+                if (isDownloaded(task.track.id)) {
+                    withContext(Dispatchers.IO) { taskStore.remove(task.track.id, task.revision) }
+                } else if (key(task.track.id) !in removedIdentities && key(task.track.id) !in attempts) {
+                    attempts[key(task.track.id)] = ProviderDownloadAttempt(task.track, task.quality, task.revision, task.accountScope)
+                    downloadErrors[key(task.track.id)] = melox.plugin.PluginErrors.message(task.errorCode ?: "DOWNLOAD_INTERRUPTED")
+                }
+            }
+            } catch (_: Exception) {
+                taskRecoveryError = melox.plugin.PluginErrors.message("PERSISTENCE_FAILED")
+            } finally { restoreReady.complete(Unit) }
         }
     }
 
@@ -71,15 +96,64 @@ class MeloXProviderDownloadStore private constructor() {
 
     fun recordFor(id: MusicResourceId): MeloXProviderDownloadedSong? = recordsByKey[key(id)]
 
+    fun errorFor(id: MusicResourceId): String? = downloadErrors[key(id)]
+
+    fun retry(id: MusicResourceId) {
+        val attempt = attempts[key(id)] ?: return
+        if (attempt.accountScope != null) {
+            downloadErrors[key(id)] = melox.plugin.PluginErrors.message("DOWNLOAD_ACCOUNT_CHANGED")
+            return
+        }
+        start(attempt.track, attempt.quality)
+    }
+
+    fun dismiss(id: MusicResourceId) {
+        val identity = key(id)
+        if (jobs.containsKey(identity)) return
+        val attempt = attempts[identity] ?: return
+        lateinit var cleanup: Job
+        cleanup = scope.launch(Dispatchers.IO, start = CoroutineStart.LAZY) {
+            try {
+                restoreReady.await()
+                taskStore.remove(id, attempt.revision)
+                withContext(Dispatchers.Main) {
+                    if (attempts[identity]?.revision == attempt.revision) attempts.remove(identity)
+                    downloadErrors.remove(identity)
+                }
+            } catch (_: Exception) {
+                withContext(Dispatchers.Main) { downloadErrors[identity] = melox.plugin.PluginErrors.message("PERSISTENCE_FAILED") }
+            }
+        }
+        jobs[identity] = cleanup
+        cleanup.invokeOnCompletion { jobs.remove(identity, cleanup) }
+        cleanup.start()
+    }
+
     fun remove(id: MusicResourceId) {
         val idKey = key(id)
+        if (!removing.add(idKey)) return
         removedIdentities.add(idKey)
-        jobs[idKey]?.cancel()
-        recordsByKey.remove(idKey)?.let { record ->
-            File(directory, record.fileName).delete()
-            downloads.removeAll { key(it.track.id) == idKey }
+        val owner = jobs[idKey]
+        owner?.cancel()
+        scope.launch {
+            try {
+                owner?.join()
+                restoreReady.await()
+                attempts[idKey]?.let { attempt ->
+                    withContext(Dispatchers.IO) { taskStore.remove(id, attempt.revision) }
+                }
+                recordsByKey.remove(idKey)?.let { record ->
+                    withContext(Dispatchers.IO) { File(directory, record.fileName).delete() }
+                    downloads.removeAll { key(it.track.id) == idKey }
+                }
+                attempts.remove(idKey)
+                activeDownloads.remove(idKey)
+                downloadErrors.remove(idKey)
+                withContext(Dispatchers.IO) { writeIndex() }
+            } catch (_: Exception) {
+                downloadErrors[idKey] = melox.plugin.PluginErrors.message("PERSISTENCE_FAILED")
+            } finally { removing.remove(idKey) }
         }
-        scope.launch(Dispatchers.IO) { writeIndex() }
     }
 
     fun localPlaybackUri(id: MusicResourceId): String? = recordsByKey[key(id)]
@@ -89,26 +163,46 @@ class MeloXProviderDownloadStore private constructor() {
 
     fun start(track: MusicTrack, quality: AudioQualityTier = AudioQualityTier.Standard) {
         val idKey = key(track.id)
-        if (isDownloaded(track.id) || jobs.containsKey(idKey)) return
-        val provider = MeloXMusicProviders.create()[track.id.sourceId] ?: return
-        val downloader = provider as? DownloadCapability ?: return
+        if (isDownloaded(track.id) || jobs.containsKey(idKey) || idKey in removing) return
+        val attempt = ProviderDownloadAttempt(track, quality)
+        attempts[idKey] = attempt
+        downloadErrors.remove(idKey)
         activeDownloads[idKey] = true
         lateinit var job: Job
         job = scope.launch(Dispatchers.IO, start = CoroutineStart.LAZY) {
+            val staging = File(directory, "${digest(idKey)}-${attempt.revision}.part")
+            var destination: File? = null
+            var committed = false
             try {
-                val resolution = downloader.resolveDownload(track, quality)
+                restoreReady.await()
+                if (isDownloaded(track.id)) {
+                    committed = true
+                    withContext(Dispatchers.Main) { attempts.remove(idKey) }
+                    return@launch
+                }
+                taskStore.save(ProviderDownloadTaskStore.Task(track, quality, attempt.revision))
+                val registry = registryFactory()
+                val generation = registry.generation
+                val provider = registry[track.id.sourceId] ?: error("SOURCE_UNAVAILABLE")
+                val downloader = provider as? DownloadCapability ?: error("UNSUPPORTED_OPERATION")
+                val resolution = try { kotlinx.coroutines.withTimeout(12_000L) { downloader.resolveDownload(track, quality) } }
+                    catch (timeout: kotlinx.coroutines.TimeoutCancellationException) { throw java.io.IOException("Download resolution timed out", timeout) }
                 val playable = resolution as? PlaybackResolution.Playable
                     ?: error("${track.id.sourceId.displayName} 当前没有可下载音频")
                 val extension = extensionFor(playable.format)
                 val fileName = "${digest(idKey)}.$extension"
-                val destination = File(directory, fileName)
-                download(playable, destination)
+                val target = File(directory, fileName)
+                destination = target
+                download(playable, staging)
                 currentCoroutineContext().ensureActive()
+                check(registry.generation == generation && registry[track.id.sourceId] === provider) { "SOURCE_UNAVAILABLE" }
+                java.nio.file.Files.move(staging.toPath(), target.toPath(),
+                    java.nio.file.StandardCopyOption.ATOMIC_MOVE, java.nio.file.StandardCopyOption.REPLACE_EXISTING)
                 val record = MeloXProviderDownloadedSong(
                     track = track,
                     quality = quality,
                     fileName = fileName,
-                    byteCount = destination.length(),
+                    byteCount = target.length(),
                     format = playable.format,
                     bitrate = playable.bitrate,
                     downloadedAt = System.currentTimeMillis(),
@@ -121,35 +215,82 @@ class MeloXProviderDownloadStore private constructor() {
                     downloads.removeAll { key(it.track.id) == idKey }
                     downloads += record
                 }
-                withContext(Dispatchers.IO) { writeIndex() }
+                withContext(NonCancellable + Dispatchers.IO) {
+                    writeIndex()
+                    committed = true
+                }
+                taskStore.remove(track.id, attempt.revision)
+                withContext(Dispatchers.Main) { attempts.remove(idKey); downloadErrors.remove(idKey) }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                withContext(NonCancellable) {
+                    runCatching { taskStore.remove(track.id, attempt.revision) }.onFailure {
+                        withContext(Dispatchers.Main) { downloadErrors[idKey] = melox.plugin.PluginErrors.message("PERSISTENCE_FAILED") }
+                    }.onSuccess { withContext(Dispatchers.Main) { attempts.remove(idKey); downloadErrors.remove(idKey) } }
+                }
+                throw cancelled
+            } catch (failure: Exception) {
+                val code = melox.plugin.PluginErrors.code(failure)
+                val saved = runCatching { taskStore.save(ProviderDownloadTaskStore.Task(track, quality, attempt.revision, code)) }.isSuccess
+                withContext(Dispatchers.Main) { downloadErrors[idKey] = melox.plugin.PluginErrors.message(if (saved) code else "PERSISTENCE_FAILED") }
             } finally {
+                staging.delete()
+                if (!committed) {
+                    destination?.delete()
+                    withContext(NonCancellable + Dispatchers.Main) {
+                        recordsByKey.remove(idKey)
+                        downloads.removeAll { key(it.track.id) == idKey }
+                    }
+                }
                 withContext(NonCancellable + Dispatchers.Main) { activeDownloads.remove(idKey) }
             }
         }
         jobs[idKey] = job
-        job.invokeOnCompletion { jobs.remove(idKey, job) }
+        job.invokeOnCompletion {
+            jobs.remove(idKey, job)
+            scope.launch {
+                if (!jobs.containsKey(idKey)) activeDownloads.remove(idKey)
+            }
+        }
         job.start()
     }
 
-    private fun download(resolution: PlaybackResolution.Playable, destination: File) {
+    @OptIn(kotlinx.coroutines.InternalCoroutinesApi::class)
+    private suspend fun download(resolution: PlaybackResolution.Playable, destination: File) {
         destination.parentFile?.mkdirs()
         if (resolution.url.startsWith("file:")) {
             val uri = java.net.URI(resolution.url)
             val source = File(uri)
             AudioDownloadLimit.check(source.length())
             source.inputStream().use { input ->
-                destination.outputStream().use { output -> AudioDownloadLimit.copy(input, output) }
+                    destination.outputStream().use { output -> copyAudio(input, output) }
             }
             return
         }
         val request = Request.Builder().url(resolution.url).apply {
             resolution.requestHeaders.forEach(::header)
         }.build()
-        melox.network.MeloXHttpClient.shared.newCall(request).execute().use { response ->
+        val call = melox.network.MeloXHttpClient.shared.newCall(request)
+        val cancellation = currentCoroutineContext()[Job]!!.invokeOnCompletion(onCancelling = true, invokeImmediately = true) { cause ->
+            if (cause != null) call.cancel()
+        }
+        try { call.execute().use { response ->
             check(response.isSuccessful) { "下载失败: HTTP ${response.code}" }
             val body = requireNotNull(response.body) { "下载响应为空" }
             AudioDownloadLimit.check(body.contentLength())
-            body.byteStream().use { input -> destination.outputStream().use { output -> AudioDownloadLimit.copy(input, output) } }
+            body.byteStream().use { input -> destination.outputStream().use { output -> copyAudio(input, output) } }
+        } } finally { cancellation.dispose() }
+    }
+
+    private suspend fun copyAudio(input: java.io.InputStream, output: java.io.OutputStream) {
+        val buffer = ByteArray(32 * 1024)
+        var count = 0L
+        while (true) {
+            currentCoroutineContext().ensureActive()
+            val read = input.read(buffer)
+            if (read < 0) return
+            count += read
+            AudioDownloadLimit.check(count)
+            output.write(buffer, 0, read)
         }
     }
 
@@ -250,3 +391,6 @@ class MeloXProviderDownloadStore private constructor() {
             }
     }
 }
+
+data class ProviderDownloadAttempt(val track: MusicTrack, val quality: AudioQualityTier,
+    val revision: String = java.util.UUID.randomUUID().toString(), val accountScope: String? = null)
