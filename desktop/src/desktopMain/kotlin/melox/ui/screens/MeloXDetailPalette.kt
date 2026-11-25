@@ -41,11 +41,16 @@ internal object MeloXDetailPaletteProvider {
     suspend fun paletteFor(url: String?): MeloXDetailPalette {
         val source = url?.takeIf(String::isNotBlank) ?: return MeloXDetailPalette.LightFallback
         val session = melox.provider.jellyfin.JellyfinSessionStore.read()
+        val pluginAccess = runCatching { melox.plugin.PluginArtworkAccess.capture(source) }
+            .getOrElse { return MeloXDetailPalette.LightFallback }
         val key = melox.provider.jellyfin.JellyfinArtworkAccess.cacheKey(source, session)
-        cached(key)?.let { return it }
+        if (pluginAccess == null) cached(key)?.let { return it }
         return withContext(Dispatchers.IO) {
-            cached(key)?.let { return@withContext it }
+            if (pluginAccess == null) cached(key)?.let { return@withContext it }
             val palette = runCatching {
+                if (pluginAccess != null) {
+                    checkNotNull(melox.ui.artwork.pluginArtworkBytes(source)).inputStream().use(::decodeBitmapStream)
+                } else {
                 val request = Request.Builder()
                     .url(optimizedArtworkUrl(source))
                     .header("User-Agent", "MeloX-Desktop/1.0.0")
@@ -56,8 +61,10 @@ internal object MeloXDetailPaletteProvider {
                     response.body?.byteStream()?.use(::decodeBitmapStream)
                         ?: error("Unable to decode artwork")
                 }
+                }
             }.getOrNull()
-            if (palette != null) synchronized(cache) { cache[key] = palette }
+            if (pluginAccess != null && runCatching { pluginAccess.checkCurrent() }.isFailure) return@withContext MeloXDetailPalette.LightFallback
+            if (palette != null && pluginAccess == null) synchronized(cache) { cache[key] = palette }
             palette ?: MeloXDetailPalette.LightFallback
         }
     }

@@ -596,6 +596,11 @@ internal fun loadLyricShareArtwork(
     source: String,
     session: melox.provider.jellyfin.JellyfinSession = melox.provider.jellyfin.JellyfinSessionStore.read(),
 ): java.awt.image.BufferedImage? {
+    if (melox.plugin.PluginArtworkAccess.isPluginArtwork(source)) {
+        val access = checkNotNull(melox.plugin.PluginArtworkAccess.capture(source))
+        return checkNotNull(melox.ui.artwork.pluginArtworkBytes(source)).inputStream().use(javax.imageio.ImageIO::read)
+            .also { access.checkCurrent() }
+    }
     if (!source.contains("://") && !source.startsWith("file:", true)) return javax.imageio.ImageIO.read(File(source))
     val connection = melox.provider.jellyfin.JellyfinArtworkAccess.openConnection(source, session).apply {
         connectTimeout = 10_000

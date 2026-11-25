@@ -1,4 +1,5 @@
 package melox.ui.player
+import androidx.compose.ui.graphics.asSkiaBitmap
 
 import androidx.compose.runtime.collectAsState
 
@@ -100,11 +101,13 @@ internal object ArtworkDynamicPaletteProvider {
     suspend fun paletteFor(url: String?): ArtworkDynamicPalette {
         val source = url?.takeIf(String::isNotBlank) ?: return ArtworkDynamicPalette.Fallback
         val session = melox.provider.jellyfin.JellyfinSessionStore.read()
+        val pluginAccess = runCatching { melox.plugin.PluginArtworkAccess.capture(source) }
+            .getOrElse { return ArtworkDynamicPalette.Fallback }
         val key = melox.provider.jellyfin.JellyfinArtworkAccess.cacheKey(source, session)
-        cached(key)?.let { return it }
+        if (pluginAccess == null) cached(key)?.let { return it }
 
         return withContext(Dispatchers.IO) {
-            cached(key)?.let { return@withContext it }
+            if (pluginAccess == null) cached(key)?.let { return@withContext it }
             val palette = runCatching {
                 val decoded = decodeArtwork(source, session)
                 try {
@@ -118,7 +121,8 @@ internal object ArtworkDynamicPaletteProvider {
                 }
             }.getOrNull()
 
-            if (palette != null) synchronized(cache) { cache[key] = palette }
+            if (pluginAccess != null && runCatching { pluginAccess.checkCurrent() }.isFailure) return@withContext ArtworkDynamicPalette.Fallback
+            if (palette != null && pluginAccess == null) synchronized(cache) { cache[key] = palette }
             palette ?: ArtworkDynamicPalette.Fallback
         }
     }
@@ -130,6 +134,7 @@ internal object ArtworkDynamicPaletteProvider {
     private fun decodeArtwork(source: String, session: melox.provider.jellyfin.JellyfinSession): Bitmap {
         val uri = runCatching { URI(source) }.getOrNull()
         return when (uri?.scheme?.lowercase()) {
+            "melox-plugin-image" -> decodeBytes(checkNotNull(melox.ui.artwork.pluginArtworkBytes(source)))
             "http", "https" -> decodeNetworkArtwork(source, session)
             "file" -> decodeFileArtwork(File(uri).absolutePath)
             null -> decodeFileArtwork(source)
@@ -417,9 +422,10 @@ internal fun MeloXMeiMeshBackdrop(
     reduceMotion: Boolean = false,
 ) {
     val jellyfinRevision by melox.provider.jellyfin.JellyfinSessionStore.revision.collectAsState()
-    var palette by remember(jellyfinRevision) { mutableStateOf(ArtworkDynamicPalette.Fallback) }
+    val pluginRevision = melox.ui.artwork.pluginArtworkRevision()
+    var palette by remember(jellyfinRevision, pluginRevision) { mutableStateOf(ArtworkDynamicPalette.Fallback) }
     val phase = remember { mutableFloatStateOf(0f) }
-    LaunchedEffect(artworkUrl, jellyfinRevision) {
+    LaunchedEffect(artworkUrl, jellyfinRevision, pluginRevision) {
         palette = ArtworkDynamicPaletteProvider.paletteFor(artworkUrl)
     }
     LaunchedEffect(reduceMotion, isPlaying) {
@@ -537,7 +543,8 @@ internal fun MeloXFlowingLightBackdrop(
     }
 
     val jellyfinRevision by melox.provider.jellyfin.JellyfinSessionStore.revision.collectAsState()
-    LaunchedEffect(artworkUrl, mixOutgoingArtworkUrl, mixIncomingArtworkUrl, jellyfinRevision) {
+    val pluginRevision = melox.ui.artwork.pluginArtworkRevision()
+    LaunchedEffect(artworkUrl, mixOutgoingArtworkUrl, mixIncomingArtworkUrl, jellyfinRevision, pluginRevision) {
         val covers = listOfNotNull(mixOutgoingArtworkUrl ?: artworkUrl, mixIncomingArtworkUrl).filter(String::isNotBlank).distinct()
         val palettes = coroutineScope { covers.map { cover -> async { ArtworkDynamicPaletteProvider.paletteFor(cover) } }.awaitAll() }
         targetPalette = palettes.reduceOrNull(ArtworkDynamicPalette::combinedWith) ?: ArtworkDynamicPalette.Fallback
@@ -769,9 +776,18 @@ private fun DesktopArtworkImage(
 ) {
     val revision by melox.provider.jellyfin.JellyfinSessionStore.revision.collectAsState()
     val session = remember(revision) { melox.provider.jellyfin.JellyfinSessionStore.read() }
-    val key = remember(artworkUrl, session) { artworkUrl?.takeIf(String::isNotBlank)?.let { melox.provider.jellyfin.JellyfinArtworkAccess.cacheKey(it, session) } }
-    val bitmap = rememberMeloXArtworkBitmap(key) {
-        runCatching { decodeArtworkImage(checkNotNull(artworkUrl), session) }.getOrNull()
+    val pluginRevision = melox.ui.artwork.pluginArtworkRevision()
+    val plugin = artworkUrl?.let(melox.plugin.PluginArtworkAccess::isPluginArtwork) == true
+    val key = remember(artworkUrl, session, pluginRevision) { artworkUrl?.takeIf(String::isNotBlank)?.let {
+        melox.provider.jellyfin.JellyfinArtworkAccess.cacheKey(it, session) + if (plugin) "#plugin=$pluginRevision" else ""
+    } }
+    val bitmap = rememberMeloXArtworkBitmap(key, cacheAllowed = !plugin) {
+        runCatching {
+            val access = melox.plugin.PluginArtworkAccess.capture(checkNotNull(artworkUrl))
+            decodeArtworkImage(artworkUrl, session).also { image ->
+                try { access?.checkCurrent() } catch (failure: Throwable) { image.asSkiaBitmap().close(); throw failure }
+            }
+        }.getOrNull()
     }
     val image = bitmap
     if (image != null) {
@@ -787,6 +803,7 @@ private fun DesktopArtworkImage(
 
 private fun decodeArtworkImage(source: String, session: melox.provider.jellyfin.JellyfinSession): ImageBitmap {
     val bytes = when (runCatching { URI(source) }.getOrNull()?.scheme?.lowercase()) {
+        "melox-plugin-image" -> checkNotNull(melox.ui.artwork.pluginArtworkBytes(source))
         "http", "https" -> {
             val request = Request.Builder()
                 .url(source)

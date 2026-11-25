@@ -12,6 +12,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asSkiaBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
@@ -37,17 +38,30 @@ fun MeloXArtworkImage(
     }
     val revision by melox.provider.jellyfin.JellyfinSessionStore.revision.collectAsState()
     val session = remember(revision) { melox.provider.jellyfin.JellyfinSessionStore.read() }
-    val cacheKey = remember(url, session, viewport) { url?.takeIf { it.isNotBlank() && viewport != IntSize.Zero }?.let {
-        melox.provider.jellyfin.JellyfinArtworkAccess.cacheKey(it, session) + "#crop=${viewport.width}x${viewport.height}"
+    val pluginRevision = melox.ui.artwork.pluginArtworkRevision()
+    val plugin = url?.let(melox.plugin.PluginArtworkAccess::isPluginArtwork) == true
+    val cacheKey = remember(url, session, viewport, pluginRevision) { url?.takeIf { it.isNotBlank() && viewport != IntSize.Zero }?.let {
+        melox.provider.jellyfin.JellyfinArtworkAccess.cacheKey(it, session) + "#crop=${viewport.width}x${viewport.height}" +
+            (if (plugin) "#plugin=$pluginRevision" else "")
     } }
     val requestedViewport = viewport
-    val bitmap = rememberMeloXArtworkBitmap(cacheKey) {
+    val bitmap = rememberMeloXArtworkBitmap(cacheKey, cacheAllowed = !plugin) {
         runCatching {
-            val connection = melox.provider.jellyfin.JellyfinArtworkAccess.openConnection(checkNotNull(url), session).apply {
-                connectTimeout = 10_000
-                readTimeout = 10_000
+            if (plugin) {
+                val access = checkNotNull(melox.plugin.PluginArtworkAccess.capture(checkNotNull(url)))
+                val bytes = checkNotNull(melox.ui.artwork.pluginArtworkBytes(url))
+                melox.ui.artwork.decodeMeloXArtwork(bytes, requestedViewport.width, requestedViewport.height).also { image ->
+                    try { access.checkCurrent() } catch (failure: Throwable) {
+                        image.asSkiaBitmap().close(); throw failure
+                    }
+                }
+            } else {
+                val connection = melox.provider.jellyfin.JellyfinArtworkAccess.openConnection(checkNotNull(url), session).apply {
+                    connectTimeout = 10_000
+                    readTimeout = 10_000
+                }
+                connection.getInputStream().use { melox.ui.artwork.decodeMeloXArtwork(it.readBytes(), requestedViewport.width, requestedViewport.height) }
             }
-            connection.getInputStream().use { melox.ui.artwork.decodeMeloXArtwork(it.readBytes(), requestedViewport.width, requestedViewport.height) }
         }.getOrNull().also {
             if (it == null) logDebug("MeloXArtwork", "artwork load failed")
         }

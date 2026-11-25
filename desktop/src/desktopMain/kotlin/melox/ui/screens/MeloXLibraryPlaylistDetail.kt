@@ -236,7 +236,8 @@ internal fun MeloXLibraryPlaylistDetailScreen(
             displayed.creatorUserId != null && displayed.creatorUserId == currentUserId
     }
 
-    LaunchedEffect(displayed.coverUrl) {
+    val pluginArtworkRevision = melox.ui.artwork.pluginArtworkRevision()
+    LaunchedEffect(displayed.coverUrl, pluginArtworkRevision) {
         palette = MeloXDetailPaletteProvider.paletteFor(displayed.coverUrl)
     }
 

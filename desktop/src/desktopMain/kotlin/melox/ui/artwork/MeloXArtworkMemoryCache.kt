@@ -32,13 +32,20 @@ internal object MeloXArtworkMemoryCache {
  * Publication/lease release occurs on the UI dispatcher, outside drawing.
  */
 @Composable
-internal fun rememberMeloXArtworkBitmap(key: String?, decode: () -> ImageBitmap?): ImageBitmap? {
+internal fun rememberMeloXArtworkBitmap(key: String?, cacheAllowed: Boolean = true, decode: () -> ImageBitmap?): ImageBitmap? {
     var bitmap by remember(key) { mutableStateOf<ImageBitmap?>(null) }
-    LaunchedEffect(key) {
+    LaunchedEffect(key, cacheAllowed) {
         if (key.isNullOrBlank()) return@LaunchedEffect
         var unpublished: ImageBitmap? = null
         var lease: MeloXResourceLruCache.Lease<ImageBitmap>? = null
         try {
+            if (!cacheAllowed) {
+                MeloXArtworkMemoryCache.decodePermits.withPermit {
+                    withContext(Dispatchers.IO) { unpublished = decode() }
+                }
+                bitmap = unpublished
+                awaitCancellation()
+            }
             lease = MeloXArtworkMemoryCache.acquire(key)
             if (lease == null) {
                 MeloXArtworkMemoryCache.decodePermits.withPermit {
