@@ -30,7 +30,9 @@ class NeteaseLibraryCache(private val directory: File = File(meloXDataDir(), "ne
         writeJson(File(directory, "playlist_$playlistId.json")) { encodePlaylistDetail(detail) }
     }
 
-    suspend fun loadHomeContent(cacheKey: String): NeteaseHomeContent? = readJson(File(directory, "home_${safeCacheKey(cacheKey)}.json")) { value ->
+    suspend fun loadHomeContent(cacheKey: String): NeteaseHomeContent? = readJson(
+        File(directory, "home_${safeCacheKey(cacheKey)}.json").takeIf(File::isFile)
+            ?: File(directory, "home_${cacheKey.hashCode().toUInt().toString(16)}.json")) { value ->
         NeteaseHomeContent(
             playlists = decodePlaylists(value.optJSONArray("playlists") ?: JSONArray()),
             newSongs = decodeSongs(value.optJSONArray("newSongs") ?: JSONArray()),
@@ -58,12 +60,12 @@ class NeteaseLibraryCache(private val directory: File = File(meloXDataDir(), "ne
     }
 
     suspend fun loadExplore(category: String): List<NeteasePlaylistSummary>? = readJson(
-        File(directory, "explore_${category.hashCode()}.json"),
+        File(directory, "explore_${safeCacheKey(category)}.json"),
     ) { value -> decodePlaylists(value.optJSONArray("playlists") ?: JSONArray()) }
 
     suspend fun saveExplore(category: String, playlists: List<NeteasePlaylistSummary>) {
         writeJson(
-            File(directory, "explore_${category.hashCode()}.json"),
+            File(directory, "explore_${safeCacheKey(category)}.json"),
         ) { JSONObject().put("playlists", encodePlaylists(playlists)) }
     }
 
@@ -116,19 +118,24 @@ class NeteaseLibraryCache(private val directory: File = File(meloXDataDir(), "ne
 
         /** Returns true only for the first automatic refresh in this app process. */
         @Synchronized
-        fun beginLibraryColdStartRefresh(userId: Long): Boolean =
-            boundedAdd(refreshedLibraries, userId)
+        fun beginLibraryColdStartRefresh(userId: Long, directory: File = File(meloXDataDir(), "netease_library_cache")): Boolean =
+            boundedAdd(refreshedLibraries, userId) && isCacheStale(File(directory, "library_$userId.json"))
 
         /** Each opened playlist is refreshed at most once in this app process. */
         @Synchronized
-        fun beginPlaylistColdStartRefresh(playlistId: Long): Boolean =
-            boundedAdd(refreshedPlaylists, playlistId)
+        fun beginPlaylistColdStartRefresh(playlistId: Long, directory: File = File(meloXDataDir(), "netease_library_cache")): Boolean =
+            boundedAdd(refreshedPlaylists, playlistId) && isCacheStale(File(directory, "playlist_$playlistId.json"))
 
         @Synchronized
-        fun beginHomeColdStartRefresh(cacheKey: String): Boolean = boundedAdd(refreshedHomes, cacheKey)
+        fun beginHomeColdStartRefresh(cacheKey: String, directory: File = File(meloXDataDir(), "netease_library_cache")): Boolean =
+            boundedAdd(refreshedHomes, cacheKey) && isCacheStale(File(directory, "home_${safeCacheKey(cacheKey)}.json"))
 
         @Synchronized
-        fun beginExploreColdStartRefresh(category: String): Boolean = boundedAdd(refreshedExplore, category)
+        fun beginExploreColdStartRefresh(category: String, directory: File = File(meloXDataDir(), "netease_library_cache")): Boolean =
+            boundedAdd(refreshedExplore, category) && isCacheStale(File(directory, "explore_${safeCacheKey(category)}.json"))
+
+        private fun isCacheStale(file: File): Boolean =
+            !(file.isFile && System.currentTimeMillis() - file.lastModified() < 30L * 60 * 1000)
 
         private fun <T> boundedAdd(values: MutableSet<T>, value: T): Boolean {
             if (!values.add(value)) return false
@@ -273,5 +280,6 @@ private fun decodeHomePodcasts(values: JSONArray) = buildList {
         )
     }
 }
-private fun safeCacheKey(value: String): String = value.hashCode().toUInt().toString(16)
+private fun safeCacheKey(value: String): String = java.security.MessageDigest.getInstance("SHA-256")
+    .digest(value.toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it.toInt() and 255) }
 private fun JSONObject.optNullableString(name: String): String? = if (isNull(name)) null else optString(name).takeIf(String::isNotBlank)

@@ -263,7 +263,7 @@ private fun LibrarySourceContent(navState: MeloXNavState?, requestedPage: String
         if (source == MusicSource.Netease) {
             val userId = session.profile?.userId ?: return@LaunchedEffect
             cache.loadSnapshot(userId)?.let { snapshot = it }
-            if (NeteaseLibraryCache.beginLibraryColdStartRefresh(userId)) {
+            if (snapshot == null || NeteaseLibraryCache.beginLibraryColdStartRefresh(userId, cache.cacheDir)) {
                 refreshLibrary()
             }
         } else {

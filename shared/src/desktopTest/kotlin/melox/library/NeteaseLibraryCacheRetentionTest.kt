@@ -5,6 +5,28 @@ import kotlinx.coroutines.runBlocking
 import kotlin.test.*
 
 class NeteaseLibraryCacheRetentionTest {
+    @Test fun freshDiskCacheSkipsAutomaticRefreshAndHashCollisionsStaySeparate() = runBlocking {
+        val root = Files.createTempDirectory("library-cache-freshness").toFile()
+        try {
+            val cache = NeteaseLibraryCache(root)
+            val id = System.nanoTime()
+            cache.saveSnapshot(id, NeteaseLibrarySnapshot(emptyList(), emptyList(), emptyList()))
+            assertFalse(NeteaseLibraryCache.beginLibraryColdStartRefresh(id, root))
+            val staleId = id + 1
+            cache.saveSnapshot(staleId, NeteaseLibrarySnapshot(emptyList(), emptyList(), emptyList()))
+            root.resolve("library_$staleId.json").setLastModified(System.currentTimeMillis() - 31L * 60 * 1000)
+            assertTrue(NeteaseLibraryCache.beginLibraryColdStartRefresh(staleId, root))
+            assertFalse(NeteaseLibraryCache.beginLibraryColdStartRefresh(staleId, root))
+            assertEquals("Aa".hashCode(), "BB".hashCode())
+            val first = listOf(NeteasePlaylistSummary(1, "First", null, 0, ""))
+            val second = listOf(NeteasePlaylistSummary(2, "Second", null, 0, ""))
+            cache.saveExplore("Aa", first)
+            cache.saveExplore("BB", second)
+            assertEquals(first, cache.loadExplore("Aa"))
+            assertEquals(second, cache.loadExplore("BB"))
+        } finally { root.deleteRecursively() }
+    }
+
     @Test fun browsingCannotEvictFavoritesAndPlaylistsHaveIndependentQuota() = runBlocking {
         val root = Files.createTempDirectory("library-cache-retention").toFile()
         try {

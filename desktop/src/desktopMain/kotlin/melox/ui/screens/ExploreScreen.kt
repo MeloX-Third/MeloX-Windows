@@ -155,7 +155,7 @@ private fun NeteaseExploreDataScreen(
             return@LaunchedEffect
         }
         collections = cache.loadExplore(category).orEmpty().map { ExploreCollection.Netease(it) }
-        if (NeteaseLibraryCache.beginExploreColdStartRefresh(category)) refresh()
+        if (collections.isEmpty() || NeteaseLibraryCache.beginExploreColdStartRefresh(category, cache.cacheDir)) refresh()
     }
 
     ExploreLayout(

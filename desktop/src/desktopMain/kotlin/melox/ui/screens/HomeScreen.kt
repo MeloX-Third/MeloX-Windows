@@ -185,7 +185,7 @@ private fun NeteaseHome(
             runCatching { withContext(Dispatchers.IO) { client.recentSongsBlocking(8) } }
                 .onSuccess { recentSongs = it }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
         }
-        if (melox.library.NeteaseLibraryCache.beginHomeColdStartRefresh(cacheKey)) refresh(false)
+        if (content == null || melox.library.NeteaseLibraryCache.beginHomeColdStartRefresh(cacheKey, cache.cacheDir)) refresh(false)
     }
 
     val blocks = content?.let { value ->

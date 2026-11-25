@@ -222,7 +222,7 @@ internal fun MeloXLibraryPlaylistDetailScreen(
         } else {
             cache.loadPlaylistDetail(initialPlaylist.id)?.let { detail = it }
             loading = detail == null
-            if (NeteaseLibraryCache.beginPlaylistColdStartRefresh(initialPlaylist.id)) {
+            if (detail == null || NeteaseLibraryCache.beginPlaylistColdStartRefresh(initialPlaylist.id, cache.cacheDir)) {
                 refreshPlaylist()
             }
         }
