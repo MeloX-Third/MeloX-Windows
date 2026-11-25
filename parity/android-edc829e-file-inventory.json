@@ -1160,14 +1160,16 @@
         "windowsCandidates":  [
                                   "shared/src/commonMain/kotlin/melox/recommendation/LocalRecommendationEngine.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "PARTIAL",
+        "notes": "Fixed edc829e full analysis reviewed: all built-in aggregation sources plus explicitly selected dynamic recommendation candidates; 34302bd merges complete source-scoped playback behavior once and retains history outside current library. Recommendation tests/JAR pass; native UI and complete recommendation consumption remain open."
     },
     {
         "android":  "core/recommendation/LocalRecommendationStore.kt",
         "windowsCandidates":  [
                                   "shared/src/commonMain/kotlin/melox/recommendation/LocalRecommendationStore.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "PARTIAL",
+        "notes": "Complete candidate track JSON/source identity already implemented. 2b41147 connects audible desktop start/completion/early-skip signals with serialized background writes and consent checks under erase lock. Recommendation and real AutoMix tests pass; recommendation output still matches title/artist and requires further identity/consumer review."
     },
     {
         "android":  "core/recommendation/MeloXHomeRecommendationPool.kt",
