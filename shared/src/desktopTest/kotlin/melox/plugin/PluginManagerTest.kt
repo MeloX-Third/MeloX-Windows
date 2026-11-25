@@ -58,6 +58,35 @@ class PluginManagerTest {
         } finally { manager.close(); root.deleteRecursively() }
     }
 
+    @Test fun diagnosticsSurviveDisableAndCorruptionCanBeClearedWithoutLoadingRuntime() {
+        val root = Files.createTempDirectory("manager-diagnostics").toFile()
+        val registry = MusicProviderRegistry(listOf(melox.provider.local.LocalProvider()))
+        var failedRead = false
+        var erased = 0
+        val manager = PluginManager(PluginPackageStore(root), registry,
+            PluginManager.ProviderFactory { error("must remain disabled") },
+            readPersistentDiagnostics = { checked ->
+                assertEquals(source, checked)
+                check(!failedRead) { "private-file-content" }
+                listOf("host event")
+            }, erasePersistentDiagnostics = { checked -> assertEquals(source, checked); erased++; failedRead = false })
+        try {
+            manager.install(archive("1.0.0"))
+            assertTrue(manager.diagnostics(source).contains("host event"))
+            assertTrue(manager.diagnostics(source).contains("运行时未加载"))
+            failedRead = true
+            val damaged = manager.diagnostics(source)
+            assertTrue(damaged.any { "原文件已保留" in it })
+            assertFalse(damaged.any { "private-file-content" in it })
+            manager.clearDiagnostics(source)
+            assertEquals(1, erased)
+            assertTrue(manager.diagnostics(source).contains("host event"))
+            manager.uninstall(source)
+            assertEquals(2, erased)
+            assertTrue(manager.diagnostics(source).single().startsWith("插件未安装"))
+        } finally { manager.close(); root.deleteRecursively() }
+    }
+
     @Test fun rejectedPermissionAndPreparationLeaveRunningProviderAndOldPackageIntact() {
         val root = Files.createTempDirectory("manager-update").toFile()
         val registry = MusicProviderRegistry(listOf(melox.provider.local.LocalProvider()))

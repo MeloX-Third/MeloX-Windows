@@ -14,6 +14,8 @@ class PluginManager(
     private val registry: MusicProviderRegistry,
     private val factory: ProviderFactory,
     private val cancelAuthorization: (SourceId) -> Unit = {},
+    private val readPersistentDiagnostics: (SourceId) -> List<String> = { emptyList() },
+    private val erasePersistentDiagnostics: (SourceId) -> Unit = {},
 ) : Closeable {
     fun interface ProviderFactory { fun prepare(plugin: PluginArchiveReader.Package): LoadedProvider }
     data class LoadedProvider(val provider: MusicProvider, val resources: Closeable)
@@ -129,6 +131,25 @@ class PluginManager(
         disable(source)
         store.uninstall(source)
         state.value = state.value - source
+        runCatching { erasePersistentDiagnostics(source) }
+    }
+
+    fun diagnostics(source: SourceId): List<String> = synchronized(lock) {
+        val entry = state.value[source] ?: return@synchronized listOf("插件未安装：${source.value}")
+        buildList {
+            add("${source.value} · ${entry.manifest.version} · API ${entry.manifest.apiVersion} · ${entry.status}")
+            entry.error?.let { add("宿主错误：$it · ${PluginErrors.message(it)}") }
+            runCatching { readPersistentDiagnostics(source) }.fold(
+                onSuccess = { addAll(it) },
+                onFailure = { add("持久诊断无法读取，原文件已保留，可清除后重试") },
+            )
+            if (source !in loaded) add("运行时未加载")
+        }
+    }
+
+    fun clearDiagnostics(source: SourceId) = synchronized(lock) {
+        checkOpen()
+        erasePersistentDiagnostics(source)
     }
 
     fun resetEnabledState() = synchronized(lock) {
