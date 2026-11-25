@@ -654,9 +654,10 @@
     {
         "android":  "core/plugin/PluginPublicDns.kt",
         "windowsCandidates":  [
-
+                                  "shared/src/commonMain/kotlin/melox/plugin/PluginPublicDns.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "IMPLEMENTED",
+        "notes": "5b822f8 validates all answers on every lookup and returns the same address list to OkHttp; deterministic mixed-answer and rebinding tests pass (35 plugin tests). Production transport integration pending."
     },
     {
         "android":  "core/plugin/PluginResultValidator.kt",
