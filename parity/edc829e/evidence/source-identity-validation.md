@@ -25,3 +25,5 @@ Android 功能基线 `edc829eaffa716b69d08681817414f9633abefc7`。
 命令 `gradle :shared:desktopTest --tests "melox.playback.DynamicQueuePersistenceTest" --tests "melox.music.UnifiedFavoritesTest" --tests "melox.playback.DesktopPlaybackStateTest"` 成功，55 秒。新增两项队列专项及既有收藏/桌面播放状态同轮通过；此处只验证身份持久化，不代表缺失 Provider 可以播放。
 
 `dca69fe` 使用完整 sourceId 比较收藏来源，聚合评分对动态来源使用中性来源加分及动态显示名，初始化导入继续严格核对内置来源。命令 `gradle :shared:desktopTest --tests "melox.music.UnifiedFavoritesTest" --tests "*TrackAggregation*"` 成功，56 秒。XML：收藏 8 项、聚合质量 9 项，共 17 项，0 失败/0 错误/0 跳过；新增场景覆盖动态收藏重载、跨来源低音质不会替换已有高音质、再次初始化聚合及删除。
+
+`9973ebc` 将推荐候选 JSON 的外层来源改为 SourceId，保留有效未安装来源；完整 track 与外层来源/资源 ID 必须一致。命令 `gradle :shared:desktopTest --tests "melox.recommendation.*"` 成功，51 秒。新增动态候选测试覆盖完整身份往返、跨来源冲突拒绝及旧格式动态身份保留。推荐训练来源枚举、播放统计键和动态 Provider 候选收集仍待接通。
