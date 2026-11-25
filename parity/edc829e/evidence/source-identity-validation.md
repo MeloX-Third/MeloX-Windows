@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`25fd768` 桌面“功能→插件管理”接通生产 Manager：导入/升级预览能力、域名、认证、发布者指纹与候选摘要；启停、卸载确认、损坏记录移除、诊断查看/清除，以及账号选择/删除/token 导入/OAuth 登录/重新授权/取消。弹窗内容可滚动，来源行状态按完整 SourceId 固定。桌面测试与 JAR 构建成功（44 秒）；这是编译及现有桌面回归证据，尚未执行该页面的真实窗口输入或真实公网 OAuth 验收。
+
 `39bcfaf` 生产入口在窗口/播放初始化前恢复保存的启用插件，UI 与播放共享动态注册表；退出 finally 关闭 OAuth 与 PluginManager。首次启用准备独立 RX bundle，账号选择/移除/token 导入通过 Manager 的账号上下文替换，浏览器授权共用登录所有者。管理器/账号专项及 desktopJar 成功（20 秒），此前启动接线与 desktopTest 成功（58 秒）。打包安装版 classpath、真实窗口管理交互与公网 OAuth 尚需实际验收；每会话新 bundle 的版本复用/清理仍待完善。
 
 `1b02dee` 非验证调用前刷新即将过期的 OAuth，宿主 token broker 交换并以 vault CAS 更新，保留未返回的新 refresh token；验证调用不刷新，刷新失败保留账号且过期 credential 仍显式拒绝。账号/worker 联合专项成功（56 秒），账号元数据收尾后账号专项与 desktopJar 再次成功（17 秒）。token 服务为 fixture，不构成真实公网授权验收。
