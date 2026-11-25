@@ -695,6 +695,18 @@ private fun LyricsSettings() {
 
 @Composable
 private fun FeatureSettings() {
+    var showPlugins by remember { mutableStateOf(false) }
+    if (melox.settings.MeloXSettingsRuntime.desktopLayoutEnabled) {
+        SettingsActionButton("插件管理", Modifier.testTag("settings-open-plugins")) { showPlugins = true }
+        if (showPlugins) androidx.compose.ui.window.DialogWindow(onCloseRequest = { showPlugins = false },
+            title = "插件管理", state = androidx.compose.ui.window.rememberDialogState(width = 760.dp, height = 680.dp)) {
+            MaterialTheme {
+                androidx.compose.material3.Surface(Modifier.fillMaxSize()) {
+                    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp)) { PluginSettings() }
+                }
+            }
+        }
+    }
     SettingsGlassGroup {
         SettingsToggleRow("settings_feature_podcasts", "feature_podcasts", true)
         SettingsToggleRow("settings_feature_history", "feature_history", true)
