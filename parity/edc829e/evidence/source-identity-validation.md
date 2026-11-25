@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`dc346e3` OAuth 会话与 Windows 回环浏览器适配：随机 state/verifier、回调目标绑定、重复参数拒绝、交换前认领、防重放、十分钟单调时钟过期、取消及生命周期门控提交；新增管理器 OAuth 提交入口，避免提交前取消自身待处理会话。Windows 监听在打开浏览器前绑定 127.0.0.1 随机端口，回调检查 state/路径/方法并发送 no-store 文本响应，结束时关闭监听。`gradle :shared:desktopTest --tests "melox.plugin.*" :desktop:compileKotlinDesktop` 成功（16 秒），XML 51 项通过、0 失败/错误/跳过。会话测试使用 HTTP fixture；浏览器入口目前仅有回调参数策略专项，尚无真实回环套接字/账号端到端证据，生产账号 UI 和插件启动待接通。
+
 `dde35c3` OAuth 宿主交换基础：PKCE S256、Bearer token 严格字段/有效期解析及溢出拒绝、清单固定 token 端点、POST 表单、禁止重定向、16 KiB 响应限制和撤销检查。`gradle :shared:desktopTest --tests "melox.plugin.*"` 成功（1 分 7 秒），XML 47 项通过、0 失败/错误/跳过。HTTP 结果由内部 interceptor fixture 提供；浏览器、回调会话和账号落盘接线尚在实施，不代表端到端 OAuth 登录完成。
 
 `ad20096` HTTP 宿主凭据引用：共享层 PluginCredentialLease 隔离 Windows 账号存储类型，来源/策略/域名/有效期检查后覆盖脚本同名 header，会话切换通过密文与选择摘要立即拒绝旧租约。`gradle :shared:desktopTest --tests "melox.plugin.*" :desktop:compileKotlinDesktop` 成功（1 分 8 秒），XML 45 项通过、0 失败/错误/跳过。首次编译发现 commonMain 不可直接引用 desktopMain 仓库类型，抽取共享接口；随后接口属性智能转换错误用局部值修复。fixture 验证 header 注入、未授权域名拒绝、无账号拒绝、策略变化拒绝、跨插件租约拒绝和切换后拒绝。Provider 媒体 credential 引用、运行时账号和 UI 尚待接通。
