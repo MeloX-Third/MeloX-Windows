@@ -68,6 +68,7 @@ internal fun MeloXDesktopSearchScaffold(
     providerMedia: List<DesktopSearchProviderMedia> = emptyList(),
     onOpenProviderMedia: (Int) -> Unit = {},
     libraryScopeAvailable: Boolean = true,
+    sourcePicker: (@Composable () -> Unit)? = null,
 ) {
     CompositionLocalProvider(LocalTextStyle provides androidx.compose.ui.text.TextStyle(fontFamily = MeloXDesktopTextFontFamily,
         fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)) {
@@ -79,6 +80,10 @@ internal fun MeloXDesktopSearchScaffold(
                 DesktopSearchScope(libraryScope, onScope, sourceLabel, libraryScopeAvailable)
             }
             HorizontalDivider(thickness = .5.dp)
+            if (sourcePicker != null) {
+                Box(Modifier.fillMaxWidth().padding(horizontal = 34.dp, vertical = 8.dp)) { sourcePicker() }
+                HorizontalDivider(thickness = .5.dp)
+            }
             if (sourceFailures.isNotEmpty()) Text(sourceFailures.joinToString("；"),
                 modifier = Modifier.fillMaxWidth().testTag("desktop-search-source-failures").padding(horizontal = 34.dp, vertical = 8.dp),
                 color = MaterialTheme.colorScheme.error, fontSize = 12.sp)

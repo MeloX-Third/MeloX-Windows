@@ -471,6 +471,18 @@ fun SearchScreen(
                 },
                 libraryScope = libraryScope && effectiveSource.builtIn == MusicSource.Netease,
                 libraryScopeAvailable = effectiveSource.builtIn == MusicSource.Netease,
+                sourcePicker = {
+                    val choices = melox.music.provider.MusicProviderSelectionStore.visibleSources().map {
+                        melox.music.model.SourceId.fromBuiltIn(it) to it.displayName
+                    } + providerRegistry.enabledDynamicProviders().filter {
+                        it is SearchCapability && it.supports(melox.music.provider.MusicCapability.Search)
+                    }.map { it.sourceId to it.displayName }
+                    melox.ui.desktop.DesktopSettingsPicker("搜索来源", effectiveSource, choices,
+                        "desktop-search-source", enabled = choices.isNotEmpty()) { selected ->
+                        libraryScope = false
+                        melox.ui.navigation.MeloXSearchLaunchBus.postSourceId(query, kind, selected)
+                    }
+                },
                 onScope = { libraryScope = it && effectiveSource.builtIn == MusicSource.Netease; skipSearchDebounce = true; searchTrigger += 1 },
                 kinds = availableKinds,
                 kind = kind,
