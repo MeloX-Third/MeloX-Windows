@@ -8,6 +8,29 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 class WindowsPluginWorkerLauncherTest {
+    @Test fun productionBundleRunsValidatedProvider() = kotlinx.coroutines.runBlocking {
+        if (!com.sun.jna.Platform.isWindows()) return@runBlocking
+        val root = File("build/parity/production-worker-${java.util.UUID.randomUUID()}").absoluteFile
+        val entries = requireNotNull(System.getProperty("melox.test.workerClasspath")).split(File.pathSeparator).map(::File)
+        val jars = entries.filter { it.isFile && (it.name.startsWith("kotlin-stdlib") || it.name.startsWith("json-") || it.name.startsWith("javet")) }
+        val launcher = WindowsPluginWorkerBundle.prepare(root, File(System.getProperty("java.home")),
+            jars + File("build/classes/kotlin/desktop/main").absoluteFile)
+        val storageRoot = java.nio.file.Files.createTempDirectory("container-factory-storage").toFile()
+        val source = requireNotNull(melox.music.model.SourceId.parse("plugin:test.bundle"))
+        val manifest = PluginManifest(source, "Bundle", "1.0.0", 1, "index.js", setOf(PluginCapability.Search), emptySet())
+        try {
+            val factory = PluginProcessProviderFactory { plugin -> PluginProcessRuntime(plugin, launcher,
+                { token, current -> PluginHostCalls(token, PluginHttpBroker(manifest), PluginStorage(source, base = storageRoot), current) }) }
+            val provider = factory.prepare(PluginArchiveReader.Package(manifest,
+                "globalThis.meloxPlugin={search:(query,page,pageSize)=>({items:[],page,pageSize,hasMore:false})};"))
+            try { assertTrue((provider.provider as PluginMusicProvider).searchSongs("fixture", 1, 30).items.isEmpty()) }
+            finally { provider.resources.close() }
+            assertFailsWith<IllegalArgumentException> {
+                WindowsPluginWorkerBundle.prepare(root, File(System.getProperty("java.home")), jars)
+            }
+        } finally { storageRoot.deleteRecursively(); root.deleteRecursively() }
+    }
+
     @Test fun quotesWindowsArgumentsIncludingTrailingSlashes() {
         assertEquals("\"\"", WindowsPluginWorkerLauncher.quote(""))
         assertEquals("\"a b\"", WindowsPluginWorkerLauncher.quote("a b"))
