@@ -21,6 +21,8 @@ data class LyricBinding(
 }
 
 object LyricBindingStore {
+    private val changes = kotlinx.coroutines.flow.MutableStateFlow(0L)
+    val revision: kotlinx.coroutines.flow.StateFlow<Long> = changes
     private const val PreferencesName = "melox_lyric_bindings"
 
     private fun prefs() = getPreferences(PreferencesName)
@@ -50,10 +52,17 @@ object LyricBindingStore {
             .put("artist", binding.artist)
             .put("durationMs", binding.durationMs)
         prefs().putString(playbackId.key(), value.toString())
+        changes.value += 1
     }
 
     fun clear() {
         prefs().clear()
+        changes.value += 1
+    }
+
+    fun remove(playbackId: MusicResourceId) {
+        prefs().remove(playbackId.key())
+        changes.value += 1
     }
 
     private fun MusicResourceId.key(): String = "${sourceId.value}:$value"

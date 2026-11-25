@@ -1,0 +1,108 @@
+package melox.ui.screens
+
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.foundation.shape.RoundedCornerShape
+import melox.ui.desktop.DesktopSettingsButton
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import melox.lyrics.*
+import melox.music.model.*
+import melox.music.provider.*
+
+/** Results and previews belong to the selected source instance and registry generation. */
+@Composable
+internal fun MeloXLyricBindingDialog(track: MusicTrack, onDismiss: () -> Unit) {
+    val registry = remember { MeloXMusicProviders.create() }
+    val generation by registry.changes.collectAsState()
+    val providers = remember(generation) { (registry.providers + registry.enabledDynamicProviders()).filter {
+        it is SearchCapability && it is LyricsCapability && it.supports(MusicCapability.Search) && it.supports(MusicCapability.Lyrics)
+    } }
+    var source by remember { mutableStateOf(track.id.sourceId) }
+    var query by remember { mutableStateOf("${track.title} ${track.artistText}".trim()) }
+    var results by remember(source, generation) { mutableStateOf<List<MusicTrack>>(emptyList()) }
+    var selected by remember(source, generation) { mutableStateOf<MusicTrack?>(null) }
+    var preview by remember(source, generation) { mutableStateOf<LyricsDocument?>(null) }
+    var error by remember(source, generation) { mutableStateOf<String?>(null) }
+    var busy by remember(source, generation) { mutableStateOf(false) }
+    var searched by remember(source, generation) { mutableStateOf(false) }
+    val scope = key(source, generation) { rememberCoroutineScope() }
+    fun current(provider: MusicProvider, stamp: Long) = registry.generation == stamp && registry[provider.sourceId] === provider
+    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+      Surface(Modifier.widthIn(max = 560.dp).fillMaxWidth(.9f).testTag("lyric-binding-dialog"), shape = RoundedCornerShape(10.dp)) {
+       Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text("选择歌词来源")
+        Column(Modifier.fillMaxWidth().heightIn(max = 420.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("搜索歌曲并预览逐字歌词，确认后绑定到当前歌曲。")
+            providers.forEach { provider ->
+                DesktopSettingsButton((if (source == provider.sourceId) "✓ " else "") + provider.displayName,
+                    enabled = !busy, onClick = { source = provider.sourceId })
+            }
+            OutlinedTextField(query, { query = it }, label = { Text("歌曲或歌手") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+            Button(enabled = !busy && query.isNotBlank() && providers.any { it.sourceId == source }, onClick = {
+                val provider = registry[source] ?: return@Button
+                val stamp = registry.generation
+                val text = query
+                scope.launch {
+                    busy = true; searched = false; error = null; selected = null; preview = null; results = emptyList()
+                    try {
+                        val page = kotlinx.coroutines.withTimeout(30_000) { withContext(Dispatchers.IO) { (provider as SearchCapability).searchSongs(text, 1, 30) } }
+                        if (current(provider, stamp)) { results = page.items.filter { it.id.sourceId == source }; searched = true }
+                    } catch (cancelled: CancellationException) { throw cancelled }
+                    catch (failure: Exception) { if (current(provider, stamp)) error = failure.message ?: "搜索失败" }
+                    finally { busy = false }
+                }
+            }) { Text("搜索") }
+            if (busy) CircularProgressIndicator(Modifier.size(24.dp))
+            if (providers.isEmpty()) Text("暂无支持搜索歌词的来源")
+            if (searched && results.isEmpty() && !busy) Text("没有找到匹配歌曲，请修改关键词后重试")
+            results.forEach { candidate -> TextButton(enabled = !busy, onClick = {
+                val provider = registry[source] ?: return@TextButton
+                val stamp = registry.generation
+                scope.launch {
+                    busy = true; error = null; selected = null; preview = null
+                    try {
+                        val document = withContext(Dispatchers.IO) { (provider as LyricsCapability).lyrics(candidate, requestedLyricPreference()) }
+                        if (current(provider, stamp)) {
+                            selected = candidate; preview = document
+                            if (document.lines.none { it.syllables.isNotEmpty() }) error = "此结果没有逐字歌词，无法建立强绑定"
+                        }
+                    } catch (cancelled: CancellationException) { throw cancelled }
+                    catch (failure: Exception) { if (current(provider, stamp)) error = failure.message ?: "歌词加载失败" }
+                    finally { busy = false }
+                }
+            }) { Text("${candidate.title} · ${candidate.artistText}") } }
+            preview?.lines?.take(8)?.forEach { Text(it.text) }
+            error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+        }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+         DesktopSettingsButton("解除当前歌曲绑定", enabled = !busy && LyricBindingStore.read(track.id) != null) {
+             LyricBindingStore.remove(track.id); onDismiss()
+         }
+         Spacer(Modifier.weight(1f))
+         DesktopSettingsButton("取消", onClick = onDismiss)
+         DesktopSettingsButton("绑定歌词", enabled = !busy && selected != null && preview?.lines?.any { it.syllables.isNotEmpty() } == true, onClick = {
+            val candidate = selected ?: return@DesktopSettingsButton
+            if (registry[candidate.id.sourceId] == null) return@DesktopSettingsButton
+            LyricBindingStore.write(track.id, LyricBinding(BoundLyricSource.Provider, candidate.id.sourceId.builtIn,
+                candidate.id.value, candidate.title, candidate.artistText, candidate.durationMs ?: track.durationMs ?: 0,
+                candidate.id.sourceId))
+            melox.settings.MeloXSettingsPreferences.setBoolean("lyrics_auto_select", true)
+            melox.settings.MeloXSettingsPreferences.setBoolean("experimental_lyric_strong_binding", true)
+            onDismiss()
+        })
+        }
+       }
+      }
+    }
+}

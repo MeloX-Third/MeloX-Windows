@@ -156,6 +156,7 @@ fun MeloXNowPlayingScreen(
     )
     val actionQueue = if (queuedSong != null) queueSnapshot.songs else listOf(actionSong)
     var showActions by remember { mutableStateOf(false) }
+    var showLyricSelection by remember(track.id) { mutableStateOf(false) }
     var showQuality by remember { mutableStateOf(false) }
     var outputError by remember { mutableStateOf<String?>(null) }
     var showLanOutput by remember { mutableStateOf(false) }
@@ -284,6 +285,7 @@ fun MeloXNowPlayingScreen(
                     visible = showActions,
                     onDismiss = { showActions = false },
                     fromPlayer = true,
+                    onSelectLyrics = { showLyricSelection = true },
                 )
             }
         }
@@ -298,6 +300,7 @@ fun MeloXNowPlayingScreen(
             MeloXLyricSharePanel(track, sourceColor, lyrics.document?.lines.orEmpty(), initial,
                 onDismiss = { lyrics.shareIndex = null })
         }
+        if (showLyricSelection) MeloXLyricBindingDialog(track) { showLyricSelection = false }
     }
     }
 }

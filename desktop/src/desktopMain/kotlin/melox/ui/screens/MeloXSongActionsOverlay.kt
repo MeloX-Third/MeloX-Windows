@@ -74,11 +74,12 @@ fun MeloXSongActionsOverlay(
     onSourcePlaylistChanged: (() -> Unit)? = null,
     fromPlayer: Boolean = false,
     desktopAnchor: androidx.compose.ui.unit.IntOffset? = null,
+    onSelectLyrics: (() -> Unit)? = null,
 ) {
     if (!visible) return
     if (melox.settings.MeloXSettingsRuntime.desktopLayoutEnabled) {
         melox.ui.desktop.MeloXDesktopSongMenu(song, onDismiss, desktopAnchor, sourcePlaylist,
-            sourceOwnedPlaylistId, sourceProviderPlaylist, onSourcePlaylistChanged)
+            sourceOwnedPlaylistId, sourceProviderPlaylist, onSourcePlaylistChanged, onSelectLyrics = onSelectLyrics)
         return
     }
     // A different native identity owns different jobs/state, even when legacy ids collide.

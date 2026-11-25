@@ -100,10 +100,11 @@ private class LyricTouchInteractionSource : MutableInteractionSource {
 internal fun rememberMeloXPlayerLyrics(track: MusicTrack): MeloXPlayerLyricsState {
     val registry = remember { melox.music.provider.MeloXMusicProviders.create() }
     val providerGeneration by registry.changes.collectAsState()
+    val bindingRevision by melox.lyrics.LyricBindingStore.revision.collectAsState()
     val preference = melox.lyrics.requestedLyricPreference()
     // A new request owns new display state, including when language changes after 30s.
     // Cancelled loads/upgrades can only hold the retired state, never the new language's state.
-    val state = remember(track, preference, MeloXSettingsRuntime.automaticLyricSelectionEnabled,
+    val state = remember(track, preference, bindingRevision, MeloXSettingsRuntime.automaticLyricSelectionEnabled,
         MeloXSettingsRuntime.lyricStrongBindingEnabled, MeloXSettingsRuntime.bilibiliLyricAudioAlignmentEnabled) {
         MeloXPlayerLyricsState(track)
     }

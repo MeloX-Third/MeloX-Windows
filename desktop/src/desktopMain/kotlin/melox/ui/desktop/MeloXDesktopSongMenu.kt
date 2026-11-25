@@ -67,6 +67,7 @@ internal fun MeloXDesktopSongMenu(
     sourceProviderPlaylist: MusicPlaylistSummary? = null,
     onSourcePlaylistChanged: (() -> Unit)? = null,
     wikiLoader: suspend (Long) -> List<melox.network.MeloXWikiSection> = ::loadDesktopSongWiki,
+    onSelectLyrics: (() -> Unit)? = null,
 ) = key(song) {
     val scope = rememberCoroutineScope()
     val cookie = remember { { NeteaseSessionStore.readCookie() } }
@@ -213,6 +214,9 @@ internal fun MeloXDesktopSongMenu(
                 MeloXDownloadStore.instance().start(song, MusicQualityPreferences.read(), sourcePlaylist); onDismiss()
             }
             DesktopMenuDivider()
+            if (onSelectLyrics != null) DesktopSongMenuItem(null, MeloXSymbol.Book, "select-lyrics", label = "选择歌词来源") {
+                onSelectLyrics(); onDismiss()
+            }
             DesktopSongMenuItem("ui.song.view_information", MeloXSymbol.Info, "information") {
                 song.neteaseSongId?.let { MeloXCollectionLaunchBus.open(MeloXCollectionTarget.Song(it, song)) }
                     ?: MeloXSearchLaunchBus.postSourceId(song.name, MeloXSearchKind.Songs,
