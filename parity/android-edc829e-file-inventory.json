@@ -150,14 +150,16 @@
         "windowsCandidates":  [
                                   "shared/src/commonMain/kotlin/melox/library/NeteaseLibraryCache.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "PARTIAL",
+        "notes": "edc829e audit confirms missing favorites protection, separate playlist quota, SHA-256 category keys, unique temporary files and 30-minute disk freshness gates. See ANDROID_EDC829E_AUDIT.md."
     },
     {
         "android":  "core/library/NeteaseLibraryClient.kt",
         "windowsCandidates":  [
                                   "shared/src/commonMain/kotlin/melox/library/NeteaseLibraryClient.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "PARTIAL",
+        "notes": "edc829e audit confirms missing specialType=5 favorites selection, like/get cursor pagination and rejection handling, playlist backfill and missing detail retries. Remaining routes require separate audit."
     },
     {
         "android":  "core/library/NeteaseLibraryModels.kt",
