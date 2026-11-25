@@ -14,6 +14,8 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 
+internal class PluginMediaHttpException(val status: Int) : java.io.IOException("PLUGIN_MEDIA_HTTP_$status")
+
 /** Invocation-owned transport. No shared cookies, proxy, authenticators or application interceptors. */
 class PluginHttpBroker internal constructor(
     private val manifest: PluginManifest,
@@ -122,7 +124,7 @@ class PluginHttpBroker internal constructor(
         try {
             checkCurrent()
             val opened = call.execute().also { response = it }
-            require(opened.code in setOf(200, 206)) { "plugin media request failed" }
+            if (opened.code !in setOf(200, 206)) throw PluginMediaHttpException(opened.code)
             require(!PluginMediaFormats.unsupportedMime(opened.header("Content-Type").orEmpty())) { "UNSUPPORTED_MEDIA_FORMAT" }
             val body = requireNotNull(opened.body)
             require(body.contentLength() <= MAX_MEDIA_BYTES) { "plugin media exceeds quota" }

@@ -11,28 +11,52 @@ import melox.music.provider.MusicProviderRegistry
 
 /** Opaque process-local decoder inputs. Native decoders never receive provider URLs or headers. */
 internal object PluginPlaybackInputs {
+    internal data class MediaRequest(val url: String, val headers: Map<String, String>, val expiresAt: Long?)
     private const val Prefix = "melox-plugin-audio:"
     private data class Source(val expires: Long, val current: () -> Boolean, val open: () -> InputStream)
     private val sources = ConcurrentHashMap<String, Source>()
 
     fun register(provider: PluginMusicProvider, registry: MusicProviderRegistry, generation: Long,
-        url: String, headers: Map<String, String>, expiresAt: Long?): String {
+        url: String, headers: Map<String, String>, expiresAt: Long?,
+        refresh: (() -> MediaRequest)? = null): String {
         val current = { registry.generation == generation && registry[provider.sourceId] === provider }
         val requestHeaders = headers.toMap()
         PluginMediaFormats.check(url)
         PluginHttpBroker(provider.manifest).use { it.authorizeMediaUrl(url) }
-        return register(expiresAt, current) {
+        fun open(request: MediaRequest): InputStream {
+            check(current()) { "CANCELLED" }
+            check(request.expiresAt?.let { it > System.currentTimeMillis() } != false) { "AUTH_EXPIRED" }
             val broker = PluginHttpBroker(provider.manifest, accountCurrent = current)
             val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
             scope.launch { registry.changes.collect { if (!current()) broker.close() } }
             try {
-                val input = broker.openMedia(url, requestHeaders)
-                object : java.io.FilterInputStream(input) {
+                val input = broker.openMedia(request.url, request.headers)
+                return object : java.io.FilterInputStream(input) {
                     override fun close() { try { super.close() } finally { scope.cancel(); broker.close() } }
                 }
             } catch (failure: Throwable) {
                 scope.cancel(); broker.close(); throw failure
             }
+        }
+        val initial = MediaRequest(url, requestHeaders, expiresAt)
+        return register(expiresAt, current) {
+            openWithRefresh(current, { open(initial) }, refresh?.let { resolve -> { open(resolve()) } })
+        }
+    }
+
+    /** Retry only an unopened rejected response; never replay bytes after decoding starts. */
+    internal fun openWithRefresh(current: () -> Boolean, open: () -> InputStream,
+        refresh: (() -> InputStream)?): InputStream {
+        check(current()) { "CANCELLED" }
+        return try { open() } catch (failure: PluginMediaHttpException) {
+            if (failure.status !in setOf(401, 403, 410) || refresh == null) throw failure
+            check(current()) { "CANCELLED" }
+            val input = refresh()
+            if (!current()) {
+                input.close()
+                error("CANCELLED")
+            }
+            input
         }
     }
 

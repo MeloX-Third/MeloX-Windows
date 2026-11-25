@@ -4,6 +4,42 @@ import java.io.ByteArrayInputStream
 import kotlin.test.*
 
 class PluginPlaybackInputsTest {
+    @Test fun rejectedMediaRefreshesOnceAndRevocationRejectsLateStream() {
+        for (status in listOf(401, 403, 410)) {
+            var opens = 0
+            var refreshes = 0
+            PluginPlaybackInputs.openWithRefresh({ true }, {
+                opens++; throw PluginMediaHttpException(status)
+            }, { refreshes++; ByteArrayInputStream(byteArrayOf(42)) }).use { assertEquals(42, it.read()) }
+            assertEquals(1, opens)
+            assertEquals(1, refreshes)
+            assertFailsWith<PluginMediaHttpException> {
+                PluginPlaybackInputs.openWithRefresh({ true }, { throw PluginMediaHttpException(status) }, {
+                    refreshes++; throw PluginMediaHttpException(status)
+                })
+            }
+            assertEquals(2, refreshes)
+        }
+        var refreshes = 0
+        assertFailsWith<PluginMediaHttpException> {
+            PluginPlaybackInputs.openWithRefresh({ true }, { throw PluginMediaHttpException(500) }, {
+                refreshes++; ByteArrayInputStream(byteArrayOf())
+            })
+        }
+        assertEquals(0, refreshes)
+        var current = true
+        var closed = false
+        assertFailsWith<IllegalStateException> {
+            PluginPlaybackInputs.openWithRefresh({ current }, { throw PluginMediaHttpException(403) }, {
+                current = false
+                object : ByteArrayInputStream(byteArrayOf()) { override fun close() { closed = true } }
+            })
+        }
+        assertTrue(closed)
+        assertFailsWith<IllegalStateException> {
+            PluginPlaybackInputs.openWithRefresh({ false }, { error("must not open") }, null)
+        }
+    }
     @Test fun opaqueInputReopensAndRejectsRevocationAndExpiry() {
         var current = true
         var opens = 0

@@ -208,12 +208,24 @@ class ResolvedRequest(
         }
         if (providers.generation != generation || providers[source] !== provider)
             throw IOException("Music source changed during resolution")
+        val refresh = {
+            check(providers.generation == generation && providers[source] === provider) { "CANCELLED" }
+            val updated = runBlocking(Dispatchers.IO) {
+                withTimeout(12_000L) { playback.resolvePlayback(track, currentQuality(uri)) }
+            }
+            check(providers.generation == generation && providers[source] === provider) { "CANCELLED" }
+            when (updated) {
+                is PlaybackResolution.Playable -> melox.plugin.PluginPlaybackInputs.MediaRequest(updated.url, updated.requestHeaders, updated.expiresAtEpochMs)
+                is PlaybackResolution.Preview -> melox.plugin.PluginPlaybackInputs.MediaRequest(updated.url, emptyMap(), null)
+                else -> throw IOException("Music source audio unavailable after refresh")
+            }
+        }
         return when (resolution) {
             is PlaybackResolution.Playable -> ResolvedRequest(melox.plugin.PluginPlaybackInputs.register(
-                plugin, providers, generation, resolution.url, resolution.requestHeaders, resolution.expiresAtEpochMs),
+                plugin, providers, generation, resolution.url, resolution.requestHeaders, resolution.expiresAtEpochMs, refresh),
                 expiresAtEpochMs = resolution.expiresAtEpochMs)
             is PlaybackResolution.Preview -> ResolvedRequest(melox.plugin.PluginPlaybackInputs.register(
-                plugin, providers, generation, resolution.url, emptyMap(), null))
+                plugin, providers, generation, resolution.url, emptyMap(), null, refresh))
             else -> throw IOException("Music source audio unavailable: ${resolution.javaClass.simpleName}")
         }
     }
