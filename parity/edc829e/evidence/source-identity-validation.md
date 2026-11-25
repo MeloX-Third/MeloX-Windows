@@ -1,5 +1,9 @@
 # 动态音源身份迁移验证
 
+`1df68a6` 为动态来源新增独立播放解析路径：完整 track URI 往返、下载本地文件优先、缺失来源等待恢复入口、播放能力声明、12 秒解析超时、来源 generation/实例校验；动态 URL 不进入内置解析缓存或跨来源回退。桌面播放器及委托解析器接入本地下载查询，队列匹配/下载状态比较不再访问动态来源的旧枚举属性。
+
+命令 `gradle :shared:desktopTest --tests "melox.playback.DynamicProviderPlaybackTest" --tests "melox.playback.PlaybackFallbackOrderTest" --tests "melox.playback.NeteasePlaybackRequestTest" :desktop:compileKotlinDesktop` 成功，2 分 18 秒。XML 动态播放 2 项、网易请求 7 项、回退顺序 9 项，共 18 项，0 失败/错误。覆盖中文/斜线/字面百分号资源和完整歌曲元数据往返、请求头传递、重复解析不缓存、解析期间禁用拒绝、来源缺失错误、本地下载优先。首轮新增测试编译错误已修正；实际插件运行时、账号凭据和受控媒体传输未实现，不能据此宣称插件播放全链路完成。
+
 `634c025` 接通下载 Provider 的 SourceId 查询与索引完整 track 保存/恢复，拒绝嵌套歌曲与索引外层来源或 ID 冲突。旧索引仍按旧字段恢复，未知记录合并保留。命令 `gradle :shared:desktopTest --tests "melox.download.*"` 成功，1 分钟；XML 9 项、0 失败/错误。实际动态传输、任务持久化及暂停恢复尚待迁移。
 
 Android 功能基线 `edc829eaffa716b69d08681817414f9633abefc7`。
