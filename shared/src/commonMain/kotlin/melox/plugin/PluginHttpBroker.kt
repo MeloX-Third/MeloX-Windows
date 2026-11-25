@@ -20,6 +20,7 @@ class PluginHttpBroker internal constructor(
     private val accountCurrent: () -> Boolean = { true },
     internalTransport: okhttp3.Interceptor? = null,
     private val credential: PluginCredentialLease? = null,
+    internalDns: okhttp3.Dns? = null,
 ) : Closeable {
     init { require(credential == null || credential.source == manifest.sourceId) { "credential source mismatch" } }
     private val requests = AtomicInteger()
@@ -28,7 +29,7 @@ class PluginHttpBroker internal constructor(
     private val client = OkHttpClient.Builder().proxy(Proxy.NO_PROXY)
         .followRedirects(false).followSslRedirects(false).retryOnConnectionFailure(false)
         .callTimeout(5, TimeUnit.SECONDS).connectTimeout(3, TimeUnit.SECONDS).readTimeout(3, TimeUnit.SECONDS)
-        .dns(PluginPublicDns(manifest.networkDomains)).apply {
+        .dns(internalDns ?: PluginPublicDns(manifest.networkDomains)).apply {
             // Internal deterministic transport fixtures; production uses the isolated client above.
             internalTransport?.let(::addInterceptor)
         }.build()
@@ -112,7 +113,8 @@ class PluginHttpBroker internal constructor(
             builder.header(name, value)
         }
         checkCurrent()
-        val call = client.newCall(builder.build())
+        val call = client.newBuilder().callTimeout(0, TimeUnit.SECONDS).readTimeout(15, TimeUnit.SECONDS)
+            .build().newCall(builder.build())
         calls.add(call)
         var response: okhttp3.Response? = null
         try {
@@ -132,14 +134,19 @@ class PluginHttpBroker internal constructor(
                 }
                 override fun read(buffer: ByteArray, offset: Int, length: Int): Int {
                     check(!released) { "stream closed" }
-                    checkCurrent()
-                    val count = `in`.read(buffer, offset, length)
-                    checkCurrent()
-                    if (count > 0) {
-                        transferred += count
-                        require(transferred <= MAX_MEDIA_BYTES) { "plugin media exceeds quota" }
+                    try {
+                        checkCurrent()
+                        val count = `in`.read(buffer, offset, length)
+                        checkCurrent()
+                        if (count > 0) {
+                            transferred += count
+                            require(transferred <= MAX_MEDIA_BYTES) { "plugin media exceeds quota" }
+                        }
+                        return count
+                    } catch (failure: Throwable) {
+                        try { close() } catch (closing: Throwable) { failure.addSuppressed(closing) }
+                        throw failure
                     }
-                    return count
                 }
                 override fun skip(count: Long): Long {
                     val buffer = ByteArray(8192)
