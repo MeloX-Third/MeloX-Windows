@@ -9,7 +9,7 @@ import melox.provider.bilibili.BilibiliLyricOffsetStore
 /** Pinned per-resource offset, observed by every presentation without changing playback time. */
 @Composable
 internal fun rememberBilibiliLyricOffset(track: MusicTrack): Int {
-    if (track.id.source != MusicSource.Bilibili) return 0
+    if (track.id.sourceId.builtIn != MusicSource.Bilibili) return 0
     val offset by BilibiliLyricOffsetStore.state(track.id.value)
     return offset
 }

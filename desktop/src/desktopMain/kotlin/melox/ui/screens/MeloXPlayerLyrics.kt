@@ -198,7 +198,7 @@ internal fun LyricsPage(
     val wordByWord = MeloXSettingsRuntime.lyricWordByWordEnabled
     val usesWordTiming = wordByWord && lines.any { it.syllables.isNotEmpty() }
     val lyricAdvance = effectiveBilibiliLyricAdvance(MeloXSettingsRuntime.lyricAdvanceMs, rememberBilibiliLyricOffset(track))
-    val timedAdvance = if (track.id.source == melox.music.model.MusicSource.Bilibili || MeloXSettingsRuntime.lyricAdvanceAppliesToWordByWord) lyricAdvance else 0L
+    val timedAdvance = if (track.id.sourceId.builtIn == melox.music.model.MusicSource.Bilibili || MeloXSettingsRuntime.lyricAdvanceAppliesToWordByWord) lyricAdvance else 0L
     val lineAdvance = if (usesWordTiming) timedAdvance else lyricAdvance
     val interludes = remember(lines) { MeloXLyricPresentation.interludes(lines) }
     val interludeByIndex = remember(interludes) { interludes.associateBy { it.followingLyricIndex } }

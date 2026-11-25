@@ -231,7 +231,7 @@ object AudioPlayer {
         } finally { dualSession.compareAndSet(engine, null); engine.close() }
     }
 
-    private fun trackKey(track: MusicTrack) = "${track.id.source.storageValue}:${track.id.value}"
+    private fun trackKey(track: MusicTrack) = "${track.id.sourceId.value}:${track.id.value}"
 
     private suspend fun runSession(request: PlayRequest) {
         while (session.get() === request) {
