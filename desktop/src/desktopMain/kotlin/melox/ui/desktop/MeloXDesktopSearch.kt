@@ -67,6 +67,7 @@ internal fun MeloXDesktopSearchScaffold(
     sourceFailures: List<String> = emptyList(),
     providerMedia: List<DesktopSearchProviderMedia> = emptyList(),
     onOpenProviderMedia: (Int) -> Unit = {},
+    libraryScopeAvailable: Boolean = true,
 ) {
     CompositionLocalProvider(LocalTextStyle provides androidx.compose.ui.text.TextStyle(fontFamily = MeloXDesktopTextFontFamily,
         fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurface)) {
@@ -75,7 +76,7 @@ internal fun MeloXDesktopSearchScaffold(
                 Spacer(Modifier.weight(1f))
                 DesktopSearchField(query, onQuery, onSubmit, suggestions, onSuggestion)
                 Spacer(Modifier.weight(1f))
-                DesktopSearchScope(libraryScope, onScope, sourceLabel)
+                DesktopSearchScope(libraryScope, onScope, sourceLabel, libraryScopeAvailable)
             }
             HorizontalDivider(thickness = .5.dp)
             if (sourceFailures.isNotEmpty()) Text(sourceFailures.joinToString("；"),
@@ -150,10 +151,11 @@ private fun DesktopSearchField(value: String, onChange: (String) -> Unit, onSubm
 }
 
 @Composable
-private fun DesktopSearchScope(library: Boolean, onScope: (Boolean) -> Unit, sourceLabel: String) {
+private fun DesktopSearchScope(library: Boolean, onScope: (Boolean) -> Unit, sourceLabel: String, libraryAvailable: Boolean) {
     Row(Modifier.width(236.dp).height(26.dp).clip(RoundedCornerShape(6.dp))
         .background(MaterialTheme.colorScheme.onSurface.copy(alpha = .07f)).padding(2.dp)) {
-        listOf(false to sourceLabel, true to desktopString("ui.navigation.library")).forEach { (value, label) ->
+        (if (libraryAvailable) listOf(false to sourceLabel, true to desktopString("ui.navigation.library"))
+            else listOf(false to sourceLabel)).forEach { (value, label) ->
             Box(Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(4.dp))
                 .background(if (value == library) MaterialTheme.colorScheme.surface else Color.Transparent)
                 .clickable { onScope(value) }.testTag("desktop-search-scope:${if (value) "library" else "catalog"}"),

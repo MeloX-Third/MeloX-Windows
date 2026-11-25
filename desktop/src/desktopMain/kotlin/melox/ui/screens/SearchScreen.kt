@@ -284,7 +284,7 @@ fun SearchScreen(
         error = null
         if (!skipSearchDebounce) delay(if (MeloXSettingsRuntime.desktopLayoutEnabled) 800 else 1500)
         skipSearchDebounce = false
-        if (libraryScope) {
+        if (libraryScope && effectiveSource.builtIn == MusicSource.Netease) {
             songs = emptyList(); providerSongs = emptyList(); media = emptyList(); loading = true
             try {
                 if (!NeteaseSessionStore.containsMusicU(sessionCookie)) {
@@ -469,8 +469,9 @@ fun SearchScreen(
                     query = picked; searchSuggestions = emptyList()
                     skipSearchDebounce = true; searchTrigger += 1
                 },
-                libraryScope = libraryScope,
-                onScope = { libraryScope = it; skipSearchDebounce = true; searchTrigger += 1 },
+                libraryScope = libraryScope && effectiveSource.builtIn == MusicSource.Netease,
+                libraryScopeAvailable = effectiveSource.builtIn == MusicSource.Netease,
+                onScope = { libraryScope = it && effectiveSource.builtIn == MusicSource.Netease; skipSearchDebounce = true; searchTrigger += 1 },
                 kinds = availableKinds,
                 kind = kind,
                 onKind = { kind = it },
