@@ -574,9 +574,10 @@
     {
         "android":  "core/plugin/PluginManager.kt",
         "windowsCandidates":  [
-
+                                  "shared/src/commonMain/kotlin/melox/plugin/PluginManager.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "PARTIAL",
+        "notes": "87615d8 shared lifecycle, upgrade approval, restore, account withdrawal and primary failure ownership; 15 plugin tests pass. Production factory/startup, diagnostics and real account lifecycle pending."
     },
     {
         "android":  "core/plugin/PluginManifest.kt",
