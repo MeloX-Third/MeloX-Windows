@@ -38,6 +38,9 @@ internal fun desktopPlatformString(key: String): String {
     val chinese = melox.settings.MeloXAppLanguage.locale.language == "zh"
     return when (key) {
         "daily-history" -> if (chinese) "每日推荐历史" else "Daily recommendation history"
+        "daily-history-today" -> if (chinese) "今天" else "Today"
+        "daily-history-empty-month" -> if (chinese) "本月暂无推荐历史" else "No recommendation history this month"
+        "daily-history-description" -> if (chinese) "按日期查看已保存的每日推荐" else "Browse saved daily recommendations by date"
         "daily-history-empty" -> if (chinese) "暂无历史记录。打开每日推荐后会自动保存最近 30 天的记录。" else "No history yet. Opening daily recommendations saves up to 30 daily records."
         "daily-history-unreadable" -> if (chinese) "无法读取这一天的记录" else "Unable to read this day's record"
         "about_developer" -> if (chinese) "开发者：lladlam（MeloX Windows）" else "Developer: lladlam (MeloX Windows)"

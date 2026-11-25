@@ -16,9 +16,11 @@ import melox.playback.PlaybackCommands
 
 @Composable
 internal fun MeloXDesktopDailyHistory(onBack: () -> Unit) {
-    val account = DailyHistoryStore.accountKey(NeteaseSessionStore.readCookie())
+    val session = melox.account.rememberNeteaseSessionStore()
+    val account = DailyHistoryStore.accountKey(session.cookie)
     var dates by remember(account) { mutableStateOf<List<String>>(emptyList()) }
     var selected by remember(account) { mutableStateOf<String?>(null) }
+    var month by remember(account) { mutableStateOf(java.time.YearMonth.now()) }
     var songs by remember(account) { mutableStateOf<List<SearchSong>>(emptyList()) }
     var loading by remember(account) { mutableStateOf(true) }
     var error by remember(account) { mutableStateOf<String?>(null) }
@@ -62,6 +64,9 @@ internal fun MeloXDesktopDailyHistory(onBack: () -> Unit) {
         state = scroll, contentPadding = PaddingValues(34.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item { DesktopDialogButton("ui.common.back", onClick = onBack) }
         item { Text(desktopPlatformString("daily-history"), style = MaterialTheme.typography.headlineLarge) }
+        item {
+            DesktopDailyHistoryCalendar(month, dates, onMonth = { month = it }, onDate = { selected = it })
+        }
         when {
             loading -> item { CircularProgressIndicator() }
             error != null -> item {
@@ -69,9 +74,54 @@ internal fun MeloXDesktopDailyHistory(onBack: () -> Unit) {
                 DesktopDialogButton("ui.common.retry", onClick = { retry++ })
             }
             dates.isEmpty() -> item { Text(desktopPlatformString("daily-history-empty")) }
-            else -> items(dates, key = { it }) { date ->
+            dates.none { melox.dailyhistory.MeloXDailyClock.parseKey(it)?.let(java.time.YearMonth::from) == month } ->
+                item { Text(desktopPlatformString("daily-history-empty-month")) }
+            else -> items(dates.filter { melox.dailyhistory.MeloXDailyClock.parseKey(it)?.let(java.time.YearMonth::from) == month }, key = { it }) { date ->
                 Text(date, Modifier.fillMaxWidth().testTag("daily-history-date:$date")
                     .clickable(role = androidx.compose.ui.semantics.Role.Button) { selected = date }.padding(16.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun DesktopDailyHistoryCalendar(month: java.time.YearMonth, dates: List<String>,
+    onMonth: (java.time.YearMonth) -> Unit, onDate: (String) -> Unit) {
+    val locale = melox.settings.MeloXAppLanguage.locale
+    val today = melox.dailyhistory.MeloXDailyClock.today()
+    val archived = dates.toSet()
+    Column(Modifier.widthIn(max = 560.dp).testTag("daily-history-calendar"), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+            TextButton(onClick = { onMonth(month.minusMonths(1)) }, modifier = Modifier.testTag("daily-history-previous-month")) {
+                Text("‹", style = MaterialTheme.typography.titleLarge)
+            }
+            Text(month.format(java.time.format.DateTimeFormatter.ofPattern("LLLL yyyy", locale)), Modifier.weight(1f),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+            TextButton(onClick = { onMonth(java.time.YearMonth.from(today)) }) { Text(desktopPlatformString("daily-history-today")) }
+            TextButton(onClick = { onMonth(month.plusMonths(1)) }, modifier = Modifier.testTag("daily-history-next-month")) {
+                Text("›", style = MaterialTheme.typography.titleLarge)
+            }
+        }
+        Row(Modifier.fillMaxWidth()) {
+            java.time.DayOfWeek.entries.forEach { day -> Text(day.getDisplayName(java.time.format.TextStyle.SHORT, locale),
+                Modifier.weight(1f), textAlign = androidx.compose.ui.text.style.TextAlign.Center) }
+        }
+        melox.dailyhistory.MeloXDailyClock.monthCells(month).chunked(7).forEach { week ->
+            Row(Modifier.fillMaxWidth()) {
+                week.forEach { date ->
+                    Box(Modifier.weight(1f).height(52.dp), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                        if (date != null) {
+                            val key = date.toString()
+                            TextButton(onClick = { onDate(key) }, enabled = key in archived,
+                                modifier = Modifier.testTag("daily-history-calendar-date:$key")) {
+                                Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+                                    Text(date.dayOfMonth.toString(), fontWeight = if (date == today) androidx.compose.ui.text.font.FontWeight.Bold else null)
+                                    Text(if (key in archived) "•" else " ", style = MaterialTheme.typography.labelSmall)
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
