@@ -23,6 +23,7 @@ class PluginMediaSocketTest {
             server.useHttps(serverTls.sslSocketFactory())
             server.start()
             server.enqueue(MockResponse.Builder().body("tls-audio").addHeader("Content-Type", "audio/mpeg").build())
+            server.enqueue(MockResponse.Builder().body("{\"tls\":true}").addHeader("Content-Type", "application/json").build())
             val routing = Interceptor { chain ->
                 chain.proceed(chain.request().newBuilder().url(server.url("/audio")).build())
             }
@@ -34,10 +35,19 @@ class PluginMediaSocketTest {
             PluginHttpBroker(manifest, internalTransport = routing, internalDns = loopback,
                 internalTls = clientTls.sslSocketFactory() to clientTls.trustManager).use { broker ->
                 assertEquals("tls-audio", broker.openMedia("https://api.example.com/audio").use { it.readBytes().toString(Charsets.UTF_8) })
+                val response = org.json.JSONObject(broker.request("""{"url":"https://api.example.com/api"}"""))
+                assertEquals(200, response.getInt("status"))
+                assertTrue(org.json.JSONObject(response.getString("body")).getBoolean("tls"))
+            }
+            PluginHttpBroker(manifest, internalTransport = Interceptor { chain ->
+                chain.proceed(chain.request().newBuilder().url(server.url("/audio").newBuilder().host("127.0.0.1").build()).build())
+            }, internalDns = loopback, internalTls = clientTls.sslSocketFactory() to clientTls.trustManager).use { broker ->
+                assertFailsWith<javax.net.ssl.SSLPeerUnverifiedException> { broker.openMedia("https://api.example.com/audio") }
             }
             val request = assertNotNull(server.takeRequest(2, TimeUnit.SECONDS))
             assertNotNull(request.handshake)
-            assertEquals(1, server.requestCount)
+            assertNotNull(assertNotNull(server.takeRequest(2, TimeUnit.SECONDS)).handshake)
+            assertEquals(2, server.requestCount)
         }
     }
 
