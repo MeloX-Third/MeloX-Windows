@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`e1eda90` 使用本地真实 TLS 服务验证媒体读取：默认系统信任拒绝测试自签证书；仅测试构造器注入信任该证书的 trust manager 后完成 TLS 握手并读取音频体，服务端请求包含 handshake。未关闭主机名验证，生产默认客户端保持系统信任与公网 DNS 策略。插件/下载专项及桌面编译成功（1 分 19 秒）。本地 TLS 的内部路由/DNS 注入不等于公网 DNS、真实插件服务或账号媒体验收。
+
 `ee1158a` 媒体流取消 API 的 5 秒整请求超时，保留连接超时与 15 秒读取超时；读取异常立即关闭响应并取消所属请求。真实本地 HTTP socket 测试读取完整媒体体，并观察读取线程进入底层阻塞 socket read 后关闭 broker，3 秒内中断读取。`gradle :shared:desktopTest --tests "melox.plugin.*" --tests "melox.download.*" :desktop:compileKotlinDesktop` 成功（1 分 6 秒）。测试使用内部路由与 DNS 注入，未代表公网 DNS/TLS 或真实插件媒体验收。
 
 `14edfaa` Provider 下载生产入口按动态身份分流到私有 PluginHttpBroker，连接前及最终提交检查 registry generation，任务取消关闭 broker；动态来源拒绝非 PluginMusicProvider 和本地 file URL 绕过。`gradle :shared:desktopTest --tests "melox.download.*" --tests "melox.plugin.*" :desktop:compileKotlinDesktop` 最终重跑成功（11 秒），XML 71 项通过、0 失败/错误/跳过，包含动态文件拒绝与临时文件清理。尚缺实际插件远程下载成功、账号绑定与真实 TLS 证据。
