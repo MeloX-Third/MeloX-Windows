@@ -94,7 +94,7 @@ object LocalRecommendationStore {
         val array = JSONArray()
         tracks.forEach { track ->
             array.put(JSONObject().apply {
-                put("source", track.id.source.storageValue); put("id", track.id.value); put("title", track.title)
+                put("source", track.id.sourceId.value); put("id", track.id.value); put("title", track.title)
                 put("artist", track.artistText); put("artwork", track.artworkUrl); put("durationMs", track.durationMs ?: 0L)
                 put("track", melox.music.model.MeloXTrackJson.encode(track))
             })
@@ -113,7 +113,7 @@ object LocalRecommendationStore {
     }.getOrDefault(emptyList())
 
     internal fun decodeCandidate(item: JSONObject): MusicTrack? {
-        val source = MusicSource.entries.firstOrNull { it.storageValue == item.optString("source") } ?: return null
+        val source = melox.music.model.SourceId.parse(item.optString("source")) ?: return null
         val id = item.optString("id").takeIf(String::isNotBlank) ?: return null
         val identity = MusicResourceId(source, id)
         if (item.has("track")) {
