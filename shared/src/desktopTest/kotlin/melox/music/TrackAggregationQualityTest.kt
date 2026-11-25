@@ -77,6 +77,7 @@ class TrackAggregationQualityTest {
         assertEquals(1_000_000, hint?.bitrate)
         assertEquals(AudioQualityTier.High, kuwoSearchQuality(JSONObject().put("BITRATE", 320_000))?.tier)
         assertNull(kuwoSearchQuality(JSONObject()))
+        assertEquals(AudioQualityTier.Standard, kuwoSearchQuality(JSONObject().put("FORMAT", "mp3"))?.tier)
     }
 
     @Test fun neteaseSearchEmbeddedQualityIsOptionalAndKeepsNativeBps() {

@@ -12,7 +12,7 @@ internal fun kuwoSearchQuality(item: JSONObject): KuwoQualityHint? {
     fun hint(format: String, rawBitrate: Int?): KuwoQualityHint? {
         val bitrate = rawBitrate?.takeIf { it > 0 }?.let { if (it < 10_000) it * 1_000 else it }
         val tier = audioQualityForBitrate(bitrate, lossless = format.contains("flac") || format.contains("lossless"))
-            ?: return null
+            ?: if (format.isNotBlank()) AudioQualityTier.Standard else return null
         return KuwoQualityHint(tier, bitrate)
     }
     val variants = info.split(';').mapNotNull { entry ->
