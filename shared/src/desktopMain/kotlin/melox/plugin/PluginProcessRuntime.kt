@@ -51,10 +51,14 @@ internal class PluginProcessRuntime(
             val token = UUID.randomUUID().toString()
             val selected = context?.invoke(method)
             val valid = { !closed.get() && current() && (selected?.current?.invoke() ?: true) }
+            require(plugin.script.toByteArray(Charsets.UTF_8).size <= PluginIpcFrames.MAX_BYTES) { "INVALID_ARGUMENT" }
+            PluginJson.check(args.toString())
+            val selectedAccount = if (selected != null) selected.account else account()
+            selectedAccount?.let { PluginJson.check(it.toString(), 4096) }
             val request = JSONObject().put("token", token).put("method", method).put("args", args)
-                .put("account", (if (selected != null) selected.account else account()) ?: JSONObject.NULL).put("script", plugin.script).toString()
+                .put("account", selectedAccount ?: JSONObject.NULL).put("script", plugin.script).toString()
             // Validate before process creation; oversized scripts must not strand a worker.
-            PluginJson.check(request)
+            PluginJson.check(request, PluginIpcFrames.MAX_START_BYTES)
             val process = launcher.start()
             val calls = try { (selected?.hostCalls ?: hostCalls)(token, valid) } catch (failure: Throwable) { process.close(); throw failure }
             val owner = Closeable { try { process.close() } finally { calls.close() } }
@@ -63,7 +67,7 @@ internal class PluginProcessRuntime(
             try {
                 check(valid()) { "CANCELLED" }
                 val future = executor.submit<String> {
-                    PluginIpcFrames.write(process.output, request)
+                    PluginIpcFrames.write(process.output, request, PluginIpcFrames.MAX_START_BYTES)
                     PluginWorkerChannel(token, calls, valid).receive(process.input, process.output)
                 }
                 try { future.get(8, TimeUnit.SECONDS).also { check(valid()) { "CANCELLED" } } }

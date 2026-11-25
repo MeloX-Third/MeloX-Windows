@@ -16,7 +16,7 @@ internal object PluginWorkerMain {
         watchdog.schedule({ Runtime.getRuntime().halt(74) }, 8, TimeUnit.SECONDS)
         var token: String? = null
         try {
-            val request = JSONObject(PluginIpcFrames.read(System.`in`))
+            val request = JSONObject(PluginIpcFrames.read(System.`in`, PluginIpcFrames.MAX_START_BYTES))
             token = request.getString("token")
             require(token.length in 1..64 && token.all { it.code in 33..126 })
             val method = request.getString("method")
@@ -24,6 +24,7 @@ internal object PluginWorkerMain {
             val script = request.getString("script")
             require(script.toByteArray(Charsets.UTF_8).size <= PluginIpcFrames.MAX_BYTES)
             val arguments = request.getJSONArray("args")
+            PluginJson.check(arguments.toString())
             val account = request.optJSONObject("account")?.also { PluginJson.check(it.toString(), 4096) }
             val bridge = PluginWorkerBridge(token)
             V8RuntimeOptions.V8_FLAGS.setMaxHeapSize(16).setCustomFlags("--stack-size=256")

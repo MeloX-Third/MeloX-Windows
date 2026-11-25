@@ -10,6 +10,8 @@ import java.nio.charset.CodingErrorAction
 /** Length-delimited UTF-8 frames; reject allocation and encoding abuse before JSON parsing. */
 internal object PluginIpcFrames {
     const val MAX_BYTES = 128 * 1024
+    // A 128 KiB script may expand sixfold when JSON-escaped, plus bounded args/account.
+    const val MAX_START_BYTES = 1024 * 1024
 
     fun read(input: InputStream, maxBytes: Int = MAX_BYTES): String {
         require(maxBytes in 1..8 * 1024 * 1024)

@@ -69,6 +69,33 @@ class PluginWorkerProcessTest {
         } finally { runtime.close(); root.deleteRecursively() }
     }
 
+    @Test fun fullSizeEscapedScriptStartsButOversizedArgumentsNeverLaunch() = kotlinx.coroutines.runBlocking {
+        val root = Files.createTempDirectory("plugin-large-script").toFile()
+        val source = requireNotNull(SourceId.parse("plugin:test.large.script"))
+        val manifest = PluginManifest(source, "Large", "1.0.0", 1, "index.js", setOf(PluginCapability.Search), emptySet())
+        val body = "globalThis.meloxPlugin={search:()=>42};/*"
+        val script = body + "\t".repeat(PluginIpcFrames.MAX_BYTES - body.length - 2) + "*/"
+        assertEquals(PluginIpcFrames.MAX_BYTES, script.toByteArray().size)
+        var launches = 0
+        val runtime = PluginProcessRuntime(PluginArchiveReader.Package(manifest, script), PluginWorkerLauncher {
+            launches++
+            val process = start()
+            object : PluginWorkerProcess {
+                override val input = process.inputStream
+                override val output = process.outputStream
+                override fun close() { process.destroyForcibly(); process.waitFor(5, TimeUnit.SECONDS) }
+            }
+        }, { token, current -> PluginHostCalls(token, PluginHttpBroker(manifest), PluginStorage(source, base = root), current) })
+        try {
+            assertEquals("42", runtime.invoke("search", JSONArray()))
+            assertEquals(1, launches)
+            assertFailsWith<IllegalArgumentException> {
+                runtime.invoke("search", JSONArray().put("x".repeat(PluginIpcFrames.MAX_BYTES)))
+            }
+            assertEquals(1, launches)
+        } finally { runtime.close(); root.deleteRecursively() }
+    }
+
     @Test fun realWorkerExecutesPromiseAndHostStorageWithoutJavaBridge() {
         val root = Files.createTempDirectory("plugin-process-test").toFile()
         val executor = Executors.newSingleThreadExecutor()
