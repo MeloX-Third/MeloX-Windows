@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+截至 `4fcfe0a` 完整自动回归：`gradle :shared:desktopTest :desktop:desktopTest :desktop:desktopJar` 成功（2 分 19 秒）。共享 XML 590 项、0 失败/错误/跳过；桌面 UP-TO-DATE 复用此前 11 通过/6 条件跳过，JAR UP-TO-DATE。覆盖随后歌词绑定、网络音质及搜索来源修复；不代表真实插件生产运行、账号/网络/硬件或像素验收完成。AutoMix 历史偶发仍待定位。
+
 `4fcfe0a` 桌面搜索的网易账号音乐库范围仅在网易来源可见，并在查询分支再次校验来源；动态或其他内置来源不再通过该范围查询网易账号。`gradle :desktop:desktopTest :desktop:desktopJar` 成功（47 秒）。此项没有真实窗口输入或真实账号请求验收。
 
 `4a749e3` 桌面搜索导航保存完整 SourceId，重新进入搜索恢复动态来源；结果、目录详情、推荐与歌曲菜单按有效来源及 registry generation 重建，拒绝继续展示旧来源内容。`gradle :desktop:desktopTest :desktop:desktopJar` 成功（48 秒）。真实插件服务和窗口导航输入验收仍待完成。
