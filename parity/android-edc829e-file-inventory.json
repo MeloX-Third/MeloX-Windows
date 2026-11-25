@@ -531,9 +531,10 @@
     {
         "android":  "core/plugin/PluginDiagnostics.kt",
         "windowsCandidates":  [
-
+                                  "shared/src/commonMain/kotlin/melox/plugin/PluginDiagnostics.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "IMPLEMENTED",
+        "notes": "99fbebf bounded host event ring with allowlisted fields and atomic writes; 31 plugin tests pass. Runtime/manager/UI connection pending."
     },
     {
         "android":  "core/plugin/PluginErrors.kt",
@@ -675,9 +676,10 @@
     {
         "android":  "core/plugin/PluginStorage.kt",
         "windowsCandidates":  [
-
+                                  "shared/src/commonMain/kotlin/melox/plugin/PluginStorage.kt"
                               ],
-        "review":  "UNREVIEWED"
+        "review":  "IMPLEMENTED",
+        "notes": "99fbebf source/account hashed namespaces, bounded KV storage and atomic replacement; quota/corruption/clear isolation tests pass. Runtime host-call integration pending. Android legacy storage directories do not exist on Windows."
     },
     {
         "android":  "core/plugin/PluginTrackLink.kt",
