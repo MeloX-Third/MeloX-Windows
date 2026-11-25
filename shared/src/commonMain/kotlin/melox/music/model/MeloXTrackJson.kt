@@ -6,13 +6,13 @@ import org.json.JSONObject
 /** Full provider identity for app-owned collections. Credentials and resolved stream URLs are not stored. */
 internal object MeloXTrackJson {
     fun encode(track: MusicTrack): JSONObject = JSONObject().apply {
-        put("source", track.id.source.storageValue); put("id", track.id.value); put("title", track.title)
+        put("source", track.id.sourceId.value); put("id", track.id.value); put("title", track.title)
         put("artists", JSONArray().apply { track.artists.forEach { artist -> put(JSONObject().apply {
-            put("name", artist.name); artist.id?.let { put("source", it.source.storageValue); put("id", it.value) }
+            put("name", artist.name); artist.id?.let { put("source", it.sourceId.value); put("id", it.value) }
         }) } })
         track.album?.let { album -> put("album", JSONObject().apply {
             put("name", album.name); put("artwork", album.artworkUrl)
-            album.id?.let { put("source", it.source.storageValue); put("id", it.value) }
+            album.id?.let { put("source", it.sourceId.value); put("id", it.value) }
         }) }
         put("artwork", track.artworkUrl); put("durationMs", track.durationMs)
         put("availability", track.availability.name); put("bestQuality", track.bestQuality?.name); put("bestBitrate", track.bestBitrate)
@@ -35,7 +35,7 @@ internal object MeloXTrackJson {
 
     private fun JSONObject.text(key: String) = opt(key)?.takeUnless { it == JSONObject.NULL }?.toString()?.takeIf(String::isNotBlank)
     private fun JSONObject.resource(): MusicResourceId? {
-        val source = MusicSource.entries.firstOrNull { it.storageValue == text("source") } ?: return null
+        val source = text("source")?.let(SourceId::parse) ?: return null
         return text("id")?.let { MusicResourceId(source, it) }
     }
 
