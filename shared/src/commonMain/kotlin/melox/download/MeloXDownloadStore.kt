@@ -380,6 +380,7 @@ class MeloXDownloadStore private constructor() {
                     if (!response.isSuccessful) throw IOException("下载失败：HTTP ${response.code}")
                     val body = response.body ?: throw IOException("下载失败：响应体为空")
                     val expected = body.contentLength().takeIf { it > 0L }
+                    expected?.let(AudioDownloadLimit::check)
                     val startedAt = (System.nanoTime() / 1_000_000L)
                     temp.outputStream().buffered().use { output ->
                         body.byteStream().use { input ->
@@ -389,8 +390,9 @@ class MeloXDownloadStore private constructor() {
                             while (true) {
                                 val count = input.read(buffer)
                                 if (count < 0) break
-                                output.write(buffer, 0, count)
                                 received += count
+                                AudioDownloadLimit.check(received)
+                                output.write(buffer, 0, count)
                                 if (received - lastPublished >= 256L * 1024L) {
                                     lastPublished = received
                                     val elapsed = ((System.nanoTime() / 1_000_000L) - startedAt).coerceAtLeast(1L)

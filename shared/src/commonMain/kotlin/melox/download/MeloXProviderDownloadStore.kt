@@ -120,8 +120,10 @@ class MeloXProviderDownloadStore private constructor() {
         destination.parentFile?.mkdirs()
         if (resolution.url.startsWith("file:")) {
             val uri = java.net.URI(resolution.url)
-            File(uri.path).inputStream().use { input ->
-                destination.outputStream().use { output -> input.copyTo(output) }
+            val source = File(uri)
+            AudioDownloadLimit.check(source.length())
+            source.inputStream().use { input ->
+                destination.outputStream().use { output -> AudioDownloadLimit.copy(input, output) }
             }
             return
         }
@@ -131,7 +133,8 @@ class MeloXProviderDownloadStore private constructor() {
         melox.network.MeloXHttpClient.shared.newCall(request).execute().use { response ->
             check(response.isSuccessful) { "下载失败: HTTP ${response.code}" }
             val body = requireNotNull(response.body) { "下载响应为空" }
-            body.byteStream().use { input -> destination.outputStream().use { output -> input.copyTo(output) } }
+            AudioDownloadLimit.check(body.contentLength())
+            body.byteStream().use { input -> destination.outputStream().use { output -> AudioDownloadLimit.copy(input, output) } }
         }
     }
 
