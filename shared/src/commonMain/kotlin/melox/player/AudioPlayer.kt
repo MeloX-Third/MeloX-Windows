@@ -212,9 +212,11 @@ object AudioPlayer {
             },
         )
         engine.volume = volumeLinear
-        if (paused.get()) engine.pause()
         synchronized(playbackLock) {
             if (session.get() !== request) { engine.close(); return }
+            // Resume reads the published engine after changing paused under this lock.
+            // Publish with the same paused snapshot so a startup resume cannot be lost.
+            if (paused.get()) engine.pause()
             dualSession.set(engine)
         }
         try {
@@ -480,8 +482,8 @@ object AudioPlayer {
             pauseVersion.incrementAndGet()
             _state.value = _state.value.copy(isPlaying = false, isPaused = true)
             currentLine?.let { runCatching { it.stop() } }
+            dualSession.get()?.pause()
         }
-        dualSession.get()?.pause()
     }
 
     fun resume() {
@@ -491,8 +493,8 @@ object AudioPlayer {
             paused.set(false)
             _state.value = _state.value.copy(isPlaying = ready.get(), isPaused = false, isFinished = false)
             currentLine.takeIf { ready.get() }?.let { runCatching { it.start() } }
+            dualSession.get()?.resume()
         }
-        dualSession.get()?.resume()
     }
 
     fun stop(clearTrack: Boolean = true) {

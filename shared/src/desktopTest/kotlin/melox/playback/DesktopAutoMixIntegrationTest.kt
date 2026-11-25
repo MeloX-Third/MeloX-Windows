@@ -159,6 +159,20 @@ class DesktopAutoMixIntegrationTest {
     @Test fun softwareMuteReachesPcmPromptlyWithBufferedOutput() = runBlocking<Unit> {
         assertPromptSoftwareMute()
     }
+    @Test fun repeatedStartupResumeContinuesWritingPcm() = runBlocking<Unit> {
+        val songs = listOf(song(1, 1000, 8000))
+        repeat(20) {
+            install(songs)
+            until {
+                assertNull(AudioPlayer.state.value.error, "Startup resume must keep the decoder usable")
+                outputs.lastOrNull()?.accepted?.get()?.let { it >= 8820 * 4 } == true
+            }
+            assertFalse(AudioPlayer.state.value.isPaused)
+            player!!.release()
+            AudioPlayer.stop()
+            outputs.clear()
+        }
+    }
     @Test fun singleDeckSoftwareMuteReachesPcmPromptlyWithBufferedOutput() = runBlocking<Unit> {
         MeloXPlaybackModePreferences.setAutoMix(false)
         assertPromptSoftwareMute()
