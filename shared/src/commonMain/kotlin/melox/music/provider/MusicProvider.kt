@@ -42,6 +42,8 @@ enum class MusicCapability {
     Messages,
     Recognition,
     Resolver,
+    Authentication,
+    Download,
 }
 
 /**
@@ -104,6 +106,10 @@ interface PlaybackCapability {
 /** Provider-native download resolution. This is deliberately separate from playback fallback. */
 interface FallbackPlaybackCapability {
     suspend fun resolveFallback(track: MusicTrack, quality: AudioQualityTier): PlaybackResolution
+}
+
+interface AuthenticationCapability {
+    suspend fun authenticationStatus(): melox.music.model.MusicAuthenticationState
 }
 
 interface DownloadCapability {
@@ -280,6 +286,8 @@ class DynamicMusicProviders {
         require(MusicCapability.Playback !in provider.capabilities || provider is PlaybackCapability) { "missing playback capability" }
         require(MusicCapability.Lyrics !in provider.capabilities || provider is LyricsCapability) { "missing lyrics capability" }
         require(MusicCapability.Resolver !in provider.capabilities || provider is FallbackPlaybackCapability) { "missing resolver capability" }
+        require(MusicCapability.Authentication !in provider.capabilities || provider is AuthenticationCapability) { "missing authentication capability" }
+        require(MusicCapability.Download !in provider.capabilities || provider is DownloadCapability) { "missing download capability" }
     }
 
     private fun changed() {
