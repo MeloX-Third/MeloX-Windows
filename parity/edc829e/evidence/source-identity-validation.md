@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`b730c87` 独立 JVM 事务恢复：生成两个真实 RSA-2048 发布者签名包，显式批准候选摘要后执行发布者轮换，子进程在 decision/archive/publisher durable 三个边界调用 Runtime.halt(73)，不执行 catch/finally 回滚。父进程等待退出并重建仓库，验证决策写入后保留旧包、归档落盘后恢复新包及对应发布者指纹、清除事务日志、二次重启结果稳定。`gradle :shared:desktopTest --tests "melox.plugin.*"` 成功（27 秒），XML 55 项通过、0 失败/错误/跳过。此证据覆盖独立进程非正常终止，不等同磁盘断电/缓存损失，也未包含管理 UI 发布者批准交互。
+
 `81cd272` 桌面音乐服务页展示当前启用的动态 Provider，并提供逐来源“参与搜索”开关，接入 SourceId 白名单持久化；订阅注册表和偏好 revision。`gradle :desktop:desktopTest :desktop:desktopJar` 成功（47 秒）。当前生产插件加载仍待实现，因此未将控件编译成功视为插件安装/查询验收完成。
 
 `f5c3644` 共享 SearchSong 的网易原生写入门控改为 SourceId 内置值检查，动态歌曲即使带正数旧 UI id 也不进入网易端点；歌单分页和喜爱查找按完整 SourceId 比较。新增插件两页加载、喜爱匹配、跨来源拒绝与旧 UI 正数 id 回归。`c880c92` AutoSync 保留内置旧缓存键，对动态歌曲使用完整来源，DLNA 当前歌曲通知改用完整来源。`gradle :shared:desktopTest --tests "melox.music.*" --tests "melox.lan.*" :desktop:compileKotlinDesktop` 成功（3 分 9 秒），XML 54 项通过、0 失败/错误/跳过。AutoSync 与 DLNA 本轮只验证编译，实际设备与动态歌曲同步未验收。
