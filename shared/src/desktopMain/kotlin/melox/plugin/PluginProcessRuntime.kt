@@ -24,6 +24,12 @@ internal interface PluginWorkerProcess : Closeable {
     val output: OutputStream
 }
 
+internal class PluginInvocationContext(
+    val account: JSONObject?,
+    val current: () -> Boolean,
+    val hostCalls: (String, () -> Boolean) -> PluginHostCalls,
+)
+
 /** Lifecycle owner of fresh invocation processes and their private host-call resources. */
 internal class PluginProcessRuntime(
     private val plugin: PluginArchiveReader.Package,
@@ -31,6 +37,7 @@ internal class PluginProcessRuntime(
     private val hostCalls: (String, () -> Boolean) -> PluginHostCalls,
     private val account: () -> JSONObject? = { null },
     private val current: () -> Boolean = { true },
+    private val context: (() -> PluginInvocationContext)? = null,
 ) : Closeable {
     private val closed = AtomicBoolean()
     private val active = AtomicReference<Closeable?>()
@@ -42,13 +49,14 @@ internal class PluginProcessRuntime(
         require(busy.compareAndSet(false, true)) { "BUSY" }
         try {
             val token = UUID.randomUUID().toString()
-            val valid = { !closed.get() && current() }
+            val selected = context?.invoke()
+            val valid = { !closed.get() && current() && (selected?.current?.invoke() ?: true) }
             val request = JSONObject().put("token", token).put("method", method).put("args", args)
-                .put("account", account() ?: JSONObject.NULL).put("script", plugin.script).toString()
+                .put("account", (if (selected != null) selected.account else account()) ?: JSONObject.NULL).put("script", plugin.script).toString()
             // Validate before process creation; oversized scripts must not strand a worker.
             PluginJson.check(request)
             val process = launcher.start()
-            val calls = try { hostCalls(token, valid) } catch (failure: Throwable) { process.close(); throw failure }
+            val calls = try { (selected?.hostCalls ?: hostCalls)(token, valid) } catch (failure: Throwable) { process.close(); throw failure }
             val owner = Closeable { try { process.close() } finally { calls.close() } }
             active.set(owner)
             val executor = Executors.newSingleThreadExecutor { task -> Thread(task, "plugin-invocation-ipc").apply { isDaemon = true } }
