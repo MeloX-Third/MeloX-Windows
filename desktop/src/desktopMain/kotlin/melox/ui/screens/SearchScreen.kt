@@ -605,9 +605,11 @@ fun SearchScreen(
             when (target) {
                 is SearchDetailDestination.Playlist -> PlaylistDetailScreen(MeloXLegacyUiBridge.playlist(target.value), onBack = { selectedProviderPlaylist = null })
                 is SearchDetailDestination.Album -> ProviderCollectionDetail(target.value.title, "", target.value.artworkUrl,
-                    load = { (currentProvider as? AlbumCapability)?.albumDetail(target.value)?.tracks.orEmpty() }, onBack = { selectedProviderAlbum = null })
+                    load = { (providerRegistry[target.value.id.sourceId] as? AlbumCapability)?.albumDetail(target.value)?.tracks
+                        ?: error("音源未启用或不提供专辑详情") }, onBack = { selectedProviderAlbum = null }, resourceId = target.value.id)
                 is SearchDetailDestination.Artist -> ProviderCollectionDetail(target.value.name, "", target.value.artworkUrl,
-                    load = { (currentProvider as? ArtistCapability)?.artistDetail(target.value)?.tracks.orEmpty() }, onBack = { selectedProviderArtist = null })
+                    load = { (providerRegistry[target.value.id.sourceId] as? ArtistCapability)?.artistDetail(target.value)?.tracks
+                        ?: error("音源未启用或不提供歌手详情") }, onBack = { selectedProviderArtist = null }, resourceId = target.value.id)
                 is SearchDetailDestination.Media -> {
                     val item = target.value
                     when (item.kind) {
@@ -982,16 +984,24 @@ internal fun ProviderCollectionDetail(
     artwork: String?,
     load: suspend () -> List<MusicTrack>,
     onBack: () -> Unit,
+    resourceId: melox.music.model.MusicResourceId? = null,
 ) {
-    var tracks by remember(title, artwork) { mutableStateOf<List<MusicTrack>>(emptyList()) }
-    var loading by remember(title, artwork) { mutableStateOf(true) }
-    var error by remember(title, artwork) { mutableStateOf<String?>(null) }
+    val registry = remember { MeloXMusicProviders.create() }
+    val generation by registry.changes.collectAsState()
+    var tracks by remember(title, artwork, resourceId, generation) { mutableStateOf<List<MusicTrack>>(emptyList()) }
+    var loading by remember(title, artwork, resourceId, generation) { mutableStateOf(true) }
+    var error by remember(title, artwork, resourceId, generation) { mutableStateOf<String?>(null) }
     var reload by remember(title, artwork) { mutableIntStateOf(0) }
-    LaunchedEffect(title, artwork, reload) {
+    LaunchedEffect(title, artwork, resourceId, generation, reload) {
         loading = true
         error = null
         runCatching { load() }
-            .onSuccess { tracks = it }
+            .onSuccess {
+                kotlinx.coroutines.currentCoroutineContext().ensureActive()
+                check(registry.generation == generation) { "音源已变化" }
+                resourceId?.let { id -> require(it.all { track -> track.id.sourceId == id.sourceId }) }
+                tracks = it
+            }
             .onFailure { if (it is kotlinx.coroutines.CancellationException) throw it; error = it.message ?: pinnedString("search_content_failed") }
         loading = false
     }
