@@ -392,7 +392,7 @@ private fun DesktopSettingsLayout(
                             Spacer(Modifier.height(20.dp))
                     }
                     Column(Modifier.fillMaxWidth().testTag("settings-page:${selected.name}")) {
-                        SettingsRouteContent(selected, currentSource, onOpenMessages, onOpenServices)
+                        SettingsRouteContent(selected, currentSource, onOpenMessages, onOpenServices, onNavigate = onSelected)
                     }
                     if (selected == SettingsRoute.General) {
                         Spacer(Modifier.height(18.dp))
@@ -481,14 +481,28 @@ private fun SettingsDetail(
 }
 
 @Composable
-private fun SettingsRouteContent(route: SettingsRoute, currentSource: MusicSource, onOpenMessages: () -> Unit, onOpenServices: () -> Unit) {
+private fun SettingsRouteContent(route: SettingsRoute, currentSource: MusicSource, onOpenMessages: () -> Unit, onOpenServices: () -> Unit,
+    onNavigate: ((SettingsRoute) -> Unit)? = null) {
     when (route) {
         SettingsRoute.General -> GeneralSettings()
         SettingsRoute.Appearance -> AppearanceSettings()
         SettingsRoute.Content -> ContentSettings()
         SettingsRoute.TabLayout -> TabLayoutSettings(currentSource)
         SettingsRoute.Playback -> PinnedPlaybackSettings()
-        SettingsRoute.Lyrics -> LyricsSettings()
+        SettingsRoute.Lyrics -> {
+            LyricsSettings()
+            if (onNavigate != null) {
+                Spacer(Modifier.height(10.dp))
+                SettingsGlassGroup {
+                    SettingsActionButton(SettingsRoute.SystemPlayback.title, Modifier.testTag("lyrics-open-system-playback")) {
+                        onNavigate(SettingsRoute.SystemPlayback)
+                    }
+                    SettingsActionButton(SettingsRoute.FloatingLyrics.title, Modifier.testTag("lyrics-open-floating")) {
+                        onNavigate(SettingsRoute.FloatingLyrics)
+                    }
+                }
+            }
+        }
         SettingsRoute.SkylineLyrics -> SkylineLyricsSettings()
         SettingsRoute.SystemPlayback -> SystemPlaybackSettings()
         SettingsRoute.FloatingLyrics -> FloatingLyricsSettings()
