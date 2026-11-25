@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`07e7e91` 收藏系统歌单识别：模型/网络/缓存保留 specialType，快照、桌面保护 ID 和删除所有权判断优先 specialType=5，旧记录无该字段时保留基线回退。`gradle :shared:desktopTest --tests "melox.library.*" :desktop:desktopJar` 成功（2 分 9 秒），包含重排后的系统歌单保护及缓存字段往返；真实账号/收藏回填/分页另行验证。
+
 `e573b58` 库缓存新鲜度与分类隔离：`gradle :shared:desktopTest --tests "melox.library.NeteaseLibraryCacheRetentionTest" --tests "melox.library.NeteaseHomeCacheCompatibilityTest" :desktop:desktopJar` 成功（3 分 17 秒），四项测试覆盖收藏保护/独立配额、fresh/stale 自动刷新、String.hashCode 碰撞分类隔离和新旧首页 JSON 往返。四个页面在缓存缺失时仍触发刷新；该专项不替代后续整套回归或真实账号验收。
 
 `b4e7540` 修复网易库缓存淘汰：收藏快照排除浏览缓存数量/字节淘汰，歌单独立 48 文件/64 MiB，浏览缓存保留 128 文件/32 MiB；唯一临时文件加原子替换避免并发写共用路径。`NeteaseLibraryCacheRetentionTest` 与 `NeteaseHomeCacheCompatibilityTest` 共三项通过（2 分 4 秒）。此后新鲜度和 SHA-256 分类键变更另行验证，631 项完整回归不覆盖这些后续库缓存代码。
