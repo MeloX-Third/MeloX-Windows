@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`dde35c3` OAuth 宿主交换基础：PKCE S256、Bearer token 严格字段/有效期解析及溢出拒绝、清单固定 token 端点、POST 表单、禁止重定向、16 KiB 响应限制和撤销检查。`gradle :shared:desktopTest --tests "melox.plugin.*"` 成功（1 分 7 秒），XML 47 项通过、0 失败/错误/跳过。HTTP 结果由内部 interceptor fixture 提供；浏览器、回调会话和账号落盘接线尚在实施，不代表端到端 OAuth 登录完成。
+
 `ad20096` HTTP 宿主凭据引用：共享层 PluginCredentialLease 隔离 Windows 账号存储类型，来源/策略/域名/有效期检查后覆盖脚本同名 header，会话切换通过密文与选择摘要立即拒绝旧租约。`gradle :shared:desktopTest --tests "melox.plugin.*" :desktop:compileKotlinDesktop` 成功（1 分 8 秒），XML 45 项通过、0 失败/错误/跳过。首次编译发现 commonMain 不可直接引用 desktopMain 仓库类型，抽取共享接口；随后接口属性智能转换错误用局部值修复。fixture 验证 header 注入、未授权域名拒绝、无账号拒绝、策略变化拒绝、跨插件租约拒绝和切换后拒绝。Provider 媒体 credential 引用、运行时账号和 UI 尚待接通。
 
 `2350574` Windows DPAPI 插件账号仓库：每账号独立密文、来源/账号内嵌绑定、加密后解密核验、原子落盘、会话选择及密文摘要撤销、刷新比较交换、失败保留旧数据。`gradle :shared:desktopTest --tests "melox.plugin.*"` 成功（10 秒），XML 44 项通过、0 失败/错误/跳过；其中账号三项真实 Windows DPAPI 测试全部执行，验证重建读取、磁盘不含 token、切换后拒绝迟到刷新、损坏保留、跨来源复制拒绝和加密失败。尚未接通账号 UI、OAuth 浏览器流程及生产运行时。
