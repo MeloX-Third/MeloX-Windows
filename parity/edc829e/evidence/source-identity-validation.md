@@ -1,5 +1,7 @@
 # 动态音源身份迁移验证
 
+`8400662` 音乐库按完整 SourceId 路由动态来源，按声明能力提供歌单/专辑/歌手分类，动态来源使用独立桌面分类 picker；账号摘要、分页和详情检查来源与 registry generation，来源生命周期变化清空页面状态。插件未授权状态不导航到内置账号。`gradle :desktop:desktopTest :desktop:desktopJar` 成功（46 秒）。插件账号生产授权 UI、真实窗口输入、详情完整分页仍需后续完成。
+
 `54f897d` 首页消费保存的动态 SourceId，并按 registry generation 重建 feed/排行榜状态，检查首页资源来源，撤销迟到结果。排行榜改用完整 SourceId、100 条分页，逐页检查实例/generation、拒绝跨来源歌曲并完整身份去重。新增桌面回归覆盖重复分页、字面资源身份、来源撤销及混入其他来源。`gradle :desktop:desktopTest :desktop:desktopJar` 成功（57 秒），新增回归通过。真实插件生产加载及窗口/视觉验收仍待完成。
 
 `a5ec929` 首页种子接线：网易首页内容和最近播放、其他内置 Provider 首页新歌进入推荐池；种子刷新遵循基线的已有卡片稳定规则，不使用播放队列的新增优先逻辑。`gradle :shared:desktopTest --tests "melox.recommendation.*" :desktop:desktopTest :desktop:desktopJar` 成功（1 分 43 秒）；共享推荐专项 XML 6 项全部通过。卡片消费及动态首页后续接线仍待完成。
