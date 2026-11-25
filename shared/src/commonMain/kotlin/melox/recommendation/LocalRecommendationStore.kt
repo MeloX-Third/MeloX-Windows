@@ -96,6 +96,7 @@ object LocalRecommendationStore {
             array.put(JSONObject().apply {
                 put("source", track.id.source.storageValue); put("id", track.id.value); put("title", track.title)
                 put("artist", track.artistText); put("artwork", track.artworkUrl); put("durationMs", track.durationMs ?: 0L)
+                put("track", melox.music.model.MeloXTrackJson.encode(track))
             })
         }
         prefs().putString("candidate_tracks", array.toString())
@@ -106,18 +107,25 @@ object LocalRecommendationStore {
         buildList {
             for (index in 0 until array.length()) {
                 val item = array.optJSONObject(index) ?: continue
-                val source = MusicSource.fromStorageValue(item.getString("source"))
-                add(MusicTrack(
-                    id = MusicResourceId(source, item.getString("id")),
-                    title = item.getString("title"),
-                    artists = listOf(MusicArtistRef(name = item.getString("artist"))),
-                    artworkUrl = item.getString("artwork").takeIf(String::isNotBlank),
-                    durationMs = item.getLong("durationMs").takeIf { it > 0L },
-                    availability = TrackAvailability.Playable,
-                ))
+                decodeCandidate(item)?.let(::add)
             }
         }
     }.getOrDefault(emptyList())
+
+    internal fun decodeCandidate(item: JSONObject): MusicTrack? {
+        val source = MusicSource.entries.firstOrNull { it.storageValue == item.optString("source") } ?: return null
+        val id = item.optString("id").takeIf(String::isNotBlank) ?: return null
+        val identity = MusicResourceId(source, id)
+        if (item.has("track")) {
+            val encoded = item.optJSONObject("track") ?: return null
+            return melox.music.model.MeloXTrackJson.decode(encoded)?.takeIf { it.id == identity }
+        }
+        return MusicTrack(identity, item.optString("title"),
+            listOf(MusicArtistRef(name = item.optString("artist"))),
+            artworkUrl = item.optString("artwork").takeIf(String::isNotBlank),
+            durationMs = item.optLong("durationMs").takeIf { it > 0L },
+            availability = TrackAvailability.Playable)
+    }
 
     fun readRecommendedTracks(): List<MusicTrack> {
         val candidates = readCandidateTracks()
