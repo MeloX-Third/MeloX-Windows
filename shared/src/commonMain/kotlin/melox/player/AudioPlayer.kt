@@ -570,7 +570,7 @@ object AudioPlayer {
             index += 1
         }
         melox.playback.MeloXAudioReactiveRuntime.publishPcm(
-            _currentTrack.value?.id?.let { "${it.source.storageValue}:${it.value}" },
+            _currentTrack.value?.let(::trackKey),
             shorts,
             samples,
             volumeLinear,

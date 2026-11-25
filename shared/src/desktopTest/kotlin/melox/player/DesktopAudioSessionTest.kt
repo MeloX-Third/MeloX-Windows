@@ -83,6 +83,20 @@ open class DesktopAudioSessionTest {
         assertEquals(88_200L, output.acceptedBytes.get()) // partial writes retained all frames
     }
 
+    @Test fun dynamicTrackPublishesPcmWithoutBuiltInSourceAccess() = runBlocking<Unit> {
+        val dynamic = track.copy(id = MusicResourceId(melox.music.model.SourceId.parse("plugin:test.pcm")!!, "opaque%/tone"))
+        val ended = CompletableDeferred<Unit>()
+        val failures = CopyOnWriteArrayList<AudioPlaybackFailure>()
+        AudioPlayer.play(wav().absolutePath, dynamic, onEnded = { ended.complete(Unit) }, onFailure = failures::add)
+        awaitCondition { outputs.firstOrNull()?.acceptedBytes?.get() == 88_200L || failures.isNotEmpty() }
+        assertTrue(failures.isEmpty(), failures.toString())
+        assertEquals(dynamic.id, AudioPlayer.currentTrack.value?.id)
+        outputs.single().consumeAll()
+        withTimeout(15_000) { ended.await() }
+        assertTrue(AudioPlayer.state.value.isFinished)
+        assertTrue(failures.isEmpty())
+    }
+
     @Test fun seekingToTheDecoderOriginalZeroPositionActuallyRestartsIt() = runBlocking<Unit> {
         val ended = CompletableDeferred<Unit>()
         val failures = CopyOnWriteArrayList<AudioPlaybackFailure>()
