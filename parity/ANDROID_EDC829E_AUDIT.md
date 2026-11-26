@@ -1,6 +1,6 @@
 # Android edc829e 增量审计
 
-功能基线：`edc829eaffa716b69d08681817414f9633abefc7`；比较起点：`53244b9`。`android-edc829e-file-inventory.json` 登记 398 个变更 Kotlin 文件及 Windows 同名候选。候选仅用于导航，`UNREVIEWED` 不表示实现或缺失；其他资源、构建和平台配置仍须独立审计。
+功能基线：`edc829eaffa716b69d08681817414f9633abefc7`；比较起点：`53244b9`。`android-edc829e-file-inventory.json` 登记 398 个变更 Kotlin 文件及 Windows 同名候选。候选仅用于导航，`UNREVIEWED` 不表示实现或缺失；其他资源、构建和平台配置仍须独立审计。Android 当前基线 `37e352d` 相对 `edc829e` 仅有 3 个提交、13 个文件、42 行改动，均为仓库地址、更新清单校验地址和 legal 联系地址，无功能差异，因此本清单不重新生成。
 
 | 范围 | 已核对的具体行为 | Windows 状态与后续 |
 |---|---|---|
