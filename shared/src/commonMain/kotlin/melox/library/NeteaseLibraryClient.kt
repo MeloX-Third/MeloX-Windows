@@ -9,6 +9,7 @@ import java.security.SecureRandom
 import javax.crypto.Cipher
 import javax.crypto.spec.SecretKeySpec
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.Job
@@ -77,12 +78,8 @@ class NeteaseLibraryClient(
             assemblePlaylistDetail(base, extra)
         }
 
-    fun playlistDetailBlocking(playlistId: Long): NeteasePlaylistDetail {
-        val base = fetchPlaylistBase(playlistId)
-        val missing = base.desiredIds.filterNot(base.byId::containsKey)
-        val extra = if (missing.isEmpty()) emptyList() else missing.chunked(100).flatMap { songDetailsBlocking(it) }
-        return assemblePlaylistDetail(base, extra)
-    }
+    fun playlistDetailBlocking(playlistId: Long): NeteasePlaylistDetail =
+        runBlocking(Dispatchers.IO) { playlistDetail(playlistId) }
 
     private class PlaylistDetailBase(
         val summary: NeteasePlaylistSummary,
