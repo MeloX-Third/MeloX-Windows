@@ -37,7 +37,8 @@ internal class AutoSyncTimelineStore(private val root: File = File(meloXDataDir(
         }
     }.getOrNull()
 
-    fun save(track: String, source: String, audio: String, models: String, lines: Map<Int, List<AutoSyncUnit>>) {
+    fun save(track: String, source: String, audio: String, models: String, lines: Map<Int, List<AutoSyncUnit>>,
+        languages: List<String> = emptyList()) {
         require(lines.isNotEmpty())
         check(root.isDirectory || root.mkdirs()) { "Cannot create AutoSync timeline directory" }
         val target = File(root, "${hash(track)}.json")
@@ -50,10 +51,24 @@ internal class AutoSyncTimelineStore(private val root: File = File(meloXDataDir(
                 values.put(JSONObject().put("index", index).put("units", array))
             }
             staging.writeText(JSONObject().put("version", 1).put("source", source).put("audio", audio)
-                .put("models", models).put("lines", values).toString(), Charsets.UTF_8)
+                .put("models", models).put("langs", JSONArray(languages.distinct().sorted())).put("lines", values)
+                .toString(), Charsets.UTF_8)
             try { Files.move(staging.toPath(), target.toPath(), StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING) }
             catch (_: AtomicMoveNotSupportedException) { Files.move(staging.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING) }
         } finally { staging.delete() }
+    }
+
+    /** Removes only timelines generated with [language]; other languages stay cached. */
+    fun clearLanguage(language: String) {
+        if (language.isBlank()) return
+        runCatching {
+            root.listFiles().orEmpty().forEach { file ->
+                if (!file.isFile) return@forEach
+                val langs = runCatching { JSONObject(file.readText(Charsets.UTF_8)).optJSONArray("langs") }.getOrNull()
+                    ?: return@forEach
+                if ((0 until langs.length()).any { langs.optString(it) == language }) file.delete()
+            }
+        }
     }
 
     companion object {

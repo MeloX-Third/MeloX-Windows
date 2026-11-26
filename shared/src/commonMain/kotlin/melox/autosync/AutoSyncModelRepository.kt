@@ -150,7 +150,7 @@ internal class AutoSyncModelRepository(
 
     /** Remove only files recorded by this app's installed manifest. */
     suspend fun remove(language: String): Boolean = withContext(Dispatchers.IO) {
-        mutation.withLock {
+        val removed = mutation.withLock {
             require(language in LANGUAGES)
             val model = ownedPack(language) ?: return@withLock false
             val files = model.manifest.getJSONArray("installed_files")
@@ -163,6 +163,13 @@ internal class AutoSyncModelRepository(
             try { Files.deleteIfExists(model.directory.toPath()) } catch (_: DirectoryNotEmptyException) { /* Keep unrelated files. */ }
             true
         }
+        // Mirrors Android edc829e: a removed language model invalidates only the
+        // cached timelines that used it. The store lives beside the model root so
+        // tests and portable data directories stay isolated.
+        if (removed) {
+            root.parentFile?.let { parent -> AutoSyncTimelineStore(File(parent, "timelines")).clearLanguage(language) }
+        }
+        removed
     }
 
     data class InstalledModel(val directory: File, val model: File, val manifest: JSONObject) {

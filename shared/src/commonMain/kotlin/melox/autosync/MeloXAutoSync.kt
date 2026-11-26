@@ -111,7 +111,7 @@ object MeloXAutoSync {
                 ensureCurrent()
                 val dictionaryStillReady = if ("ja" in languages) MeloXAutoSyncModels.japaneseDictionary.withInstalled { true } == true else false
                 if (result.isEmpty() || models != modelKey(languages, dictionaryStillReady)) return@withLock null
-                timelines.save(trackKey, sourceHash, audioKey, models, result)
+                timelines.save(trackKey, sourceHash, audioKey, models, result, languages)
                 ensureCurrent()
                 AutoSyncTimelineStore.merge(document, result)
             }
