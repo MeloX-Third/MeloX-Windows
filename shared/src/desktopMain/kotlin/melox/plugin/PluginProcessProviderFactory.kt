@@ -11,7 +11,7 @@ internal class PluginProcessProviderFactory(
 ) : PluginManager.ProviderFactory {
     override fun prepare(plugin: PluginArchiveReader.Package): PluginManager.LoadedProvider {
         val refreshRequested = AtomicBoolean()
-        val runtime = createRuntime(plugin) { refreshRequested.getAndSet(true) }
+        val runtime = createRuntime(plugin) { refreshRequested.getAndSet(false) }
         try {
             val declared = JSONArray(runBlocking { runtime.invoke("__validate", JSONArray()) })
             require(declared.length() <= 64) { "INVALID_PLUGIN" }
