@@ -75,6 +75,7 @@ import melox.library.NeteaseLibraryCache
 import melox.library.NeteaseLibraryClient
 import melox.library.NeteaseLibrarySnapshot
 import melox.library.NeteasePlaylistSummary
+import melox.library.reconcileLikedSongs
 import melox.model.SearchSong
 import melox.music.model.MusicAccountSummary
 import melox.music.model.MusicSource
@@ -183,17 +184,19 @@ private fun LibrarySourceContent(navState: MeloXNavState?, requestedPage: String
             }
             val requestedCookie = session.cookie
             val requestedRevision = NeteaseSessionStore.revision.value
+            val cachedSnapshot = cache.loadSnapshot(userId)
             runCatching {
                 withContext(Dispatchers.IO) {
                     NeteaseLibraryClient(cookieProvider = { requestedCookie }).snapshot(userId)
                 }
             }
-                .onSuccess {
+                .onSuccess { fresh ->
                     if (requestedRevision != NeteaseSessionStore.revision.value || session.cookie != requestedCookie) {
                         throw kotlinx.coroutines.CancellationException("NetEase account changed during library refresh")
                     }
-                    snapshot = it
-                    cache.saveSnapshot(userId, it)
+                    val trusted = reconcileLikedSongs(fresh, cachedSnapshot)
+                    snapshot = trusted
+                    cache.saveSnapshot(userId, trusted)
                 }
                 .onFailure {
                     if (it is kotlinx.coroutines.CancellationException) throw it

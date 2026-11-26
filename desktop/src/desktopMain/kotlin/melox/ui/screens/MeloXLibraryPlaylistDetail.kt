@@ -80,6 +80,7 @@ import melox.library.NeteaseLibraryCache
 import melox.library.NeteaseLibraryClient
 import melox.library.NeteasePlaylistDetail
 import melox.library.NeteasePlaylistSummary
+import melox.library.reconcilePlaylistDetail
 import melox.model.SearchSong
 import melox.music.provider.MeloXLegacyUiBridge
 import melox.music.provider.MeloXMusicProviders
@@ -197,10 +198,14 @@ internal fun MeloXLibraryPlaylistDetailScreen(
                 detail = MeloXLegacyUiBridge.playlistDetail(providerDetail)
             }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it; errorMessage = it.message ?: "歌单加载失败" }
         } else {
-            runCatching { client.playlistDetail(initialPlaylist.id) }
-                .onSuccess {
-                    detail = it
-                    cache.savePlaylistDetail(initialPlaylist.id, it)
+            val cachedDetail = cache.loadPlaylistDetail(initialPlaylist.id)
+            runCatching {
+                val fresh = client.playlistDetail(initialPlaylist.id)
+                reconcilePlaylistDetail(fresh, cachedDetail)
+            }
+                .onSuccess { trusted ->
+                    detail = trusted
+                    cache.savePlaylistDetail(initialPlaylist.id, trusted)
                 }
                 .onFailure { failure ->
                     if (failure is kotlinx.coroutines.CancellationException) throw failure
