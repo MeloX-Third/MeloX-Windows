@@ -12,11 +12,13 @@ object DesktopPluginRuntime {
     private var closed = false
     private val dataRoot by lazy { File(meloXDataDir()) }
     // One immutable bundle per application session. Never reuse unverified files after restart.
+    private val launcherDirectory by lazy { File(dataRoot, "melox-plugin-workers-v1/${UUID.randomUUID()}") }
+    @Volatile private var publishedBundle: File? = null
     private val launcher by lazy {
         val classpath = System.getProperty("java.class.path").split(File.pathSeparator)
             .filter(String::isNotBlank).map { File(it).absoluteFile }
-        WindowsPluginWorkerBundle.prepare(File(dataRoot, "melox-plugin-workers-v1/${UUID.randomUUID()}"),
-            File(System.getProperty("java.home")), classpath)
+        WindowsPluginWorkerBundle.prepare(launcherDirectory, File(System.getProperty("java.home")), classpath)
+            .also { publishedBundle = launcherDirectory }
     }
     private val lifecycle: PluginManager by lazy {
         PluginManager(PluginPackageStore(), MeloXMusicProviders.create(), PluginProcessProviderFactory(mediaAccess = { plugin ->
@@ -81,6 +83,10 @@ object DesktopPluginRuntime {
         if (!closed) {
             closed = true
             if (restored) { oauth.close(); lifecycle.close() }
+            publishedBundle?.let { bundle ->
+                publishedBundle = null
+                WindowsPluginWorkerBundle.remove(bundle)
+            }
         }
     }
 }

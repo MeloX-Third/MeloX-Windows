@@ -56,6 +56,7 @@ internal object WindowsPluginWorkerBundle {
             finally { if (acl.isAlive) acl.destroyForcibly() }
             Files.move(staging.toPath(), destination.toPath(), java.nio.file.StandardCopyOption.ATOMIC_MOVE)
             published = true
+            cleanupStale(parent, keep = destination)
             return WindowsPluginWorkerLauncher(listOf(File(destination, "runtime/bin/java.exe").absolutePath,
                 "-Xmx96m", "-XX:-UsePerfData", "-Djavet.lib.loading.type=custom",
                 "-Djavet.lib.loading.path=${File(destination, "native").absolutePath}", "-cp",
@@ -65,6 +66,19 @@ internal object WindowsPluginWorkerBundle {
             // This directory is uniquely owned by this preparation attempt; never remove a prior bundle.
             if (!published) staging.deleteRecursively()
         }
+    }
+
+    /** Sessions can crash without cleanup; remove only old, inactive bundles. */
+    internal fun cleanupStale(root: File, keep: File, now: Long = System.currentTimeMillis()) {
+        val cutoff = now - 30L * 24 * 60 * 60 * 1000
+        root.listFiles().orEmpty()
+            .filter { it.isDirectory && it.absoluteFile != keep.absoluteFile && it.lastModified() < cutoff }
+            .forEach { runCatching { it.deleteRecursively() } }
+    }
+
+    /** Best-effort removal of this session's bundle; open worker files may defer deletion. */
+    internal fun remove(destination: File) {
+        runCatching { destination.deleteRecursively() }
     }
 
     private fun copyTree(source: File, target: File) {
