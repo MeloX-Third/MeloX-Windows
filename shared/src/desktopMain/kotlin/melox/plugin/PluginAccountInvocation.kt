@@ -12,7 +12,7 @@ internal class PluginAccountInvocation(
         PluginHttpBroker(manifest, accountCurrent = active, credential = lease)
     },
 ) {
-    fun capture(method: String = "__validate"): PluginInvocationContext {
+    fun capture(method: String = "__validate", forceRefresh: Boolean = false): PluginInvocationContext {
         var stamp = vault.sessionStamp()
         val selected = vault.selected()
         // Unreadable credentials leave public methods available; explicit credential calls fail.
@@ -20,7 +20,7 @@ internal class PluginAccountInvocation(
         check(vault.sessionStamp() == stamp) { "CANCELLED" }
         val previous = lease
         if (method != "__validate" && previous?.policy?.type == "oauth2Pkce" &&
-            previous.expiresAt?.let { it <= System.currentTimeMillis() + 30_000 } == true) {
+            (forceRefresh || previous.expiresAt?.let { it <= System.currentTimeMillis() + 30_000 } == true)) {
             val configuration = requireNotNull(previous.policy.oauth)
             val refresh = previous.refreshToken
             if (refresh != null) try {

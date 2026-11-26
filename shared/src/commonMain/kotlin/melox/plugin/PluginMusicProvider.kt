@@ -17,6 +17,9 @@ class PluginMusicProvider(val manifest: PluginManifest, private val runtime: Plu
     FavoriteCapability, FavoriteStateCapability, AuthenticationCapability, PlaybackCapability, DownloadCapability,
     FallbackPlaybackCapability, LyricsCapability {
     internal var mediaAccess: (() -> PluginMediaAccess)? = null
+    /** Set by the desktop runtime; guarantees the next worker invocation force-refreshes OAuth. */
+    @Volatile internal var authorizationRefresh: (() -> Unit)? = null
+    internal fun requestAuthorizationRefresh() { authorizationRefresh?.invoke() }
     override val sourceId = manifest.sourceId
     override val displayName = manifest.name
     override val capabilities = manifest.capabilities.mapTo(mutableSetOf()) {

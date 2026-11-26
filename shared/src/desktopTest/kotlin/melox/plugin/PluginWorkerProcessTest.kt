@@ -22,7 +22,7 @@ class PluginWorkerProcessTest {
         val root = Files.createTempDirectory("plugin-factory").toFile()
         val source = requireNotNull(SourceId.parse("plugin:test.factory"))
         val manifest = PluginManifest(source, "Factory", "1.0.0", 1, "index.js", setOf(PluginCapability.Search), emptySet())
-        val factory = PluginProcessProviderFactory { plugin ->
+        val factory = PluginProcessProviderFactory { plugin, _ ->
             PluginProcessRuntime(plugin, PluginWorkerLauncher {
                 val process = start()
                 object : PluginWorkerProcess {

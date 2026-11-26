@@ -39,6 +39,35 @@ class PluginAccountInvocationTest {
         } finally { root.deleteRecursively() }
     }
 
+    @Test fun forcedRefreshRenewsAStillValidOAuthTokenBeforeInvocation() {
+        org.junit.Assume.assumeTrue(com.sun.jna.Platform.isWindows())
+        val root = Files.createTempDirectory("plugin-invocation-forced-refresh").toFile()
+        val source = requireNotNull(SourceId.parse("plugin:test.invocation.forced"))
+        val oauth = PluginOAuthConfiguration("https://api.example.com/authorize", "https://api.example.com/token", "client", emptyList())
+        val policy = PluginAuthentication("oauth2Pkce", domains = setOf("api.example.com"), oauth = oauth)
+        val manifest = PluginManifest(source, "Forced", "1.0.0", 1, "index.js", emptySet(), policy.domains, authentication = policy)
+        val vault = PluginAccountVault(source, root, WindowsDpapi)
+        try {
+            vault.importOAuthAndActivate("Account",
+                PluginAccountVault.Tokens("old", "refresh", System.currentTimeMillis() + 3_600_000), policy)
+            var requests = 0
+            val capture = PluginAccountInvocation(manifest, vault, root) { candidate, active, lease ->
+                PluginHttpBroker(candidate, accountCurrent = active, credential = lease, internalTransport = okhttp3.Interceptor { chain ->
+                    requests++
+                    okhttp3.Response.Builder().request(chain.request()).protocol(okhttp3.Protocol.HTTP_1_1).code(200).message("OK")
+                        .body(okhttp3.ResponseBody.create(null, """{"access_token":"forced","token_type":"Bearer","expires_in":3600}""")).build()
+                })
+            }
+            capture.capture("search")
+            assertEquals(0, requests)
+            capture.capture("search", forceRefresh = true)
+            assertEquals(1, requests)
+            assertEquals("forced", vault.lease()?.token)
+            capture.capture("search")
+            assertEquals(1, requests)
+        } finally { root.deleteRecursively() }
+    }
+
     @Test fun workerUsesCapturedAccountAndHostStorageTogether() = kotlinx.coroutines.runBlocking {
         org.junit.Assume.assumeTrue(com.sun.jna.Platform.isWindows())
         val root = Files.createTempDirectory("plugin-account-worker").toFile()
@@ -62,7 +91,7 @@ class PluginAccountInvocationTest {
                 override val output = process.outputStream
                 override fun close() { process.destroyForcibly(); process.waitFor(5, java.util.concurrent.TimeUnit.SECONDS) }
             }
-        }, { _, _ -> error("uncaptured host context") }, context = capture::capture)
+        }, { _, _ -> error("uncaptured host context") }, context = { method -> capture.capture(method) })
         try {
             val firstResult = JSONObject(runtime.invoke("search", org.json.JSONArray()))
             assertEquals(first.id, firstResult.getString("id"))

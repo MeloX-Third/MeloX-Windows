@@ -29,9 +29,10 @@ object DesktopPluginRuntime {
             PluginMediaAccess({ lease.isCurrent() && vault.sessionStamp() == stamp }) { active ->
                 PluginHttpBroker(plugin.manifest, accountCurrent = active, credential = lease)
             }
-        }) { plugin ->
+        }) { plugin, consumeForcedRefresh ->
             val accounts = PluginAccountInvocation(plugin.manifest, PluginAccountVault(plugin.manifest.sourceId), dataRoot)
-            PluginProcessRuntime(plugin, launcher, { _, _ -> error("missing account invocation context") }, context = accounts::capture,
+            PluginProcessRuntime(plugin, launcher, { _, _ -> error("missing account invocation context") },
+                context = { method -> accounts.capture(method, consumeForcedRefresh()) },
                 diagnostic = PluginDiagnostics(plugin.manifest.sourceId)::record)
         }, cancelAuthorization = { source -> oauth.cancel(source) },
             readPersistentDiagnostics = { PluginDiagnostics(it).lines() },

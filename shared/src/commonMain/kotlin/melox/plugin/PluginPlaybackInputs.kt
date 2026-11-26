@@ -40,17 +40,23 @@ internal object PluginPlaybackInputs {
         }
         val initial = MediaRequest(url, requestHeaders, expiresAt, access)
         return register(expiresAt, current) {
-            openWithRefresh(current, { open(initial) }, refresh?.let { resolve -> { open(resolve()) } })
+            openWithRefresh(current, { open(initial) }, refresh?.let { resolve -> { open(resolve()) } }) { status ->
+                // A credential-bound media rejection means the token may have been
+                // revoked before its nominal expiry; refresh OAuth once before the
+                // single re-resolution. 410 is a gone format, not an auth failure.
+                if (status in setOf(401, 403) && access != null) provider.requestAuthorizationRefresh()
+            }
         }
     }
 
     /** Retry only an unopened rejected response; never replay bytes after decoding starts. */
     internal fun openWithRefresh(current: () -> Boolean, open: () -> InputStream,
-        refresh: (() -> InputStream)?): InputStream {
+        refresh: (() -> InputStream)?, onRejected: (Int) -> Unit = {}): InputStream {
         check(current()) { "CANCELLED" }
         return try { open() } catch (failure: PluginMediaHttpException) {
             if (failure.status !in setOf(401, 403, 410) || refresh == null) throw failure
             check(current()) { "CANCELLED" }
+            onRejected(failure.status)
             val input = refresh()
             if (!current()) {
                 input.close()

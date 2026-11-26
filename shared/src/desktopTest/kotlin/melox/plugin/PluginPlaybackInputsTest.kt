@@ -40,6 +40,18 @@ class PluginPlaybackInputsTest {
             PluginPlaybackInputs.openWithRefresh({ false }, { error("must not open") }, null)
         }
     }
+    @Test fun rejectedStatusCallbackReportsOnlyRetryableAuthAndGoneResponses() {
+        val reported = mutableListOf<Int>()
+        for (status in listOf(401, 403, 410, 500)) {
+            runCatching {
+                PluginPlaybackInputs.openWithRefresh({ true }, { throw PluginMediaHttpException(status) }, {
+                    ByteArrayInputStream(byteArrayOf())
+                }) { reported += it }
+            }
+        }
+        assertEquals(listOf(401, 403, 410), reported)
+    }
+
     @Test fun opaqueInputReopensAndRejectsRevocationAndExpiry() {
         var current = true
         var opens = 0

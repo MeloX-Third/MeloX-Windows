@@ -25,7 +25,7 @@ class WindowsPluginWorkerLauncherTest {
         val source = requireNotNull(melox.music.model.SourceId.parse("plugin:test.bundle"))
         val manifest = PluginManifest(source, "Bundle", "1.0.0", 1, "index.js", setOf(PluginCapability.Search), emptySet())
         try {
-            val factory = PluginProcessProviderFactory { plugin -> PluginProcessRuntime(plugin, launcher,
+            val factory = PluginProcessProviderFactory { plugin, _ -> PluginProcessRuntime(plugin, launcher,
                 { token, current -> PluginHostCalls(token, PluginHttpBroker(manifest), PluginStorage(source, base = storageRoot), current) }) }
             val provider = factory.prepare(PluginArchiveReader.Package(manifest,
                 "globalThis.meloxPlugin={search:(query,page,pageSize)=>({items:[],page,pageSize,hasMore:false})};"))
