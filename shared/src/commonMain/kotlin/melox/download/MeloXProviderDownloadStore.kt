@@ -218,6 +218,7 @@ class MeloXProviderDownloadStore internal constructor(
                     } catch (failure: melox.plugin.PluginMediaHttpException) {
                         if (failure.status !in setOf(401, 403, 410)) throw failure
                         PluginDownloadTransfer.clear(staging)
+                        if (failure.status in setOf(401, 403) && playable.pluginMediaAccess != null) plugin.requestAuthorizationRefresh()
                         currentCoroutineContext().ensureActive()
                         check(current()) { "SOURCE_UNAVAILABLE" }
                         val refreshed = kotlinx.coroutines.withTimeout(12_000L) {
