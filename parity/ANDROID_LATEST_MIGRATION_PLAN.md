@@ -2,10 +2,10 @@
 
 ## 基线与规则
 
-- Android 唯一功能基线：`D:\MeloX-Android` 当前 `main`，提交 `edc829eaffa716b69d08681817414f9633abefc7`（2026-11-25，MeloX 0.7.5+）。
-- 本基线比原活跃基线 `53244b9` 前进 **255 个提交**；不能把旧矩阵中的 `IMPLEMENTED` 当作对最新源码的验收结论。
+- Android 唯一功能基线：`D:\MeloX-Android` 当前 `main`，提交 `37e352d`（MeloX 0.7.5+）。`edc829e..37e352d` 共 3 个提交（`2ebe5fd`、`01c8592`、`37e352d`），仅改动仓库地址、更新清单校验地址和 legal 联系地址，无功能差异。
+- 本基线比原活跃基线 `53244b9` 前进 **258 个提交**（`edc829e` 为 255）；不能把旧矩阵中的 `IMPLEMENTED` 当作对最新源码的验收结论。
 - 桌面 UI 另以 `parity/desktop-a41ea0e/MATRIX.md` 锁定的 MeloX Desktop `a41ea0e1e1fa69fb543d827b853fe3aff5420951` 为唯一桌面视觉/交互真源。Android 手机页面不得直接充当 Windows 桌面页面模板；业务、模型、持久化及服务可以复用。
-- 手机 UI 在桌面完成并回归后，以 Android `edc829e` 的 Android 页面与交互为真源，独立实施和验收。
+- 手机 UI 在桌面完成并回归后，以 Android `37e352d` 的 Android 页面与交互为真源，独立实施和验收。
 - Android 工作区存在用户未提交修改。只读比较提交内容，不覆盖、不暂存、不清理 Android 工作区。
 - 原子提交：每完成一个独立功能或修改一个功能，验证后立即本地 commit；计划和文档另行提交，不混入无关功能。不自动 push。
 - 本计划按“已实现 / 部分实现 / 缺失 / 平台不适用 / 受外部验收阻塞”逐项登记。代码存在不等于迁移完成；需要测试、桌面生产场景或设备证据的分别验证。
@@ -78,7 +78,7 @@
 
 | 阶段/范围 | 状态 | 证据/备注 |
 |---|---|---|
-| 基线锁定 | DONE | Android `edc829e`；255 commits after `53244b9`；旧矩阵只作历史证据 |
+| 基线锁定 | DONE | Android `37e352d`；258 commits after `53244b9`（`edc829e` 为 255）；`edc829e..37e352d` 无功能差异；旧矩阵只作历史证据 |
 | 默认电脑 UI | DONE | `MeloXSettingsRuntime.kt` 两个缺省读取均为 `true`；显式偏好不覆盖 |
 | repeat 持久化 + 切歌防抖 | DONE | `MeloXPlaybackModePreferences.kt`、`PlaybackCommands.kt`；桌面编译成功 |
 | 最新提交 AutoMix race / system lyrics job | AUDIT | 先按 Windows PCM/歌词任务模型做生命周期审计，再落等价修复和测试 |
